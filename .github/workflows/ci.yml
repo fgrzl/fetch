@@ -57,10 +57,10 @@ jobs:
       - name: test
         run: npm run test -- --coverage
 
-      # - name: publish to npm
-      #   run: npm publish --access public
-      #   env:
-      #     NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: workflow cleanup
         uses: fgrzl/workflow-cleanup@v1
