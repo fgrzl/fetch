@@ -1,0 +1,39 @@
+{
+  "name": "@fgrzl/fetch",
+  "version": "1.0.0",
+  "description": "A simple fetch client",
+  "keywords": [
+    "fetch",
+    "typescript",
+    "api"
+  ],
+  "homepage": "https://github.com/fgrzl/fetch#readme",
+  "bugs": {
+    "url": "https://github.com/fgrzl/fetch/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fgrzl/fetch.git"
+  },
+  "license": "MIT",
+  "author": "smiggleworth",
+  "type": "commonjs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "format": "prettier --write .",
+    "test": "vitest",
+    "test:watch": "vitest --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  }
+}
