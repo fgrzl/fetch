@@ -1,3 +1,6 @@
+[![ci](https://github.com/fgrzl/fetch/actions/workflows/ci.yml/badge.svg)](https://github.com/fgrzl/fetch/actions/workflows/ci.yml)
+[![Dependabot Updates](https://github.com/fgrzl/fetch/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/fgrzl/fetch/actions/workflows/dependabot/dependabot-updates)
+
 # @fgrzl/fetch
 
 A lightweight, middleware-friendly fetch client for TypeScript projects.
@@ -19,9 +22,9 @@ npm install @fgrzl/fetch
 ## 🚀 Quick Start
 
 ```ts
-import api from '@fgrzl/fetch';
+import api from "@fgrzl/fetch";
 
-const data = await api.get('/api/user');
+const data = await api.get("/api/user");
 ```
 
 Or create a custom instance:
@@ -32,7 +35,7 @@ import { useCSRF } from "./csrf";
 import { useUnauthorized } from "./unauthorized";
 
 const api = new FetchClient({
-  credentials: 'same-origin',
+  credentials: "same-origin",
 });
 
 useCSRF(api, {
@@ -51,13 +54,14 @@ Add your own middleware:
 
 ```ts
 client.useRequestMiddleware(async (req, url) => {
-  return [{ ...req, headers: { ...req.headers, 'X-Debug': 'true' } }, url];
+  return [{ ...req, headers: { ...req.headers, "X-Debug": "true" } }, url];
 });
 ```
 
 ## 🔐 CSRF + 401 Handling
 
 The default export is pre-configured with:
+
 - `credentials: 'same-origin'`
 - CSRF token from `XSRF-TOKEN` cookie
 - 401 redirect to `/login?returnTo=...`

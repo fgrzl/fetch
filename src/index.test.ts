@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
-import { FetchClient, RequestMiddleware, ResponseMiddleware } from "./client";
+import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
+import { FetchClient, RequestMiddleware, ResponseMiddleware } from './client';
 
-describe("FetchClient", () => {
+describe('FetchClient', () => {
   const mockFetch = vi.fn();
   const originalFetch = globalThis.fetch;
 
@@ -14,24 +14,24 @@ describe("FetchClient", () => {
     globalThis.fetch = originalFetch;
   });
 
-  it("calls fetch with correct method and URL", async () => {
+  it('calls fetch with correct method and URL', async () => {
     mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ message: "ok" }), { status: 200 }),
+      new Response(JSON.stringify({ message: 'ok' }), { status: 200 }),
     );
 
     const client = new FetchClient();
-    const result = await client.get<{ message: string }>("/test");
+    const result = await client.get<{ message: string }>('/test');
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "/test",
-      expect.objectContaining({ method: "GET" }),
+      '/test',
+      expect.objectContaining({ method: 'GET' }),
     );
-    expect(result.message).toBe("ok");
+    expect(result.message).toBe('ok');
   });
 
-  it("applies request middleware", async () => {
+  it('applies request middleware', async () => {
     const mw: RequestMiddleware = async (req, url) => {
-      const headers = { ...req.headers, "X-Test": "123" };
+      const headers = { ...req.headers, 'X-Test': '123' };
       return [{ ...req, headers }, `${url}?extra=1`];
     };
 
@@ -41,17 +41,17 @@ describe("FetchClient", () => {
 
     const client = new FetchClient();
     client.useRequestMiddleware(mw);
-    await client.get("/original");
+    await client.get('/original');
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "/original?extra=1",
+      '/original?extra=1',
       expect.objectContaining({
-        headers: expect.objectContaining({ "X-Test": "123" }),
+        headers: expect.objectContaining({ 'X-Test': '123' }),
       }),
     );
   });
 
-  it("applies response middleware", async () => {
+  it('applies response middleware', async () => {
     const mw: ResponseMiddleware = async (res) => {
       return res;
     };
@@ -62,16 +62,16 @@ describe("FetchClient", () => {
 
     const client = new FetchClient();
     client.useResponseMiddleware(mw);
-    const res = await client.get<{ done: boolean }>("/ok");
+    const res = await client.get<{ done: boolean }>('/ok');
     expect(res.done).toBe(true);
   });
 
-  it("throws when response is not ok", async () => {
+  it('throws when response is not ok', async () => {
     mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ error: "fail" }), { status: 400 }),
+      new Response(JSON.stringify({ error: 'fail' }), { status: 400 }),
     );
 
     const client = new FetchClient();
-    await expect(client.get("/bad")).rejects.toEqual({ error: "fail" });
+    await expect(client.get('/bad')).rejects.toEqual({ error: 'fail' });
   });
 });

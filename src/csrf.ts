@@ -1,4 +1,4 @@
-import { FetchClient, RequestMiddleware } from "./client";
+import { FetchClient, RequestMiddleware } from './client';
 
 interface CsrfConfig {
   cookieName: string;
@@ -13,7 +13,7 @@ function csrfMiddleware(config: CsrfConfig): RequestMiddleware {
     const token = cookie?.[1];
     const headers = {
       ...req.headers,
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       ...(token && { [config.headerName]: token }),
     };
     return [{ ...req, headers }, url];

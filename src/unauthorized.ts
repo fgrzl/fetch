@@ -1,4 +1,4 @@
-import { ResponseMiddleware, FetchClient } from "./client";
+import { ResponseMiddleware, FetchClient } from './client';
 
 export interface UnauthorizedConfig {
   loginPath: string;

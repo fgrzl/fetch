@@ -9,7 +9,7 @@ branches:
     track-merge-target: false
     is-release-branch: true
     is-mainline: true
-    tag: ''
+    tag: ""
   develop:
     regex: ^develop$
     increment: minor
@@ -26,7 +26,7 @@ branches:
     increment: patch
     track-merge-target: true
     tag: bugfix
-    source-branches: ['main', 'develop']
+    source-branches: ["main", "develop"]
   hotfix:
     regex: ^hotfix[/-]
     increment: patch
@@ -41,7 +41,7 @@ branches:
     regex: ^(pull|pr)[/-]
     tag: pr
     increment: patch
-    source-branches: ['main', 'develop']
+    source-branches: ["main", "develop"]
 
 ignore:
   sha: []
