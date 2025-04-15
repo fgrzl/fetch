@@ -2,17 +2,17 @@ import { FetchClient } from "./client";
 import { useCSRF } from "./csrf";
 import { useUnauthorized } from "./unauthorized";
 
-const defaultClient = new FetchClient({
+const api = new FetchClient({
   credentials: 'same-origin',
 });
 
-useCSRF(defaultClient, {
+useCSRF(api, {
   cookieName: "csrf_token",
   headerName: "X-CSRF-Token",
 });
 
-useUnauthorized(defaultClient, {
+useUnauthorized(api, {
   loginPath: "/login",
 });
 
-export default defaultClient;
+export default api;
