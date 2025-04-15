@@ -1,17 +1,10 @@
-Sure! Here's a clean, modern `README.md` for your `@fgrzl/fetch` project:
-
----
-
-### ✅ `README.md`
-
-```md
 # @fgrzl/fetch
 
 A lightweight, middleware-friendly fetch client for TypeScript projects.
 
 ## ✨ Features
 
-- Simple API: `client.get('/api/user')`
+- Simple API: `api.get('/api/user')`
 - Built-in CSRF token support
 - Automatic 401 redirect handling
 - Custom middleware support (request/response)
