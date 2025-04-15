@@ -26,6 +26,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org/"
+          cache: "npm"
+
       - name: setup gitversion
         uses: gittools/actions/gitversion/setup@v1
         with:
@@ -40,13 +47,6 @@ jobs:
           VERSION=${{ steps.gitversion.outputs.semVer }}
           echo "Using version: $VERSION"
           npm version --no-git-tag-version "$VERSION"
-
-      - name: setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org/"
-          cache: "npm"
 
       - name: install dependencies
         run: npm ci
