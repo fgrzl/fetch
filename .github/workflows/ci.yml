@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "**"
+      - '**'
   pull_request:
     branches:
       - main
@@ -16,33 +16,32 @@ permissions:
   actions: write
 
 jobs:
-  build-and-test:
+  build-and-publish:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: setup node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org/"
-          cache: "npm"
+          node-version: 'lts/*'
+          cache: 'npm'
 
-      - name: setup gitversion
+      - name: Setup GitVersion
         uses: gittools/actions/gitversion/setup@v1
         with:
-          versionSpec: "5.x"
+          versionSpec: '6.0.0'
 
-      - name: execute gitversion
+      - name: Execute GitVersion
         id: gitversion
         uses: gittools/actions/gitversion/execute@v1
 
-      - name: apply gitversion
+      - name: Apply GitVersion
         run: |
           VERSION=${{ steps.gitversion.outputs.semVer }}
           echo "Using version: $VERSION"
@@ -57,10 +56,21 @@ jobs:
       - name: test
         run: npm run test -- --coverage
 
-      - name: publish to npm
-        run: npm publish --access public
+      - name: Publish to NPM
+        if: github.ref_type == 'tag' || github.ref == 'refs/heads/develop'
+        run: |
+          VERSION=${{ steps.gitversion.outputs.semVer }}
+          LABEL=${{ steps.gitversion.outputs.PreReleaseLabel }}
+
+          if [[ "$VERSION" == *-* ]]; then
+            echo "Publishing prerelease version: $VERSION with tag: $LABEL"
+            npm publish --access public --tag "$LABEL"
+          else
+            echo "Publishing stable version: $VERSION"
+            npm publish --access public
+          fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: workflow cleanup
+      - name: Workflow Cleanup
         uses: fgrzl/workflow-cleanup@v1
