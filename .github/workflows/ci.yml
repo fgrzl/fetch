@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "**"
+      - '**'
   pull_request:
     branches:
       - main
@@ -29,21 +29,19 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "lts/*"
-          cache: "npm"
+          node-version: 'lts/*'
+          cache: 'npm'
 
       - name: Setup GitVersion
         uses: gittools/actions/gitversion/setup@v1
-        with:
-          versionSpec: "6.0.0"
 
       - name: Execute GitVersion
-        id: gitversion
+        id: version
         uses: gittools/actions/gitversion/execute@v1
 
       - name: Apply GitVersion
         run: |
-          VERSION=${{ steps.gitversion.outputs.semVer }}
+          VERSION=${{ steps.version.outputs.semVer }}
           echo "Using version: $VERSION"
           npm version --no-git-tag-version "$VERSION"
 
@@ -59,8 +57,8 @@ jobs:
       - name: Publish to NPM
         if: github.ref_type == 'tag' || github.ref == 'refs/heads/develop'
         run: |
-          VERSION=${{ steps.gitversion.outputs.semVer }}
-          LABEL=${{ steps.gitversion.outputs.PreReleaseLabel }}
+          VERSION=${{ steps.version.outputs.semVer }}
+          LABEL=${{ steps.version.outputs.PreReleaseLabel }}
 
           if [[ "$VERSION" == *-* ]]; then
             echo "Publishing prerelease version: $VERSION with tag: $LABEL"
