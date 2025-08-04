@@ -13,7 +13,7 @@ interface CsrfConfig {
 /**
  * Creates a request middleware that adds CSRF token to requests.
  * Reads the token from a cookie and adds it as a header.
- * 
+ *
  * @param config - CSRF configuration options
  * @returns Request middleware function
  */
@@ -34,15 +34,15 @@ function csrfMiddleware(config: CsrfConfig): RequestMiddleware {
 
 /**
  * Configures CSRF protection for a FetchClient.
- * 
+ *
  * This function adds middleware that:
  * - Reads CSRF tokens from cookies and includes them in request headers
  * - Updates CSRF tokens from response headers back to cookies
  * - Automatically sets Content-Type to application/json for requests
- * 
+ *
  * @param client - The FetchClient instance to configure
  * @param config - CSRF configuration options
- * 
+ *
  * @example
  * ```typescript
  * const client = new FetchClient();

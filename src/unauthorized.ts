@@ -11,7 +11,7 @@ export interface UnauthorizedConfig {
 /**
  * Creates a response middleware that handles 401 Unauthorized responses
  * by redirecting to a login page with a return URL.
- * 
+ *
  * @param config - Configuration options
  * @returns Response middleware function
  */
@@ -31,14 +31,14 @@ function unauthorizedRedirectMiddleware(
 
 /**
  * Configures automatic redirection for unauthorized responses.
- * 
+ *
  * When a 401 Unauthorized response is received, this middleware will
  * automatically redirect the browser to the specified login page,
  * including the current URL as a returnTo parameter for post-login redirection.
- * 
+ *
  * @param client - The FetchClient instance to configure
  * @param config - Configuration options including the login path
- * 
+ *
  * @example
  * ```typescript
  * const client = new FetchClient();

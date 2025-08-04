@@ -30,18 +30,18 @@ export interface FetchClientConfig {
 
 /**
  * A configurable HTTP client with middleware support.
- * 
+ *
  * @example
  * ```typescript
  * const client = new FetchClient({
  *   credentials: 'same-origin'
  * });
- * 
+ *
  * // Add middleware
  * client.useRequestMiddleware(async (req, url) => {
  *   return [{ ...req, headers: { ...req.headers, 'Auth': 'token' } }, url];
  * });
- * 
+ *
  * // Make requests
  * const data = await client.get('/api/users');
  * ```
@@ -79,7 +79,7 @@ export class FetchClient {
 
   /**
    * Makes an HTTP request with middleware processing.
-   * 
+   *
    * @template T - The expected response type
    * @param url - The URL to request
    * @param init - Request configuration options
