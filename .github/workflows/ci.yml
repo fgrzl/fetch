@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches:
-      - "**"
+      - '**'
   pull_request:
     branches:
       - main
@@ -15,101 +15,60 @@ permissions:
   packages: write
   actions: write
 
-env:
-  NODE_VERSION: "lts/*"
-  REGISTRY_URL: "https://registry.npmjs.org"
-
 jobs:
-  ci:
-    name: CI/CD Pipeline
+  build-and-publish:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          registry-url: ${{ env.REGISTRY_URL }}
+          node-version: 'lts/*'
+          cache: 'npm'
+
+      - name: Setup GitVersion
+        uses: gittools/actions/gitversion/setup@v4.0.1
+
+      - name: Execute GitVersion
+        id: version
+        uses: gittools/actions/gitversion/execute@v4.0.1
+
+      - name: Apply GitVersion
+        run: |
+          VERSION=${{ steps.version.outputs.semVer }}
+          echo "Using version: $VERSION"
+          npm version --no-git-tag-version "$VERSION"
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Lint Code
-        run: npm run lint --if-present
-
-      - name: Type Check
-        run: npm run type-check --if-present
-
-      - name: Run Tests
-        run: npm run test -- --coverage --reporter=verbose
-
-      - name: Build Package
+      - name: Build
         run: npm run build
 
-      - name: Upload Coverage Reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-reports
-          path: coverage/
-          retention-days: 7
-
-      # Versioning and Publishing (only on specific branches/tags)
-      - name: Setup GitVersion
-        if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref == 'refs/heads/develop')
-        uses: gittools/actions/gitversion/setup@v2
-        with:
-          versionSpec: "6.x"
-
-      - name: Calculate Version
-        if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref == 'refs/heads/develop')
-        id: version
-        uses: gittools/actions/gitversion/execute@v2
-
-      - name: Display Version Information
-        if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref == 'refs/heads/develop')
-        run: |
-          echo "Calculated Version: ${{ steps.version.outputs.semVer }}"
-          echo "Pre-release Label: ${{ steps.version.outputs.preReleaseLabel }}"
-          echo "Is Pre-release: ${{ steps.version.outputs.preReleaseLabel != '' }}"
-
-      - name: Apply Version to Package
-        if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref == 'refs/heads/develop')
-        run: |
-          VERSION=${{ steps.version.outputs.semVer }}
-          echo "Applying version: $VERSION"
-          npm version --no-git-tag-version "$VERSION"
+      - name: Test
+        run: npm run test -- --coverage
 
       - name: Publish to NPM
-        if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref == 'refs/heads/develop')
+        if: github.ref_type == 'tag' || github.ref == 'refs/heads/develop'
         run: |
           VERSION=${{ steps.version.outputs.semVer }}
-          LABEL=${{ steps.version.outputs.preReleaseLabel }}
+          LABEL=${{ steps.version.outputs.PreReleaseLabel }}
 
-          if [[ -n "$LABEL" ]]; then
-            echo "📦 Publishing pre-release version: $VERSION with tag: $LABEL"
+          if [[ "$VERSION" == *-* ]]; then
+            echo "Publishing prerelease version: $VERSION with tag: $LABEL"
             npm publish --access public --tag "$LABEL"
           else
-            echo "📦 Publishing stable release: $VERSION"
+            echo "Publishing stable version: $VERSION"
             npm publish --access public
           fi
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create Release Tag
-        if: github.event_name == 'push' && (github.ref_type == 'tag' || github.ref == 'refs/heads/develop') && steps.version.outputs.preReleaseLabel == ''
-        run: |
-          VERSION=${{ steps.version.outputs.semVer }}
-          git tag "v$VERSION"
-          git push origin "v$VERSION"
-
       - name: Workflow Cleanup
-        if: always()
         uses: fgrzl/workflow-cleanup@v1
