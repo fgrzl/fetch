@@ -1,33 +1,27 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from './client';
 import { useCSRF } from './csrf';
+import {
+  setupMockFetch,
+  createMockResponse,
+  clearAllCookies,
+} from './test-utils';
 
 describe('CSRF Middleware', () => {
-  const mockFetch = vi.fn();
-  const originalFetch = globalThis.fetch;
+  const { mockFetch, setup, cleanup } = setupMockFetch();
 
   beforeEach(() => {
-    vi.resetAllMocks();
-    globalThis.fetch = mockFetch;
-    // Clear all cookies before each test
-    document.cookie.split(';').forEach((c) => {
-      const eqPos = c.indexOf('=');
-      const name = eqPos > -1 ? c.substring(0, eqPos) : c;
-      document.cookie = `${name.trim()}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
-    });
+    setup();
+    clearAllCookies();
   });
 
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-  });
+  afterEach(cleanup);
 
   it('adds CSRF token from cookie to headers', async () => {
     // Set up a CSRF token in cookies
     document.cookie = 'csrf_token=test-token-123; path=/';
 
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true }), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
     const client = new FetchClient();
     useCSRF(client, {

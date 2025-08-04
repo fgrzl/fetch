@@ -1,24 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import { FetchClient, RequestMiddleware, ResponseMiddleware } from './client';
 import { HttpError, NetworkError } from './errors';
+import { setupMockFetch, createMockResponse } from './test-utils';
 
 describe('FetchClient', () => {
-  const mockFetch = vi.fn();
-  const originalFetch = globalThis.fetch;
+  const { mockFetch, setup, cleanup } = setupMockFetch();
 
-  beforeEach(() => {
-    vi.resetAllMocks();
-    globalThis.fetch = mockFetch;
-  });
-
-  afterAll(() => {
-    globalThis.fetch = originalFetch;
-  });
+  beforeEach(setup);
+  afterAll(cleanup);
 
   it('calls fetch with correct method and URL', async () => {
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ message: 'ok' }), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(createMockResponse({ message: 'ok' }));
 
     const client = new FetchClient();
     const result = await client.get<{ message: string }>('/test');
@@ -31,9 +23,7 @@ describe('FetchClient', () => {
   });
 
   it('makes POST requests correctly', async () => {
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ id: 1 }), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(createMockResponse({ id: 1 }));
 
     const client = new FetchClient();
     const body = { name: 'Test User' };

@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from './client';
 import { useUnauthorized } from './unauthorized';
+import { setupMockFetch, createMockResponse } from './test-utils';
 
 // Mock window.location
 const mockLocation = {
@@ -15,20 +16,16 @@ Object.defineProperty(window, 'location', {
 });
 
 describe('Unauthorized Middleware', () => {
-  const mockFetch = vi.fn();
-  const originalFetch = globalThis.fetch;
+  const { mockFetch, setup, cleanup } = setupMockFetch();
 
   beforeEach(() => {
-    vi.resetAllMocks();
-    globalThis.fetch = mockFetch;
+    setup();
     mockLocation.href = '';
     mockLocation.pathname = '/current-page';
     mockLocation.search = '?param=value';
   });
 
-  afterEach(() => {
-    globalThis.fetch = originalFetch;
-  });
+  afterEach(cleanup);
 
   it('redirects to login page on 401 response', async () => {
     mockFetch.mockResolvedValueOnce(

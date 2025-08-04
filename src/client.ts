@@ -132,6 +132,25 @@ export class FetchClient {
   }
 
   /**
+   * Helper method for requests with JSON body.
+   * @template T - The expected response type
+   * @param url - The URL to request
+   * @param method - The HTTP method
+   * @param body - The request body data (will be JSON stringified)
+   * @returns Promise that resolves to the parsed JSON response
+   */
+  private requestWithJsonBody<T>(
+    url: string,
+    method: 'POST' | 'PUT',
+    body: any,
+  ): Promise<T> {
+    return this.request<T>(url, {
+      method,
+      body: JSON.stringify(body),
+    });
+  }
+
+  /**
    * Makes a POST request with JSON body.
    * @template T - The expected response type
    * @param url - The URL to request
@@ -139,10 +158,7 @@ export class FetchClient {
    * @returns Promise that resolves to the parsed JSON response
    */
   public post<T>(url: string, body: any) {
-    return this.request<T>(url, {
-      method: 'POST',
-      body: JSON.stringify(body),
-    });
+    return this.requestWithJsonBody<T>(url, 'POST', body);
   }
 
   /**
@@ -153,10 +169,7 @@ export class FetchClient {
    * @returns Promise that resolves to the parsed JSON response
    */
   public put<T>(url: string, body: any) {
-    return this.request<T>(url, {
-      method: 'PUT',
-      body: JSON.stringify(body),
-    });
+    return this.requestWithJsonBody<T>(url, 'PUT', body);
   }
 
   /**
