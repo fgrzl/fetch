@@ -252,7 +252,7 @@ describe('FetchClient', () => {
     mockFetch.mockRejectedValueOnce(customError);
 
     const client = new FetchClient();
-    
+
     try {
       await client.get('/error');
       expect.fail('Should have thrown an error');
