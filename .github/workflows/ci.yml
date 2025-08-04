@@ -1,4 +1,4 @@
-name: ci
+name: CI
 
 on:
   workflow_dispatch:
@@ -33,11 +33,11 @@ jobs:
           cache: 'npm'
 
       - name: Setup GitVersion
-        uses: gittools/actions/gitversion/setup@v1
+        uses: gittools/actions/gitversion/setup@v4.0.1
 
       - name: Execute GitVersion
         id: version
-        uses: gittools/actions/gitversion/execute@v1
+        uses: gittools/actions/gitversion/execute@v4.0.1
 
       - name: Apply GitVersion
         run: |
