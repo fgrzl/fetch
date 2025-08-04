@@ -31,10 +31,18 @@
     "test:watch": "vitest --watch"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@types/node": "^24.2.0",
     "@vitest/coverage-v8": "^3.2.4",
     "prettier": "^3.6.2",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
+=======
+    "@types/node": "^24.0.15",
+    "@vitest/coverage-v8": "^3.2.3",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.3"
+>>>>>>> 7d81ce867e947e6febf3244f532a60aa792f9d06
   }
 }
