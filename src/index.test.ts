@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 import { FetchClient, RequestMiddleware, ResponseMiddleware } from './client';
+import { HttpError } from './errors';
 
 describe('FetchClient', () => {
   const mockFetch = vi.fn();
@@ -72,6 +73,14 @@ describe('FetchClient', () => {
     );
 
     const client = new FetchClient();
-    await expect(client.get('/bad')).rejects.toEqual({ error: 'fail' });
+    
+    try {
+      await client.get('/bad');
+      expect.fail('Should have thrown an error');
+    } catch (error) {
+      expect(error).toBeInstanceOf(HttpError);
+      expect((error as HttpError).status).toBe(400);
+      expect((error as HttpError).body).toEqual({ error: 'fail' });
+    }
   });
 });
