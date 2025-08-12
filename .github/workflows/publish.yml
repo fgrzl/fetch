@@ -1,0 +1,63 @@
+name: Publish
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: "npm"
+
+      - name: Setup GitVersion
+        uses: gittools/actions/gitversion/setup@v4.1.0
+
+      - name: Execute GitVersion
+        id: version
+        uses: gittools/actions/gitversion/execute@v4.1.0
+
+      - name: Apply GitVersion
+        run: |
+          VERSION=${{ steps.version.outputs.semVer }}
+          echo "Using version: $VERSION"
+          npm version --no-git-tag-version "$VERSION"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test -- --coverage
+
+      - name: Publish to NPM
+        run: |
+          VERSION=${{ steps.version.outputs.semVer }}
+          LABEL=${{ steps.version.outputs.PreReleaseLabel }}
+
+          if [[ "$VERSION" == *-* ]]; then
+            echo "Publishing prerelease version: $VERSION with tag: $LABEL"
+            npm publish --access public --tag "$LABEL"
+          else
+            echo "Publishing stable version: $VERSION"
+            npm publish --access public
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
