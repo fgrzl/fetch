@@ -26,6 +26,21 @@ jobs:
         id: version
         uses: gittools/actions/gitversion/execute@v4.1.0
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "lts/*"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test -- --coverage
+
       - name: Tag Commit
         uses: fgrzl/actions/tag-commit@v0.0.4
         with:
