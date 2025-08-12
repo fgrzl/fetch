@@ -1,7 +1,7 @@
 {
   "name": "@fgrzl/fetch",
   "version": "0.0.0",
-  "description": "A simple fetch client",
+  "description": "A simple fetch client with some extra goodies",
   "keywords": [
     "fetch",
     "typescript",
