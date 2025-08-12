@@ -30,20 +30,18 @@ const data = await api.get("/api/user");
 Or create a custom instance:
 
 ```ts
-import { FetchClient } from "./client";
-import { useCSRF } from "./csrf";
-import { useUnauthorized } from "./unauthorized";
+import { FetchClient, useCSRF, useUnauthorized } from "@fgrzl/fetch";
 
-const api = new FetchClient({
+const client = new FetchClient({
   credentials: "same-origin",
 });
 
-useCSRF(api, {
+useCSRF(client, {
   cookieName: "csrf_token",
   headerName: "X-CSRF-Token",
 });
 
-useUnauthorized(api, {
+useUnauthorized(client, {
   loginPath: "/login",
 });
 ```
