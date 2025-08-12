@@ -157,8 +157,8 @@ export class FetchClient {
    * @param body - The request body data (will be JSON stringified)
    * @returns Promise that resolves to the parsed JSON response
    */
-  public post<T>(url: string, body: any) {
-    return this.requestWithJsonBody<T>(url, 'POST', body);
+  public post<T>(url: string, body?: any) {
+    return this.requestWithJsonBody<T>(url, 'POST', body ?? {});
   }
 
   /**
@@ -168,8 +168,8 @@ export class FetchClient {
    * @param body - The request body data (will be JSON stringified)
    * @returns Promise that resolves to the parsed JSON response
    */
-  public put<T>(url: string, body: any) {
-    return this.requestWithJsonBody<T>(url, 'PUT', body);
+  public put<T>(url: string, body?: any) {
+    return this.requestWithJsonBody<T>(url, 'PUT', body ?? {});
   }
 
   /**
