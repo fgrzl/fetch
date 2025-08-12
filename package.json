@@ -1,7 +1,7 @@
 {
   "name": "@fgrzl/fetch",
   "version": "0.0.0",
-  "description": "A simple fetch client",
+  "description": "A simple fetch client with some extra goodies",
   "keywords": [
     "fetch",
     "typescript",
@@ -28,7 +28,7 @@
     "prepublishOnly": "npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest",
+    "test": "vitest run",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "lint": "npm run format:check"
