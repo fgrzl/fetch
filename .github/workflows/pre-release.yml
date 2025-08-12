@@ -49,7 +49,7 @@ jobs:
       - name: Publish NPM
         uses: fgrzl/actions/publish-npm@v0.0.4
         with:
-          npm-token: ${{ secrets.NPM_TOKEN  }}
+          npm-token: ${{ secrets.NPM_TOKEN }}
           label: ${{ steps.version.outputs.PreReleaseLabel }}
           version: ${{ steps.version.outputs.semVer }}
 
