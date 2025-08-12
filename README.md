@@ -21,86 +21,20 @@ npm install @fgrzl/fetch
 
 ## 🚀 Quick Start
 
-```ts
-import api from "@fgrzl/fetch";
+---
 
-const data = await api.get("/api/user");
-```
+## Documentation
 
-Or create a custom instance:
+- [Project Overview](docs/overview.md)
+- [Middleware](docs/middleware.md)
+- [Error Handling](docs/errors.md)
+- [Testing](docs/testing.md)
 
-```ts
-import { FetchClient, useCSRF, useUnauthorized } from "@fgrzl/fetch";
+---
 
-const client = new FetchClient({
-  credentials: "same-origin",
-});
+## License
 
-useCSRF(client, {
-  cookieName: "csrf_token",
-  headerName: "X-CSRF-Token",
-});
-
-useUnauthorized(client, {
-  loginPath: "/login",
-});
-```
-
-## 🧩 Middleware
-
-### Request Middleware
-
-Request middleware functions run before the HTTP request is sent, allowing you to modify request options and URLs.
-
-```ts
-import { FetchClient, RequestMiddleware } from "@fgrzl/fetch";
-
-const client = new FetchClient();
-
-// Add authentication header
-client.useRequestMiddleware(async (req, url) => {
-  const token = localStorage.getItem("auth-token");
-  const headers = {
-    ...req.headers,
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-  return [{ ...req, headers }, url];
-});
-
-// Add debug information
-client.useRequestMiddleware(async (req, url) => {
-  const headers = {
-    ...req.headers,
-    "X-Debug": "true",
-    "X-Timestamp": new Date().toISOString(),
-  };
-  return [{ ...req, headers }, url];
-});
-```
-
-### Response Middleware
-
-Response middleware functions run after the HTTP response is received, allowing you to process or modify responses.
-
-```ts
-import { ResponseMiddleware } from "@fgrzl/fetch";
-
-// Log response times
-client.useResponseMiddleware(async (response) => {
-  console.log(`Request to ${response.url} took ${performance.now()}ms`);
-  return response;
-});
-
-// Extract and store updated auth tokens
-client.useResponseMiddleware(async (response) => {
-  const newToken = response.headers.get("X-New-Auth-Token");
-  if (newToken) {
-    localStorage.setItem("auth-token", newToken);
-  }
-  return response;
-});
-```
-
+MIT
 ### Middleware Execution Order
 
 Middlewares execute in the order they are registered:
