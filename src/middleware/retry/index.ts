@@ -20,3 +20,10 @@ export { useRetry } from './retry-middleware';
 
 // 🎯 LEVEL 2: Configuration type for TypeScript users
 export type { RetryOptions } from './types';
+
+// 🎯 LEVEL 3: Factory functions for advanced use cases
+export { 
+  createRetryMiddleware,
+  createExponentialRetry,
+  createServerErrorRetry
+} from './retry-middleware';

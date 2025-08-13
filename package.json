@@ -9,7 +9,7 @@
     "http",
     "client",
     "middleware",
-    "csrf",
+    "CSRF",
     "auth",
     "type-safe"
   ],

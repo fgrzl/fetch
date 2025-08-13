@@ -1,5 +1,5 @@
 import { FetchClient, RequestMiddleware } from '../../client';
-import type { CsrfOptions } from './types';
+import type { CSRFOptions } from './types';
 
 /**
  * Creates a request middleware that adds CSRF token to requests.
@@ -8,7 +8,7 @@ import type { CsrfOptions } from './types';
  * @param config - CSRF configuration options
  * @returns Request middleware function
  */
-function csrfMiddleware(config: CsrfOptions): RequestMiddleware {
+export function createCSRFMiddleware(config: CSRFOptions = {}): RequestMiddleware {
   return async (req, url) => {
     const cookieName = config.cookieName || 'XSRF-TOKEN';
     const headerName = config.headerName || 'X-XSRF-TOKEN';
@@ -51,15 +51,15 @@ function csrfMiddleware(config: CsrfOptions): RequestMiddleware {
  * });
  * ```
  */
-export function useCSRF(client: FetchClient, config: CsrfOptions = {}) {
-  client.useRequestMiddleware(csrfMiddleware(config));
+export function useCSRF(client: FetchClient, config: CSRFOptions = {}) {
+  client.useRequestMiddleware(createCSRFMiddleware(config));
   client.useResponseMiddleware(async (req, res) => {
     const cookieName = config.cookieName || 'XSRF-TOKEN';
     const headerName = config.headerName || 'X-XSRF-TOKEN';
 
-    const csrfToken = res.headers.get(headerName);
-    if (csrfToken) {
-      document.cookie = `${cookieName}=${csrfToken}; path=/;`;
+    const CSRFToken = res.headers.get(headerName);
+    if (CSRFToken) {
+      document.cookie = `${cookieName}=${CSRFToken}; path=/;`;
     }
     return res;
   });

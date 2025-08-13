@@ -8,24 +8,40 @@ This document explains how to use and compose request/response middleware in the
 Automatically includes CSRF tokens in requests:
 
 ```ts
-import { useCSRF } from "@fgrzl/fetch";
+import { useCSRF, createCSRFMiddleware } from "@fgrzl/fetch";
 
+// Simple usage
 useCSRF(client, {
   cookieName: "XSRF-TOKEN",      // Industry standard
   headerName: "X-XSRF-TOKEN",    // HTTP header convention
 });
+
+// Advanced usage with factory
+const CSRFMiddleware = createCSRFMiddleware({
+  cookieName: "XSRF-TOKEN",
+  headerName: "X-XSRF-TOKEN"
+});
+client.useRequestMiddleware(CSRFMiddleware);
 ```
 
 ### Authorization Redirect
 Automatically redirects on 401 responses:
 
 ```ts
-import { useAuthorization } from "@fgrzl/fetch";
+import { useAuthorization, createAuthorizationMiddleware } from "@fgrzl/fetch";
 
+// Simple usage
 useAuthorization(client, {
   url: "/login",
   param: "redirect_uri"
 });
+
+// Advanced usage with factory
+const authMiddleware = createAuthorizationMiddleware({
+  url: "/login",
+  param: "redirect_uri"
+});
+client.useResponseMiddleware(authMiddleware);
 ```
 
 ### Retry Middleware

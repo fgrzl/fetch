@@ -16,7 +16,10 @@
  */
 
 // 🎯 LEVEL 1: Main function users need (simple, works out of the box)
-export { useCSRF } from './csrf-middleware';
+export { useCSRF } from './CSRF-middleware';
 
 // 🎯 LEVEL 2: Configuration type for TypeScript users
-export type { CsrfOptions } from './types';
+export type { CSRFOptions } from './types';
+
+// 🎯 LEVEL 3: Factory functions for advanced use cases
+export { createCSRFMiddleware } from './CSRF-middleware';

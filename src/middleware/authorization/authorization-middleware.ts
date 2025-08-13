@@ -8,8 +8,8 @@ import type { AuthorizationOptions } from './types';
  * @param config - Configuration options
  * @returns Response middleware function
  */
-function authorizationRedirectMiddleware(
-  config: AuthorizationOptions,
+export function createAuthorizationMiddleware(
+  config: AuthorizationOptions = {},
 ): ResponseMiddleware {
   return async (req, res) => {
     if (res.status === 401) {
@@ -61,5 +61,5 @@ export function useAuthorization(
   client: FetchClient,
   config: AuthorizationOptions = {},
 ) {
-  client.useResponseMiddleware(authorizationRedirectMiddleware(config));
+  client.useResponseMiddleware(createAuthorizationMiddleware(config));
 }

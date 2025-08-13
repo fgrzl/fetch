@@ -19,13 +19,13 @@ describe('CSRF Middleware', () => {
 
   it('adds CSRF token from cookie to headers', async () => {
     // Set up a CSRF token in cookies
-    document.cookie = 'csrf_token=test-token-123; path=/';
+    document.cookie = 'CSRF_token=test-token-123; path=/';
 
     mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
     const client = new FetchClient();
     useCSRF(client, {
-      cookieName: 'csrf_token',
+      cookieName: 'CSRF_token',
       headerName: 'X-CSRF-Token',
     });
 
@@ -49,7 +49,7 @@ describe('CSRF Middleware', () => {
 
     const client = new FetchClient();
     useCSRF(client, {
-      cookieName: 'csrf_token',
+      cookieName: 'CSRF_token',
       headerName: 'X-CSRF-Token',
     });
 
@@ -72,7 +72,7 @@ describe('CSRF Middleware', () => {
 
     const client = new FetchClient();
     useCSRF(client, {
-      cookieName: 'csrf_token',
+      cookieName: 'CSRF_token',
       headerName: 'X-CSRF-Token',
     });
 
@@ -105,18 +105,18 @@ describe('CSRF Middleware', () => {
 
     const client = new FetchClient();
     useCSRF(client, {
-      cookieName: 'csrf_token',
+      cookieName: 'CSRF_token',
       headerName: 'X-CSRF-Token',
     });
 
     await client.get('/api/data');
 
     // Check that the cookie was updated
-    expect(document.cookie).toContain('csrf_token=new-token-456');
+    expect(document.cookie).toContain('CSRF_token=new-token-456');
   });
 
   it('preserves existing headers', async () => {
-    document.cookie = 'csrf_token=test-token-123; path=/';
+    document.cookie = 'CSRF_token=test-token-123; path=/';
 
     mockFetch.mockResolvedValueOnce(
       new Response(JSON.stringify({ success: true }), { status: 200 }),
@@ -131,7 +131,7 @@ describe('CSRF Middleware', () => {
     });
 
     useCSRF(client, {
-      cookieName: 'csrf_token',
+      cookieName: 'CSRF_token',
       headerName: 'X-CSRF-Token',
     });
 

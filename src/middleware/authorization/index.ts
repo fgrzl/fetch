@@ -20,3 +20,6 @@ export { useAuthorization } from './authorization-middleware';
 
 // 🎯 LEVEL 2: Configuration type for TypeScript users
 export type { AuthorizationOptions } from './types';
+
+// 🎯 LEVEL 3: Factory functions for advanced use cases
+export { createAuthorizationMiddleware } from './authorization-middleware';

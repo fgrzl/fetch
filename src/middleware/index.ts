@@ -14,6 +14,6 @@
  */
 
 // 🎯 Re-export clean public APIs from each middleware module
-export * from './csrf';
+export * from './CSRF';
 export * from './authorization';
 export * from './retry';

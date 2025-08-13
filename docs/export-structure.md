@@ -32,7 +32,7 @@ useCSRF(client);
 
 ### 🎯 Level 3: TypeScript Integration (TypeScript users)
 ```typescript
-import type { FetchClientConfig, CsrfOptions } from '@fgrzl/fetch';
+import type { FetchClientConfig, CSRFOptions } from '@fgrzl/fetch';
 ```
 
 **What:** Type definitions for configuration objects  
