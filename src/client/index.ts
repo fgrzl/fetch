@@ -1,18 +1,18 @@
 /**
- * @fileoverview Client module barrel exports.
+ * @fileoverview Client module exports - "Pit of Success" pattern.
  *
- * This module provides a configurable HTTP client with middleware support.
- * It acts as the main entry point for the client functionality, re-exporting
- * all public APIs from the types and client implementation files.
+ * This module exports client functionality in order of discoverability:
+ * 1. FetchClient class (main thing users need)
+ * 2. Types for TypeScript users (auto-discovered via IntelliSense)
  */
 
-// Export types
+// 🎯 LEVEL 1: Main client class (what users need most)
+export { FetchClient } from './fetch-client';
+
+// 🎯 LEVEL 2: Types for TypeScript users (discovered when needed)
 export type {
   RequestMiddleware,
   ResponseMiddleware,
   FetchResponse,
   FetchClientOptions as FetchClientConfig,
 } from './types';
-
-// Export client class
-export { FetchClient } from './client';

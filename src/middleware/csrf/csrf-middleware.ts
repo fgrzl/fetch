@@ -46,8 +46,8 @@ function csrfMiddleware(config: CsrfOptions): RequestMiddleware {
  *
  * // Custom cookie and header names
  * useCSRF(client, {
- *   cookieName: 'csrf_token',
- *   headerName: 'X-CSRF-Token'
+ *   cookieName: 'XSRF-TOKEN',
+ *   headerName: 'X-XSRF-TOKEN'
  * });
  * ```
  */

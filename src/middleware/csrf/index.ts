@@ -1,5 +1,5 @@
 /**
- * CSRF Protection Middleware
+ * CSRF Protection Middleware - "Pit of Success" pattern
  *
  * This middleware provides Cross-Site Request Forgery (CSRF) protection by:
  * - Reading CSRF tokens from cookies and adding them to request headers
@@ -11,9 +11,12 @@
  * import { useCSRF } from '@fgrzl/fetch';
  *
  * const client = new FetchClient();
- * useCSRF(client); // Uses defaults
+ * useCSRF(client); // Just works with sensible defaults!
  * ```
  */
 
-export { useCSRF } from './csrf';
+// 🎯 LEVEL 1: Main function users need (simple, works out of the box)
+export { useCSRF } from './csrf-middleware';
+
+// 🎯 LEVEL 2: Configuration type for TypeScript users
 export type { CsrfOptions } from './types';

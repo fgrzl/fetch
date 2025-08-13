@@ -4,7 +4,7 @@ import {
   clearAllCookies,
   createMockResponse,
   setupMockFetch,
-} from '../../utils/test';
+} from '../../utils/test-utils';
 import { useCSRF } from './index';
 
 describe('CSRF Middleware', () => {

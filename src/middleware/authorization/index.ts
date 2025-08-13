@@ -1,5 +1,5 @@
 /**
- * Authorization Redirect Middleware
+ * Authorization Redirect Middleware - "Pit of Success" pattern
  *
  * This middleware handles 401 Unauthorized responses by:
  * - Automatically redirecting to a login page
@@ -11,9 +11,12 @@
  * import { useAuthorization } from '@fgrzl/fetch';
  *
  * const client = new FetchClient();
- * useAuthorization(client); // Redirects to /login with redirect_uri param
+ * useAuthorization(client); // Just works - redirects to /login!
  * ```
  */
 
-export { useAuthorization } from './authorization';
+// 🎯 LEVEL 1: Main function users need (simple, sensible defaults)
+export { useAuthorization } from './authorization-middleware';
+
+// 🎯 LEVEL 2: Configuration type for TypeScript users
 export type { AuthorizationOptions } from './types';

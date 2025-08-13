@@ -11,8 +11,8 @@ Automatically includes CSRF tokens in requests:
 import { useCSRF } from "@fgrzl/fetch";
 
 useCSRF(client, {
-  cookieName: "csrf_token",
-  headerName: "X-CSRF-Token",
+  cookieName: "XSRF-TOKEN",      // Industry standard
+  headerName: "X-XSRF-TOKEN",    // HTTP header convention
 });
 ```
 

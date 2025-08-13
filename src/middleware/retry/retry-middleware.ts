@@ -1,4 +1,4 @@
-import type { ResponseMiddleware } from '../../client';
+import type { ResponseMiddleware, FetchClient } from '../../client';
 import type { RetryOptions } from './types';
 
 /**
@@ -158,4 +158,39 @@ export function createServerErrorRetry(maxRetries = 3): ResponseMiddleware {
     maxRetries,
     shouldRetry: (response) => response.status >= 500,
   });
+}
+
+/**
+ * Configures automatic retry functionality for failed requests.
+ *
+ * This function adds middleware that will automatically retry failed requests
+ * based on the configured retry strategy and conditions.
+ *
+ * @param client - The FetchClient instance to configure
+ * @param config - Retry configuration options
+ *
+ * @example
+ * ```typescript
+ * // Use defaults (3 retries with exponential backoff)
+ * const client = new FetchClient();
+ * useRetry(client);
+ *
+ * // Custom configuration
+ * useRetry(client, {
+ *   maxRetries: 5,
+ *   delay: 1000,
+ *   strategy: 'linear'
+ * });
+ *
+ * // Only retry server errors
+ * useRetry(client, {
+ *   shouldRetry: (response) => response.status >= 500
+ * });
+ * ```
+ */
+export function useRetry(
+  client: FetchClient,
+  config: RetryOptions = {}
+) {
+  client.useResponseMiddleware(createRetryMiddleware(config));
 }

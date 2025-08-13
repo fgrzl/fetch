@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FetchClient } from '../../client';
-import { setupMockFetch, createMockResponse } from '../../utils/test';
+import { setupMockFetch, createMockResponse } from '../../utils/test-utils';
 import { useAuthorization } from './index';
 
 // Mock window.location

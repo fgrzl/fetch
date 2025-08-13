@@ -1,7 +1,7 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FetchClient, RequestMiddleware, ResponseMiddleware } from './client';
 import api from './index';
-import { createMockResponse, setupMockFetch } from './utils/test';
+import { createMockResponse, setupMockFetch } from './utils/test-utils';
 
 describe('Default API Instance', () => {
   it('exports a configured FetchClient instance', () => {
