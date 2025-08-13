@@ -5,6 +5,7 @@ export default defineConfig({
   test: {
     globals: true, // use global `describe`, `it`, `expect`
     environment: 'jsdom', // needed for browser APIs like document.cookie
+    include: ['test/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
