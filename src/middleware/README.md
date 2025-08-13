@@ -37,7 +37,7 @@ To add a new middleware (e.g., `rate-limiting`):
 - Uses XSRF-TOKEN/X-XSRF-TOKEN by default
 - Configurable cookie and header names
 
-### Unauthorized Redirect (`unauthorized/`)
+### Authorization Redirect (`authorization/`)
 
 - Handles 401 responses with automatic redirects
 - Uses OAuth 2.0 redirect_uri parameter by default
@@ -47,7 +47,7 @@ To add a new middleware (e.g., `rate-limiting`):
 
 ```typescript
 // From main package
-import { useCSRF, useUnauthorized } from "@fgrzl/fetch";
+import { useCSRF, useAuthorization } from "@fgrzl/fetch";
 
 // From middleware directly
 import { useCSRF } from "@fgrzl/fetch/middleware";

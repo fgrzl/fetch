@@ -1,5 +1,5 @@
 /**
- * Unauthorized Redirect Middleware
+ * Authorization Redirect Middleware
  *
  * This middleware handles 401 Unauthorized responses by:
  * - Automatically redirecting to a login page
@@ -8,12 +8,12 @@
  *
  * @example
  * ```typescript
- * import { useUnauthorized } from '@fgrzl/fetch';
+ * import { useAuthorization } from '@fgrzl/fetch';
  *
  * const client = new FetchClient();
- * useUnauthorized(client); // Redirects to /login with redirect_uri param
+ * useAuthorization(client); // Redirects to /login with redirect_uri param
  * ```
  */
 
-export { useUnauthorized } from './unauthorized';
-export type { UnauthorizedOptions } from './types';
+export { useAuthorization } from './authorization';
+export type { AuthorizationOptions } from './types';

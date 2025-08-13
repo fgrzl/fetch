@@ -53,7 +53,7 @@ function csrfMiddleware(config: CsrfOptions): RequestMiddleware {
  */
 export function useCSRF(client: FetchClient, config: CsrfOptions = {}) {
   client.useRequestMiddleware(csrfMiddleware(config));
-  client.useResponseMiddleware(async (res) => {
+  client.useResponseMiddleware(async (req, res) => {
     const cookieName = config.cookieName || 'XSRF-TOKEN';
     const headerName = config.headerName || 'X-XSRF-TOKEN';
 

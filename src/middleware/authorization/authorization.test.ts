@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FetchClient } from '../../client';
-import { setupMockFetch } from '../../utils/test';
-import { useUnauthorized } from './index';
+import { setupMockFetch, createMockResponse } from '../../utils/test';
+import { useAuthorization } from './index';
 
 // Mock window.location
 const mockLocation = {
@@ -15,7 +15,7 @@ Object.defineProperty(window, 'location', {
   writable: true,
 });
 
-describe('Unauthorized Middleware', () => {
+describe('Authorization Middleware', () => {
   const { mockFetch, setup, cleanup } = setupMockFetch();
 
   beforeEach(() => {
@@ -33,7 +33,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/login',
     });
 
@@ -55,7 +55,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/login',
     });
 
@@ -70,12 +70,10 @@ describe('Unauthorized Middleware', () => {
   });
 
   it('does not redirect on successful responses', async () => {
-    mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ success: true }), { status: 200 }),
-    );
+    mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
     const client = new FetchClient();
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/login',
     });
 
@@ -92,7 +90,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/auth/signin',
     });
 
@@ -117,7 +115,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/login',
     });
 
@@ -132,7 +130,7 @@ describe('Unauthorized Middleware', () => {
   });
 
   it('works with other response middleware', async () => {
-    const responseMiddleware = vi.fn(async (res) => res);
+    const responseMiddleware = vi.fn(async (req, res) => res);
 
     mockFetch.mockResolvedValueOnce(
       new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
@@ -140,7 +138,7 @@ describe('Unauthorized Middleware', () => {
 
     const client = new FetchClient();
     client.useResponseMiddleware(responseMiddleware);
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/login',
     });
 
@@ -163,7 +161,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/login',
       param: 'redirect_uri',
     });
@@ -186,7 +184,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client, {
+    useAuthorization(client, {
       url: '/login',
     });
 
@@ -208,7 +206,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client, {});
+    useAuthorization(client, {});
 
     try {
       await client.get('/api/protected');
@@ -228,7 +226,7 @@ describe('Unauthorized Middleware', () => {
     );
 
     const client = new FetchClient();
-    useUnauthorized(client);
+    useAuthorization(client);
 
     try {
       await client.get('/api/protected');

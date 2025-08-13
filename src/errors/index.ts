@@ -17,7 +17,9 @@ export class FetchError extends Error {
   constructor(message: string, cause?: Error) {
     super(message);
     this.name = 'FetchError';
-    this.cause = cause;
+    if (cause !== undefined) {
+      this.cause = cause;
+    }
   }
 }
 

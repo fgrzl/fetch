@@ -1,5 +1,5 @@
 import { ResponseMiddleware, FetchClient } from '../../client';
-import type { UnauthorizedOptions } from './types';
+import type { AuthorizationOptions } from './types';
 
 /**
  * Creates a response middleware that handles 401 Unauthorized responses
@@ -8,10 +8,10 @@ import type { UnauthorizedOptions } from './types';
  * @param config - Configuration options
  * @returns Response middleware function
  */
-function unauthorizedRedirectMiddleware(
-  config: UnauthorizedOptions,
+function authorizationRedirectMiddleware(
+  config: AuthorizationOptions,
 ): ResponseMiddleware {
-  return async (res) => {
+  return async (req, res) => {
     if (res.status === 401) {
       const returnTo = encodeURIComponent(
         window.location.pathname + window.location.search,
@@ -38,28 +38,28 @@ function unauthorizedRedirectMiddleware(
  * ```typescript
  * // Minimal usage with all defaults
  * const client = new FetchClient();
- * useUnauthorized(client, {});
+ * useAuthorization(client, {});
  *
  * // With custom login URL
- * useUnauthorized(client, {
+ * useAuthorization(client, {
  *   url: '/auth/signin'
  * });
  *
  * // With custom return parameter name
- * useUnauthorized(client, {
+ * useAuthorization(client, {
  *   param: 'returnTo'
  * });
  *
  * // With both custom URL and parameter
- * useUnauthorized(client, {
+ * useAuthorization(client, {
  *   url: '/login',
  *   param: 'returnTo'
  * });
  * ```
  */
-export function useUnauthorized(
+export function useAuthorization(
   client: FetchClient,
-  config: UnauthorizedOptions = {},
+  config: AuthorizationOptions = {},
 ) {
-  client.useResponseMiddleware(unauthorizedRedirectMiddleware(config));
+  client.useResponseMiddleware(authorizationRedirectMiddleware(config));
 }

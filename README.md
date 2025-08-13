@@ -10,6 +10,7 @@ A lightweight, middleware-friendly fetch client for TypeScript projects.
 - Simple API: `api.get('/api/user')`
 - Built-in CSRF token support
 - Automatic 401 redirect handling
+- Retry middleware with configurable strategies
 - Custom middleware support (request/response)
 - TypeScript-first, small and dependency-free
 
@@ -35,7 +36,7 @@ if (response.ok) {
 Or create a custom instance:
 
 ```ts
-import { FetchClient, useCSRF, useUnauthorized } from "@fgrzl/fetch";
+import { FetchClient, useCSRF, useAuthorization, createRetryMiddleware } from "@fgrzl/fetch";
 
 const client = new FetchClient({
   credentials: "same-origin",
@@ -46,9 +47,16 @@ useCSRF(client, {
   headerName: "X-CSRF-Token",
 });
 
-useUnauthorized(client, {
-  loginPath: "/login",
+useAuthorization(client, {
+  url: "/login",
 });
+
+// Add retry middleware for server errors
+client.useResponseMiddleware(createRetryMiddleware({
+  maxRetries: 3,
+  delay: 1000,
+  strategy: 'exponential'
+}));
 
 // All requests now return FetchResponse<T>
 interface User {

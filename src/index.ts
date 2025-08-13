@@ -1,5 +1,5 @@
 /**
- * @fileoverview Default configured fetch client with CSRF protection and unauthorized handling.
+ * @fileoverview Default configured fetch client with CSRF protection and authorization handling.
  *
  * This module exports a pre-configured FetchClient instance with:
  * - Same-origin credentials policy
@@ -8,10 +8,10 @@
  */
 
 import { FetchClient } from './client';
-import { useCSRF, useUnauthorized } from './middleware';
+import { useCSRF, useAuthorization } from './middleware';
 
 /**
- * Pre-configured fetch client with CSRF protection and unauthorized handling.
+ * Pre-configured fetch client with CSRF protection and authorization handling.
  *
  * This client is ready to use for applications that need:
  * - CSRF protection
@@ -36,8 +36,8 @@ const api = new FetchClient({
 // Configure CSRF protection
 useCSRF(api, {});
 
-// Configure unauthorized redirect
-useUnauthorized(api, {
+// Configure authorization redirect
+useAuthorization(api, {
   url: '/login',
 });
 
@@ -52,5 +52,11 @@ export type {
   FetchClientConfig,
   FetchResponse,
 } from './client';
-export { useCSRF, useUnauthorized } from './middleware';
-export type { UnauthorizedOptions } from './middleware';
+export {
+  useCSRF,
+  useAuthorization,
+  createRetryMiddleware,
+  createExponentialRetry,
+  createServerErrorRetry,
+} from './middleware';
+export type { AuthorizationOptions, RetryOptions } from './middleware';

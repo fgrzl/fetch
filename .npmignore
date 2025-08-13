@@ -1,0 +1,26 @@
+# Source files
+src/
+docs/
+example.ts
+
+# Development files
+tsconfig*.json
+eslint.config.ts
+vitest.config.ts
+.prettierrc.json
+
+# Testing
+*.test.ts
+test-utils.ts
+__tests__/
+coverage/
+
+# Development
+.vscode/
+.git/
+.gitignore
+*.log
+node_modules/
+
+# Only ship dist
+!dist/
