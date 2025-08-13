@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../client/fetch-client';
 import { useLogging, createLoggingMiddleware } from './index';
-import type { LoggingOptions, Logger } from './types';
+import type { Logger } from './types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -194,13 +194,10 @@ describe('Logging Middleware', () => {
         includeRequestHeaders: true,
       });
 
-      const response = await loggedClient.request(
-        'https://api.example.com/users',
-        {
-          method: 'GET',
-          headers: { 'X-Custom': 'test-header' },
-        },
-      );
+      await loggedClient.request('https://api.example.com/users', {
+        method: 'GET',
+        headers: { 'X-Custom': 'test-header' },
+      });
 
       expect(mockLogger.debug).toHaveBeenCalledWith(
         expect.any(String),

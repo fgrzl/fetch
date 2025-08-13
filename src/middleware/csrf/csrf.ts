@@ -3,7 +3,7 @@
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
-import type { CSRFOptions, CSRFTokenProvider } from './types';
+import type { CSRFOptions } from './types';
 
 /**
  * Default CSRF token provider that extracts token from XSRF-TOKEN cookie.
@@ -19,7 +19,7 @@ function getTokenFromCookie(cookieName: string = 'XSRF-TOKEN'): string {
   const cookies = decodedCookie.split(';');
 
   for (const cookie of cookies) {
-    let c = cookie.trim();
+    const c = cookie.trim();
     if (c.indexOf(name) === 0) {
       return c.substring(name.length);
     }

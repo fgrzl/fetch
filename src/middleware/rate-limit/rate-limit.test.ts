@@ -5,7 +5,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../client/fetch-client';
 import { useRateLimit, createRateLimitMiddleware } from './index';
-import type { RateLimitOptions } from './types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -342,7 +341,7 @@ describe('Rate Limit Middleware', () => {
       const rateLimitedRetryClient = useRateLimit(
         useRetry(client, {
           maxRetries: 2,
-          delayMs: 100,
+          delay: 100,
         }),
         {
           maxRequests: 3,
@@ -431,7 +430,7 @@ describe('Rate Limit Middleware', () => {
       });
 
       // Make requests in rapid succession
-      const promises = [];
+      const promises: Array<Promise<any>> = [];
       for (let i = 0; i < 15; i++) {
         promises.push(
           rateLimitedClient.get(`https://api.example.com/test${i}`),
@@ -440,8 +439,8 @@ describe('Rate Limit Middleware', () => {
 
       const responses = await Promise.all(promises);
 
-      const successful = responses.filter((r) => r.ok);
-      const rateLimited = responses.filter((r) => r.status === 429);
+      const successful = responses.filter((r: any) => r.ok);
+      const rateLimited = responses.filter((r: any) => r.status === 429);
 
       expect(successful).toHaveLength(10);
       expect(rateLimited).toHaveLength(5);

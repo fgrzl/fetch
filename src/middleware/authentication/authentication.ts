@@ -3,7 +3,7 @@
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
-import type { AuthenticationOptions, AuthTokenProvider } from './types';
+import type { AuthenticationOptions } from './types';
 
 /**
  * Checks if a URL should skip authentication based on configured patterns.
@@ -107,7 +107,7 @@ export function createAuthenticationMiddleware(
       };
 
       return next(modifiedRequest);
-    } catch (error) {
+    } catch {
       // If token provider fails, proceed without auth
       // This ensures network requests don't fail due to auth issues
       return next(request);

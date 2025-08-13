@@ -179,7 +179,9 @@ export class FetchClient {
     url: string,
     params?: Record<string, string | number | boolean | undefined>,
   ): string {
-    if (!params) return url;
+    if (!params) {
+      return url;
+    }
 
     const urlObj = new URL(
       url,

@@ -189,7 +189,9 @@ export function createLoggingMiddleware(
 function getHeadersObject(
   headers: Headers | undefined,
 ): Record<string, string> | undefined {
-  if (!headers) return undefined;
+  if (!headers) {
+    return undefined;
+  }
 
   const obj: Record<string, string> = {};
   headers.forEach((value, key) => {

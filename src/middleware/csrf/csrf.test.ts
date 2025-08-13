@@ -5,7 +5,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../client/fetch-client';
 import { useCSRF, createCSRFMiddleware } from './index';
-import type { CSRFOptions } from './types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

@@ -5,7 +5,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../client/fetch-client';
 import { useAuthorization, createAuthorizationMiddleware } from './index';
-import type { AuthorizationOptions } from './types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

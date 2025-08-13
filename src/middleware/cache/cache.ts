@@ -18,7 +18,9 @@ class MemoryStorage implements CacheStorage {
 
   async get(key: string): Promise<CacheEntry | null> {
     const entry = this.cache.get(key);
-    if (!entry) return null;
+    if (!entry) {
+      return null;
+    }
 
     // Check if expired
     if (Date.now() > entry.expiresAt) {
@@ -187,7 +189,7 @@ export function createCacheMiddleware(
       }
 
       return response;
-    } catch (error) {
+    } catch {
       // If caching fails, just proceed with the request
       return next(request);
     }

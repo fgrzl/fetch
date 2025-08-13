@@ -87,7 +87,6 @@ export { useRetry, createRetryMiddleware } from './retry';
 
 import type { FetchClient } from '../client/fetch-client';
 import { useAuthentication } from './authentication';
-import { useAuthorization } from './authorization';
 import { useRetry } from './retry';
 import { useLogging } from './logging';
 import { useCache } from './cache';

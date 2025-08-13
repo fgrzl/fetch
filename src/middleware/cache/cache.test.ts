@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../client/fetch-client';
 import { useCache, createCacheMiddleware } from './index';
-import type { CacheOptions, CacheStorage, CacheEntry } from './types';
+import type { CacheStorage } from './types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
