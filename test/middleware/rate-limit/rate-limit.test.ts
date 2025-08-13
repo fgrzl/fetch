@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FetchClient } from '../../client/fetch-client';
-import { useRateLimit, createRateLimitMiddleware } from './index';
+import { FetchClient } from '../../../src/client/fetch-client';
+import { useRateLimit, createRateLimitMiddleware } from '../../../src/middleware/rate-limit/index';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -336,7 +336,7 @@ describe('Rate Limit Middleware', () => {
 
       const client = new FetchClient();
 
-      const { useRetry } = await import('../retry');
+      const { useRetry } = await import('../../../src/middleware/retry');
 
       const rateLimitedRetryClient = useRateLimit(
         useRetry(client, {

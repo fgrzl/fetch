@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FetchClient } from './fetch-client';
+import { FetchClient } from '../../src/client/fetch-client';
 
 // Mock fetch
 const mockFetch = vi.fn();

@@ -91,9 +91,21 @@ export function createRateLimitMiddleware(
         return next(request); // Let handler decide what to do
       }
 
-      throw new Error(
-        `Rate limit exceeded. Retry after ${result.retryAfter}ms`,
-      );
+      // Return a 429 Too Many Requests response instead of throwing
+      return {
+        data: null,
+        status: 429,
+        statusText: 'Too Many Requests',
+        headers: new Headers({
+          'Retry-After': Math.ceil((result.retryAfter || 0) / 1000).toString(),
+        }),
+        url: request.url || '',
+        ok: false,
+        error: {
+          message: `Rate limit exceeded. Retry after ${result.retryAfter}ms`,
+          body: { retryAfter: result.retryAfter },
+        },
+      };
     }
 
     return next(request);

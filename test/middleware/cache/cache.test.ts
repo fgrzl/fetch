@@ -3,20 +3,22 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FetchClient } from '../../client/fetch-client';
-import { useCache, createCacheMiddleware } from './index';
-import type { CacheStorage } from './types';
+import { FetchClient } from '../../../src/client/fetch-client';
+import { useCache, createCacheMiddleware } from '../../../src/middleware/cache/index';
+import type { CacheStorage } from '../../../src/middleware/cache/types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockClear();
-  mockFetch.mockResolvedValue(
-    new Response('{"data": "test"}', {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }),
+  mockFetch.mockImplementation(() =>
+    Promise.resolve(
+      new Response('{"data": "test"}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ),
   );
 });
 
@@ -336,7 +338,7 @@ describe('Cache Middleware', () => {
     it('should work with authentication middleware', async () => {
       const client = new FetchClient();
 
-      const { useAuthentication } = await import('../authentication');
+      const { useAuthentication } = await import('../../../src/middleware/authentication');
 
       const authCachedClient = useAuthentication(client, {
         tokenProvider: () => 'test-token',

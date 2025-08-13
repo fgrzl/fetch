@@ -3,19 +3,21 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FetchClient } from '../../client/fetch-client';
-import { useCSRF, createCSRFMiddleware } from './index';
+import { FetchClient } from '../../../src/client/fetch-client';
+import { useCSRF, createCSRFMiddleware } from '../../../src/middleware/csrf/index';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockClear();
-  mockFetch.mockResolvedValue(
-    new Response('{"success": true}', {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }),
+  mockFetch.mockImplementation(() =>
+    Promise.resolve(
+      new Response('{"success": true}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ),
   );
 
   // Reset document mock
@@ -39,7 +41,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/users',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-XSRF-TOKEN': 'default-csrf-token-123',
+            'x-xsrf-token': 'default-csrf-token-123',
           }),
         }),
       );
@@ -57,7 +59,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/users/123',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-XSRF-TOKEN': 'default-csrf-token-123',
+            'x-xsrf-token': 'default-csrf-token-123',
           }),
         }),
       );
@@ -75,7 +77,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/users/123',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-XSRF-TOKEN': 'default-csrf-token-123',
+            'x-xsrf-token': 'default-csrf-token-123',
           }),
         }),
       );
@@ -91,7 +93,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/users/123',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-XSRF-TOKEN': 'default-csrf-token-123',
+            'x-xsrf-token': 'default-csrf-token-123',
           }),
         }),
       );
@@ -125,7 +127,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/data',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-XSRF-TOKEN': 'custom-token-456',
+            'x-xsrf-token': 'custom-token-456',
           }),
         }),
       );
@@ -148,7 +150,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/data',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-CSRF-Token': 'laravel-csrf-token',
+            'x-csrf-token': 'laravel-csrf-token',
           }),
         }),
       );
@@ -187,7 +189,7 @@ describe('CSRF Middleware', () => {
       // Internal endpoint - has CSRF
       expect(calls[2][1]).toMatchObject({
         headers: expect.objectContaining({
-          'X-XSRF-TOKEN': 'default-csrf-token-123',
+          'x-xsrf-token': 'default-csrf-token-123',
         }),
       });
     });
@@ -224,14 +226,14 @@ describe('CSRF Middleware', () => {
       // POST - has CSRF
       expect(calls[0][1]).toMatchObject({
         headers: expect.objectContaining({
-          'X-XSRF-TOKEN': 'default-csrf-token-123',
+          'x-xsrf-token': 'default-csrf-token-123',
         }),
       });
 
       // PUT - no CSRF (not in protected methods)
       expect(calls[1][1]).not.toMatchObject({
         headers: expect.objectContaining({
-          'X-XSRF-TOKEN': expect.any(String),
+          'x-xsrf-token': expect.any(String),
         }),
       });
     });
@@ -273,7 +275,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/test',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-Custom-CSRF': 'direct-csrf-token',
+            'x-custom-csrf': 'direct-csrf-token',
           }),
         }),
       );
@@ -303,7 +305,7 @@ describe('CSRF Middleware', () => {
         'https://api.internal.com/data',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-Internal-CSRF': 'internal-token',
+            'x-internal-csrf': 'internal-token',
             // External CSRF should be skipped due to pattern
           }),
         }),
@@ -336,7 +338,7 @@ describe('CSRF Middleware', () => {
           'https://api.example.com/test',
           expect.objectContaining({
             headers: expect.objectContaining({
-              'X-XSRF-TOKEN': expectedToken,
+              'x-xsrf-token': expectedToken,
             }),
           }),
         );
@@ -357,7 +359,7 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/test',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-XSRF-TOKEN': 'token+with+plus',
+            'x-xsrf-token': 'token+with+plus',
           }),
         }),
       );
@@ -369,7 +371,7 @@ describe('CSRF Middleware', () => {
       const client = new FetchClient();
 
       // Import authentication here to avoid circular dependencies in real scenarios
-      const { useAuthentication } = await import('../authentication');
+      const { useAuthentication } = await import('../../../src/middleware/authentication');
 
       const protectedClient = useAuthentication(client, {
         tokenProvider: () => 'bearer-token',
@@ -387,8 +389,8 @@ describe('CSRF Middleware', () => {
         'https://api.example.com/secure',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer bearer-token',
-            'X-XSRF-TOKEN': 'csrf-token',
+            authorization: 'Bearer bearer-token',
+            'x-xsrf-token': 'csrf-token',
           }),
         }),
       );

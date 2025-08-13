@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FetchError, HttpError, NetworkError } from './index';
+import { FetchError, HttpError, NetworkError } from '../../src/errors/index';
 
 describe('Error Classes', () => {
   describe('FetchError', () => {

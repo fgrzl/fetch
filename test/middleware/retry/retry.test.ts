@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FetchClient } from '../../client/fetch-client';
-import { useRetry, createRetryMiddleware } from './index';
+import { FetchClient } from '../../../src/client/fetch-client';
+import { useRetry, createRetryMiddleware } from '../../../src/middleware/retry/index';
 
 // Mock fetch
 const mockFetch = vi.fn();

@@ -3,19 +3,21 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FetchClient } from '../../client/fetch-client';
-import { useAuthentication, createAuthenticationMiddleware } from './index';
+import { FetchClient } from '../../../src/client/fetch-client';
+import { useAuthentication, createAuthenticationMiddleware } from '../../../src/middleware/authentication/index';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 beforeEach(() => {
   mockFetch.mockClear();
-  mockFetch.mockResolvedValue(
-    new Response('{"success": true}', {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }),
+  // Create fresh mock responses for each call to avoid body already read error
+  mockFetch.mockImplementation(
+    () =>
+      new Response('{"success": true}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
   );
 });
 
@@ -33,7 +35,7 @@ describe('Authentication Middleware', () => {
         'https://api.example.com/users',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer test-token-123',
+            authorization: 'Bearer test-token-123',
           }),
         }),
       );
@@ -54,7 +56,7 @@ describe('Authentication Middleware', () => {
         'https://api.example.com/data',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer async-token-456',
+            authorization: 'Bearer async-token-456',
           }),
         }),
       );
@@ -108,7 +110,7 @@ describe('Authentication Middleware', () => {
       // Private endpoint - has auth
       expect(calls[2][1]).toMatchObject({
         headers: expect.objectContaining({
-          Authorization: 'Bearer test-token',
+          authorization: 'Bearer test-token',
         }),
       });
     });
@@ -129,14 +131,14 @@ describe('Authentication Middleware', () => {
       // API endpoint - has auth
       expect(calls[0][1]).toMatchObject({
         headers: expect.objectContaining({
-          Authorization: 'Bearer test-token',
+          authorization: 'Bearer test-token',
         }),
       });
 
       // Secure endpoint - has auth
       expect(calls[1][1]).toMatchObject({
         headers: expect.objectContaining({
-          Authorization: 'Bearer test-token',
+          authorization: 'Bearer test-token',
         }),
       });
 
@@ -162,7 +164,7 @@ describe('Authentication Middleware', () => {
         'https://api.example.com/users',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-API-Key': 'ApiKey api-key-789',
+            'x-api-key': 'ApiKey api-key-789',
           }),
         }),
       );
@@ -208,7 +210,7 @@ describe('Authentication Middleware', () => {
         'https://api.example.com/test',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Custom direct-token',
+            authorization: 'Custom direct-token',
           }),
         }),
       );
@@ -236,8 +238,8 @@ describe('Authentication Middleware', () => {
         'https://api.example.com/test',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'X-Auth-1': 'Bearer token1',
-            'X-Auth-2': 'Bearer token2',
+            'x-auth-1': 'Bearer token1',
+            'x-auth-2': 'Bearer token2',
           }),
         }),
       );

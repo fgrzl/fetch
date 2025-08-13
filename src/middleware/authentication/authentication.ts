@@ -76,13 +76,15 @@ export function createAuthenticationMiddleware(
 
   return async (request, next) => {
     const url = request.url || '';
+    const parsedUrl = new URL(url);
+    const pathname = parsedUrl.pathname;
 
     // Skip authentication if:
     // 1. URL matches a skip pattern
     // 2. URL doesn't match include patterns (if specified)
     if (
-      shouldSkipAuth(url, skipPatterns) ||
-      !shouldIncludeAuth(url, includePatterns)
+      shouldSkipAuth(pathname, skipPatterns) ||
+      !shouldIncludeAuth(pathname, includePatterns)
     ) {
       return next(request);
     }

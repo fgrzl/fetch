@@ -108,6 +108,15 @@ export class FetchClient {
         ...request,
       };
 
+      // Convert Headers object to plain object for better compatibility
+      if (finalInit.headers instanceof Headers) {
+        const headersObj: Record<string, string> = {};
+        finalInit.headers.forEach((value, key) => {
+          headersObj[key] = value;
+        });
+        finalInit.headers = headersObj;
+      }
+
       const response = await fetch(url, finalInit);
       const data = await this.parseResponse(response);
 

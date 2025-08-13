@@ -3,9 +3,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { FetchClient } from '../../client/fetch-client';
-import { useLogging, createLoggingMiddleware } from './index';
-import type { Logger } from './types';
+import { FetchClient } from '../../../src/client/fetch-client';
+import { useLogging, createLoggingMiddleware } from '../../../src/middleware/logging/index';
+import type { Logger } from '../../../src/middleware/logging/types';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -455,7 +455,7 @@ describe('Logging Middleware', () => {
 
       const client = new FetchClient();
 
-      const { useAuthentication } = await import('../authentication');
+      const { useAuthentication } = await import('../../../src/middleware/authentication');
 
       const authLoggedClient = useAuthentication(client, {
         tokenProvider: () => 'test-token',
