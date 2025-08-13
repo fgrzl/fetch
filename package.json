@@ -23,6 +23,9 @@
   "files": [
     "dist"
   ],
+  "overrides": {
+    "@typescript-eslint/utils": "^8.39.1"
+  },
   "scripts": {
     "build": "tsc",
     "prepublishOnly": "npm run build",

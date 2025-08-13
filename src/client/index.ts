@@ -1,5 +1,3 @@
-import { HttpError, NetworkError } from '../errors';
-
 /**
  * Middleware function that processes requests before they are sent.
  * Can modify request options and URL.
@@ -40,7 +38,7 @@ export interface FetchResponse<T> {
   /** Error information if the request failed */
   error?: {
     message: string;
-    body?: any;
+    body?: unknown;
   };
 }
 
@@ -109,7 +107,7 @@ export class FetchClient {
    * @param init - Request configuration options
    * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
-  public async request<T = any>(
+  public async request<T = unknown>(
     url: string,
     init: RequestInit = {},
   ): Promise<FetchResponse<T>> {
@@ -195,7 +193,7 @@ export class FetchClient {
   private requestWithJsonBody<T>(
     url: string,
     method: 'POST' | 'PUT',
-    body: any,
+    body: unknown,
   ): Promise<FetchResponse<T>> {
     return this.request<T>(url, {
       method,
@@ -210,7 +208,7 @@ export class FetchClient {
    * @param body - The request body data (will be JSON stringified)
    * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
-  public post<T>(url: string, body?: any): Promise<FetchResponse<T>> {
+  public post<T>(url: string, body?: unknown): Promise<FetchResponse<T>> {
     return this.requestWithJsonBody<T>(url, 'POST', body ?? {});
   }
 
@@ -221,7 +219,7 @@ export class FetchClient {
    * @param body - The request body data (will be JSON stringified)
    * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
-  public put<T>(url: string, body?: any): Promise<FetchResponse<T>> {
+  public put<T>(url: string, body?: unknown): Promise<FetchResponse<T>> {
     return this.requestWithJsonBody<T>(url, 'PUT', body ?? {});
   }
 

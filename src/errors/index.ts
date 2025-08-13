@@ -30,7 +30,7 @@ export class HttpError extends FetchError {
   /** The HTTP status text */
   public readonly statusText: string;
   /** The response body (if available) */
-  public readonly body: any;
+  public readonly body: unknown;
 
   /**
    * Creates a new HttpError.
@@ -39,7 +39,7 @@ export class HttpError extends FetchError {
    * @param body - Response body
    * @param url - The request URL
    */
-  constructor(status: number, statusText: string, body: any, url: string) {
+  constructor(status: number, statusText: string, body: unknown, url: string) {
     super(`HTTP ${status} ${statusText} at ${url}`);
     this.name = 'HttpError';
     this.status = status;
