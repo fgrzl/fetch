@@ -12,11 +12,13 @@ global.fetch = mockFetch;
 beforeEach(() => {
   vi.useFakeTimers();
   mockFetch.mockClear();
-  mockFetch.mockResolvedValue(
-    new Response('{"success": true}', {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    }),
+  mockFetch.mockImplementation(() =>
+    Promise.resolve(
+      new Response('{"success": true}', {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    ),
   );
 });
 
@@ -249,6 +251,7 @@ describe('Rate Limit Middleware', () => {
       );
 
       expect(customHandler).toHaveBeenCalledWith(
+        expect.any(Number), // retryAfter
         expect.objectContaining({
           url: 'https://api.example.com/test',
         }),

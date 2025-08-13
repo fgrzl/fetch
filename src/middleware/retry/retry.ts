@@ -110,7 +110,7 @@ export function createRetryMiddleware(
         // If successful or shouldn't retry, return the response
         if (
           response.ok ||
-          !shouldRetry(response, attempt) ||
+          !shouldRetry({ status: response.status, ok: response.ok }, attempt) ||
           attempt > maxRetries
         ) {
           return response;

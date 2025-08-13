@@ -12,11 +12,19 @@ function shouldSkipAuth(
   url: string,
   skipPatterns: (RegExp | string)[] = [],
 ): boolean {
+  // Extract pathname from URL for pattern matching
+  let pathname: string;
+  try {
+    pathname = new URL(url).pathname;
+  } catch {
+    pathname = url; // fallback if not a valid URL
+  }
+
   return skipPatterns.some((pattern) => {
     if (typeof pattern === 'string') {
-      return url.includes(pattern);
+      return pathname.includes(pattern);
     }
-    return pattern.test(url);
+    return pattern.test(pathname);
   });
 }
 
@@ -71,6 +79,9 @@ export function createAuthorizationMiddleware(
           await onUnauthorized(response, request);
         } else if (response.status === 403 && onForbidden) {
           await onForbidden(response, request);
+        } else if (onUnauthorized) {
+          // For any other configured status codes, use the first available handler
+          await onUnauthorized(response, request);
         }
       } catch (error) {
         // If handler fails, log but don't break the response chain

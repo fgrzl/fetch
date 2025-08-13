@@ -17,11 +17,13 @@ describe('Authorization Middleware', () => {
   describe('useAuthorization (Pit of Success API)', () => {
     it('should call onUnauthorized for 401 responses', async () => {
       const onUnauthorized = vi.fn();
-      mockFetch.mockResolvedValue(
-        new Response('Unauthorized', {
-          status: 401,
-          statusText: 'Unauthorized',
-        }),
+      mockFetch.mockImplementation(() =>
+        Promise.resolve(
+          new Response('Unauthorized', {
+            status: 401,
+            statusText: 'Unauthorized',
+          }),
+        ),
       );
 
       const client = new FetchClient();
@@ -87,11 +89,11 @@ describe('Authorization Middleware', () => {
 
     it('should skip handler for URLs matching skip patterns', async () => {
       const onUnauthorized = vi.fn();
-      mockFetch.mockResolvedValue(
-        new Response('Unauthorized', {
+      mockFetch.mockImplementation(() =>
+        Promise.resolve(new Response('Unauthorized', {
           status: 401,
           statusText: 'Unauthorized',
-        }),
+        }))
       );
 
       const client = new FetchClient();
@@ -178,8 +180,8 @@ describe('Authorization Middleware', () => {
       const onUnauthorized = vi.fn();
       const onForbidden = vi.fn();
 
-      mockFetch.mockResolvedValue(
-        new Response('Payment Required', { status: 402 }),
+      mockFetch.mockImplementation(() =>
+        Promise.resolve(new Response('Payment Required', { status: 402 }))
       );
 
       const middleware = createAuthorizationMiddleware({

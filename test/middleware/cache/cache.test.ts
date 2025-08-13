@@ -301,7 +301,9 @@ describe('Cache Middleware', () => {
 
   describe('Error handling', () => {
     it('should not cache error responses', async () => {
-      mockFetch.mockResolvedValue(new Response('Not Found', { status: 404 }));
+      mockFetch.mockImplementation(() =>
+        Promise.resolve(new Response('Not Found', { status: 404 })),
+      );
 
       const client = new FetchClient();
       const cachedClient = useCache(client);
@@ -357,7 +359,7 @@ describe('Cache Middleware', () => {
         'https://api.example.com/secure',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer test-token',
+            authorization: 'Bearer test-token',
           }),
         }),
       );
