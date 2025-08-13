@@ -1,7 +1,7 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FetchClient } from './client';
-import { useUnauthorized } from './unauthorized';
-import { setupMockFetch, createMockResponse } from './test-utils';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FetchClient } from '../../client';
+import { setupMockFetch } from '../../utils/test';
+import { useUnauthorized } from './index';
 
 // Mock window.location
 const mockLocation = {
@@ -34,17 +34,18 @@ describe('Unauthorized Middleware', () => {
 
     const client = new FetchClient();
     useUnauthorized(client, {
-      loginPath: '/login',
+      url: '/login',
     });
 
     try {
       await client.get('/api/protected');
     } catch (error) {
+      console.log(error);
       // The error should still be thrown after redirect
     }
 
     expect(mockLocation.href).toBe(
-      '/login?returnTo=%2Fcurrent-page%3Fparam%3Dvalue',
+      '/login?redirect_uri=%2Fcurrent-page%3Fparam%3Dvalue',
     );
   });
 
@@ -55,12 +56,13 @@ describe('Unauthorized Middleware', () => {
 
     const client = new FetchClient();
     useUnauthorized(client, {
-      loginPath: '/login',
+      url: '/login',
     });
 
     try {
       await client.get('/api/data');
     } catch (error) {
+      console.log(error);
       // Expected to throw
     }
 
@@ -74,7 +76,7 @@ describe('Unauthorized Middleware', () => {
 
     const client = new FetchClient();
     useUnauthorized(client, {
-      loginPath: '/login',
+      url: '/login',
     });
 
     const result = await client.get('/api/data');
@@ -91,17 +93,18 @@ describe('Unauthorized Middleware', () => {
 
     const client = new FetchClient();
     useUnauthorized(client, {
-      loginPath: '/auth/signin',
+      url: '/auth/signin',
     });
 
     try {
       await client.get('/api/protected');
     } catch (error) {
+      console.log(error);
       // Expected to throw
     }
 
     expect(mockLocation.href).toBe(
-      '/auth/signin?returnTo=%2Fcurrent-page%3Fparam%3Dvalue',
+      '/auth/signin?redirect_uri=%2Fcurrent-page%3Fparam%3Dvalue',
     );
   });
 
@@ -115,16 +118,17 @@ describe('Unauthorized Middleware', () => {
 
     const client = new FetchClient();
     useUnauthorized(client, {
-      loginPath: '/login',
+      url: '/login',
     });
 
     try {
       await client.get('/api/protected');
     } catch (error) {
+      console.log(error);
       // Expected to throw
     }
 
-    expect(mockLocation.href).toBe('/login?returnTo=%2Fdashboard');
+    expect(mockLocation.href).toBe('/login?redirect_uri=%2Fdashboard');
   });
 
   it('works with other response middleware', async () => {
@@ -137,18 +141,104 @@ describe('Unauthorized Middleware', () => {
     const client = new FetchClient();
     client.useResponseMiddleware(responseMiddleware);
     useUnauthorized(client, {
-      loginPath: '/login',
+      url: '/login',
     });
 
     try {
       await client.get('/api/protected');
     } catch (error) {
+      console.log(error);
       // Expected to throw
     }
 
     expect(responseMiddleware).toHaveBeenCalledTimes(1);
     expect(mockLocation.href).toBe(
-      '/login?returnTo=%2Fcurrent-page%3Fparam%3Dvalue',
+      '/login?redirect_uri=%2Fcurrent-page%3Fparam%3Dvalue',
+    );
+  });
+
+  it('uses custom return parameter name when specified', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+    );
+
+    const client = new FetchClient();
+    useUnauthorized(client, {
+      url: '/login',
+      param: 'redirect_uri',
+    });
+
+    try {
+      await client.get('/api/protected');
+    } catch (error) {
+      console.log(error);
+      // Expected to throw
+    }
+
+    expect(mockLocation.href).toBe(
+      '/login?redirect_uri=%2Fcurrent-page%3Fparam%3Dvalue',
+    );
+  });
+
+  it('uses default redirect_uri parameter when param is not specified', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+    );
+
+    const client = new FetchClient();
+    useUnauthorized(client, {
+      url: '/login',
+    });
+
+    try {
+      await client.get('/api/protected');
+    } catch (error) {
+      console.log(error);
+      // Expected to throw
+    }
+
+    expect(mockLocation.href).toBe(
+      '/login?redirect_uri=%2Fcurrent-page%3Fparam%3Dvalue',
+    );
+  });
+
+  it('uses all defaults when no config is provided', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+    );
+
+    const client = new FetchClient();
+    useUnauthorized(client, {});
+
+    try {
+      await client.get('/api/protected');
+    } catch (error) {
+      console.log(error);
+      // Expected to throw
+    }
+
+    expect(mockLocation.href).toBe(
+      '/login?redirect_uri=%2Fcurrent-page%3Fparam%3Dvalue',
+    );
+  });
+
+  it('can be called without any config parameter', async () => {
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 }),
+    );
+
+    const client = new FetchClient();
+    useUnauthorized(client);
+
+    try {
+      await client.get('/api/protected');
+    } catch (error) {
+      console.log(error);
+      // Expected to throw
+    }
+
+    expect(mockLocation.href).toBe(
+      '/login?redirect_uri=%2Fcurrent-page%3Fparam%3Dvalue',
     );
   });
 });

@@ -8,8 +8,7 @@
  */
 
 import { FetchClient } from './client';
-import { useCSRF } from './csrf';
-import { useUnauthorized } from './unauthorized';
+import { useCSRF, useUnauthorized } from './middleware';
 
 /**
  * Pre-configured fetch client with CSRF protection and unauthorized handling.
@@ -35,14 +34,11 @@ const api = new FetchClient({
 });
 
 // Configure CSRF protection
-useCSRF(api, {
-  cookieName: 'csrf_token',
-  headerName: 'X-CSRF-Token',
-});
+useCSRF(api, {});
 
 // Configure unauthorized redirect
 useUnauthorized(api, {
-  loginPath: '/login',
+  url: '/login',
 });
 
 export default api;
@@ -56,6 +52,5 @@ export type {
   FetchClientConfig,
   FetchResponse,
 } from './client';
-export { useCSRF } from './csrf';
-export { useUnauthorized } from './unauthorized';
-export type { UnauthorizedConfig } from './unauthorized';
+export { useCSRF, useUnauthorized } from './middleware';
+export type { UnauthorizedOptions } from './middleware';

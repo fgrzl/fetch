@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { FetchClient } from './client';
-import { useCSRF } from './csrf';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { FetchClient } from '../../client';
 import {
-  setupMockFetch,
-  createMockResponse,
   clearAllCookies,
-} from './test-utils';
+  createMockResponse,
+  setupMockFetch,
+} from '../../utils/test';
+import { useCSRF } from './index';
 
 describe('CSRF Middleware', () => {
   const { mockFetch, setup, cleanup } = setupMockFetch();
@@ -147,5 +147,68 @@ describe('CSRF Middleware', () => {
         }),
       }),
     );
+  });
+
+  it('uses default XSRF-TOKEN cookie and X-XSRF-TOKEN header when no config provided', async () => {
+    // Set up a CSRF token in default cookie
+    document.cookie = 'XSRF-TOKEN=default-token-789; path=/';
+
+    mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
+
+    const client = new FetchClient();
+    useCSRF(client, {});
+
+    await client.post('/api/data', { test: 'data' });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/data',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'X-XSRF-TOKEN': 'default-token-789',
+        }),
+      }),
+    );
+  });
+
+  it('can be called without any config parameter', async () => {
+    document.cookie = 'XSRF-TOKEN=no-config-token; path=/';
+
+    mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
+
+    const client = new FetchClient();
+    useCSRF(client);
+
+    await client.post('/api/data', { test: 'data' });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/data',
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          'Content-Type': 'application/json',
+          'X-XSRF-TOKEN': 'no-config-token',
+        }),
+      }),
+    );
+  });
+
+  it('updates default XSRF-TOKEN cookie from response headers', async () => {
+    const responseHeaders = new Headers();
+    responseHeaders.set('X-XSRF-TOKEN', 'new-default-token');
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: responseHeaders,
+      }),
+    );
+
+    const client = new FetchClient();
+    useCSRF(client, {});
+
+    await client.get('/api/data');
+
+    // Check that the default cookie was updated
+    expect(document.cookie).toContain('XSRF-TOKEN=new-default-token');
   });
 });

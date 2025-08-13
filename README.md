@@ -51,7 +51,10 @@ useUnauthorized(client, {
 });
 
 // All requests now return FetchResponse<T>
-interface User { id: number; name: string; }
+interface User {
+  id: number;
+  name: string;
+}
 const userResponse = await client.get<User>("/api/user");
 if (userResponse.ok) {
   console.log(userResponse.data.name); // Typed access to data

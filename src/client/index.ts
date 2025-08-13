@@ -1,4 +1,4 @@
-import { HttpError, NetworkError } from './errors';
+import { HttpError, NetworkError } from '../errors';
 
 /**
  * Middleware function that processes requests before they are sent.
@@ -168,7 +168,7 @@ export class FetchClient {
           },
         };
       }
-      
+
       // Re-throw unexpected errors
       throw error;
     }

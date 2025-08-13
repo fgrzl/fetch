@@ -1,14 +1,5 @@
-import { FetchClient, RequestMiddleware } from './client';
-
-/**
- * Configuration options for CSRF protection middleware.
- */
-interface CsrfConfig {
-  /** Name of the cookie that contains the CSRF token */
-  cookieName: string;
-  /** Name of the HTTP header to send the CSRF token in */
-  headerName: string;
-}
+import { FetchClient, RequestMiddleware } from '../../client';
+import type { CsrfOptions } from './types';
 
 /**
  * Creates a request middleware that adds CSRF token to requests.
@@ -17,16 +8,17 @@ interface CsrfConfig {
  * @param config - CSRF configuration options
  * @returns Request middleware function
  */
-function csrfMiddleware(config: CsrfConfig): RequestMiddleware {
+function csrfMiddleware(config: CsrfOptions): RequestMiddleware {
   return async (req, url) => {
-    const cookie = document.cookie.match(
-      new RegExp(`${config.cookieName}=([^;]+)`),
-    );
+    const cookieName = config.cookieName || 'XSRF-TOKEN';
+    const headerName = config.headerName || 'X-XSRF-TOKEN';
+
+    const cookie = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`));
     const token = cookie?.[1];
     const headers = {
       ...req.headers,
       'Content-Type': 'application/json',
-      ...(token && { [config.headerName]: token }),
+      ...(token && { [headerName]: token }),
     };
     return [{ ...req, headers }, url];
   };
@@ -45,19 +37,29 @@ function csrfMiddleware(config: CsrfConfig): RequestMiddleware {
  *
  * @example
  * ```typescript
+ * // Use defaults (XSRF-TOKEN cookie, X-XSRF-TOKEN header)
  * const client = new FetchClient();
+ * useCSRF(client, {});
+ *
+ * // Or with no config at all
+ * useCSRF(client);
+ *
+ * // Custom cookie and header names
  * useCSRF(client, {
  *   cookieName: 'csrf_token',
  *   headerName: 'X-CSRF-Token'
  * });
  * ```
  */
-export function useCSRF(client: FetchClient, config: CsrfConfig) {
+export function useCSRF(client: FetchClient, config: CsrfOptions = {}) {
   client.useRequestMiddleware(csrfMiddleware(config));
   client.useResponseMiddleware(async (res) => {
-    const csrfToken = res.headers.get(config.headerName);
+    const cookieName = config.cookieName || 'XSRF-TOKEN';
+    const headerName = config.headerName || 'X-XSRF-TOKEN';
+
+    const csrfToken = res.headers.get(headerName);
     if (csrfToken) {
-      document.cookie = `${config.cookieName}=${csrfToken}; path=/;`;
+      document.cookie = `${cookieName}=${csrfToken}; path=/;`;
     }
     return res;
   });
