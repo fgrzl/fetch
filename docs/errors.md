@@ -10,10 +10,10 @@ This document covers error handling strategies for the fetch client, including c
 ## Usage Example
 
 ```ts
-import { HttpError, NetworkError } from '@fgrzl/fetch';
+import { HttpError, NetworkError } from "@fgrzl/fetch";
 
 try {
-  const data = await client.get('/api/resource');
+  const data = await client.get("/api/resource");
 } catch (error) {
   if (error instanceof HttpError) {
     // Handle HTTP error

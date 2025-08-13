@@ -21,6 +21,30 @@ export type RequestMiddleware = (
 export type ResponseMiddleware = (res: Response) => Promise<Response>;
 
 /**
+ * Typed response wrapper that includes response metadata.
+ * @template T - The type of the response data
+ */
+export interface FetchResponse<T> {
+  /** The parsed response data */
+  data: T;
+  /** HTTP status code */
+  status: number;
+  /** HTTP status text */
+  statusText: string;
+  /** Response headers */
+  headers: Headers;
+  /** The original URL */
+  url: string;
+  /** Whether the response was successful (status 200-299) */
+  ok: boolean;
+  /** Error information if the request failed */
+  error?: {
+    message: string;
+    body?: any;
+  };
+}
+
+/**
  * Configuration options for FetchClient.
  */
 export interface FetchClientConfig {
@@ -83,13 +107,12 @@ export class FetchClient {
    * @template T - The expected response type
    * @param url - The URL to request
    * @param init - Request configuration options
-   * @returns Promise that resolves to the parsed JSON response
-   * @throws The error object from the response if the request fails
+   * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
   public async request<T = any>(
     url: string,
     init: RequestInit = {},
-  ): Promise<T> {
+  ): Promise<FetchResponse<T>> {
     try {
       for (const mw of this.requestMiddlewares) {
         [init, url] = await mw(init, url);
@@ -104,19 +127,49 @@ export class FetchClient {
         res = await mw(res);
       }
 
+      const responseMetadata = {
+        status: res.status,
+        statusText: res.statusText,
+        headers: res.headers,
+        url: res.url,
+        ok: res.ok,
+      };
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new HttpError(res.status, res.statusText, body, url);
+        return {
+          ...responseMetadata,
+          data: null as T,
+          error: {
+            message: res.statusText,
+            body,
+          },
+        };
       }
 
-      return res.json();
+      const data = await res.json();
+      return {
+        ...responseMetadata,
+        data,
+      };
     } catch (error) {
-      if (error instanceof HttpError) {
-        throw error;
-      }
+      // Handle network errors and other exceptions
       if (error instanceof TypeError && error.message.includes('fetch')) {
-        throw new NetworkError('Failed to fetch', url, error);
+        return {
+          status: 0,
+          statusText: 'Network Error',
+          headers: new Headers(),
+          url,
+          ok: false,
+          data: null as T,
+          error: {
+            message: 'Failed to fetch',
+            body: error,
+          },
+        };
       }
+      
+      // Re-throw unexpected errors
       throw error;
     }
   }
@@ -125,9 +178,9 @@ export class FetchClient {
    * Makes a GET request.
    * @template T - The expected response type
    * @param url - The URL to request
-   * @returns Promise that resolves to the parsed JSON response
+   * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
-  public get<T>(url: string) {
+  public get<T>(url: string): Promise<FetchResponse<T>> {
     return this.request<T>(url, { method: 'GET' });
   }
 
@@ -137,13 +190,13 @@ export class FetchClient {
    * @param url - The URL to request
    * @param method - The HTTP method
    * @param body - The request body data (will be JSON stringified)
-   * @returns Promise that resolves to the parsed JSON response
+   * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
   private requestWithJsonBody<T>(
     url: string,
     method: 'POST' | 'PUT',
     body: any,
-  ): Promise<T> {
+  ): Promise<FetchResponse<T>> {
     return this.request<T>(url, {
       method,
       body: JSON.stringify(body),
@@ -155,9 +208,9 @@ export class FetchClient {
    * @template T - The expected response type
    * @param url - The URL to request
    * @param body - The request body data (will be JSON stringified)
-   * @returns Promise that resolves to the parsed JSON response
+   * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
-  public post<T>(url: string, body?: any) {
+  public post<T>(url: string, body?: any): Promise<FetchResponse<T>> {
     return this.requestWithJsonBody<T>(url, 'POST', body ?? {});
   }
 
@@ -166,9 +219,9 @@ export class FetchClient {
    * @template T - The expected response type
    * @param url - The URL to request
    * @param body - The request body data (will be JSON stringified)
-   * @returns Promise that resolves to the parsed JSON response
+   * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
-  public put<T>(url: string, body?: any) {
+  public put<T>(url: string, body?: any): Promise<FetchResponse<T>> {
     return this.requestWithJsonBody<T>(url, 'PUT', body ?? {});
   }
 
@@ -176,9 +229,9 @@ export class FetchClient {
    * Makes a DELETE request.
    * @template T - The expected response type
    * @param url - The URL to request
-   * @returns Promise that resolves to the parsed JSON response
+   * @returns Promise that resolves to a FetchResponse containing the data and metadata
    */
-  public del<T>(url: string) {
+  public del<T>(url: string): Promise<FetchResponse<T>> {
     return this.request<T>(url, { method: 'DELETE' });
   }
 }

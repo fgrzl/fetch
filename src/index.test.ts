@@ -19,7 +19,9 @@ describe('FetchClient', () => {
       '/test',
       expect.objectContaining({ method: 'GET' }),
     );
-    expect(result.message).toBe('ok');
+    expect(result.data.message).toBe('ok');
+    expect(result.ok).toBe(true);
+    expect(result.status).toBe(200);
   });
 
   it('makes POST requests correctly', async () => {
@@ -36,7 +38,7 @@ describe('FetchClient', () => {
         body: JSON.stringify(body),
       }),
     );
-    expect(result.id).toBe(1);
+    expect(result.data.id).toBe(1);
   });
 
   it('makes PUT requests correctly', async () => {
@@ -55,7 +57,7 @@ describe('FetchClient', () => {
         body: JSON.stringify(body),
       }),
     );
-    expect(result.updated).toBe(true);
+    expect(result.data.updated).toBe(true);
   });
 
   it('makes DELETE requests correctly', async () => {
@@ -70,7 +72,7 @@ describe('FetchClient', () => {
       '/users/1',
       expect.objectContaining({ method: 'DELETE' }),
     );
-    expect(result.deleted).toBe(true);
+    expect(result.data.deleted).toBe(true);
   });
 
   it('applies request middleware', async () => {
@@ -138,7 +140,7 @@ describe('FetchClient', () => {
     const client = new FetchClient();
     client.useResponseMiddleware(mw);
     const res = await client.get<{ done: boolean }>('/ok');
-    expect(res.done).toBe(true);
+    expect(res.data.done).toBe(true);
   });
 
   it('applies multiple response middlewares in order', async () => {
@@ -159,37 +161,29 @@ describe('FetchClient', () => {
     expect(mw2).toHaveBeenCalledTimes(1);
   });
 
-  it('throws when response is not ok', async () => {
+  it('returns error information when response is not ok', async () => {
     mockFetch.mockResolvedValueOnce(
       new Response(JSON.stringify({ error: 'fail' }), { status: 400 }),
     );
 
     const client = new FetchClient();
+    const response = await client.get('/bad');
 
-    try {
-      await client.get('/bad');
-      expect.fail('Should have thrown an error');
-    } catch (error) {
-      expect(error).toBeInstanceOf(HttpError);
-      expect((error as HttpError).status).toBe(400);
-      expect((error as HttpError).body).toEqual({ error: 'fail' });
-    }
+    expect(response.ok).toBe(false);
+    expect(response.status).toBe(400);
+    expect(response.error?.body).toEqual({ error: 'fail' });
   });
 
-  it('throws NetworkError on fetch failure', async () => {
+  it('returns error information on fetch failure', async () => {
     mockFetch.mockRejectedValueOnce(new TypeError('fetch failed'));
 
     const client = new FetchClient();
+    const response = await client.get('/network-fail');
 
-    try {
-      await client.get('/network-fail');
-      expect.fail('Should have thrown an error');
-    } catch (error) {
-      expect(error).toBeInstanceOf(NetworkError);
-      expect((error as NetworkError).message).toContain(
-        'Network error for /network-fail',
-      );
-    }
+    expect(response.ok).toBe(false);
+    expect(response.status).toBe(0);
+    expect(response.statusText).toBe('Network Error');
+    expect(response.error?.message).toBe('Failed to fetch');
   });
 
   it('handles non-JSON error responses', async () => {
@@ -198,15 +192,11 @@ describe('FetchClient', () => {
     );
 
     const client = new FetchClient();
+    const response = await client.get('/server-error');
 
-    try {
-      await client.get('/server-error');
-      expect.fail('Should have thrown an error');
-    } catch (error) {
-      expect(error).toBeInstanceOf(HttpError);
-      expect((error as HttpError).status).toBe(500);
-      expect((error as HttpError).body).toEqual({});
-    }
+    expect(response.ok).toBe(false);
+    expect(response.status).toBe(500);
+    expect(response.error?.body).toEqual({});
   });
 
   it('uses custom credentials setting', async () => {

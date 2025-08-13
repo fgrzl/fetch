@@ -16,12 +16,12 @@ npm run test
 ## Example Test
 
 ```ts
-import { describe, it, expect } from 'vitest';
-import { fetch } from '../src/client';
+import { describe, it, expect } from "vitest";
+import { fetch } from "../src/client";
 
-describe('fetch client', () => {
-  it('should return data for a valid request', async () => {
-    const response = await fetch('https://api.example.com/data');
+describe("fetch client", () => {
+  it("should return data for a valid request", async () => {
+    const response = await fetch("https://api.example.com/data");
     expect(response.data).toBeDefined();
   });
 });

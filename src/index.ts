@@ -54,6 +54,7 @@ export type {
   RequestMiddleware,
   ResponseMiddleware,
   FetchClientConfig,
+  FetchResponse,
 } from './client';
 export { useCSRF } from './csrf';
 export { useUnauthorized } from './unauthorized';

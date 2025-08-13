@@ -79,7 +79,8 @@ describe('Unauthorized Middleware', () => {
 
     const result = await client.get('/api/data');
 
-    expect(result).toEqual({ success: true });
+    expect(result.data).toEqual({ success: true });
+    expect(result.ok).toBe(true);
     expect(mockLocation.href).toBe('');
   });
 

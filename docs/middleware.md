@@ -29,6 +29,7 @@ client.useResponseMiddleware(async (response) => {
 Middlewares execute in the order they are registered.
 
 ## Advanced Patterns
+
 - Conditional middleware
 - Middleware composition
 - Performance optimizations
