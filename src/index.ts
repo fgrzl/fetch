@@ -61,6 +61,16 @@ export { useRetry, createRetryMiddleware } from './middleware/retry';
 export type { RetryOptions } from './middleware/retry';
 export { useCSRF, createCSRFMiddleware } from './middleware/csrf';
 export type { CSRFOptions, CSRFTokenProvider } from './middleware/csrf';
+export { useAuthentication, createAuthenticationMiddleware } from './middleware/authentication';
+export type { AuthenticationOptions, AuthTokenProvider } from './middleware/authentication';
+export { useAuthorization, createAuthorizationMiddleware } from './middleware/authorization';
+export type { AuthorizationOptions, UnauthorizedHandler } from './middleware/authorization';
+export { useCache, createCacheMiddleware } from './middleware/cache';
+export type { CacheOptions, CacheStorage, CacheEntry } from './middleware/cache';
+export { useLogging, createLoggingMiddleware } from './middleware/logging';
+export type { LoggingOptions, Logger, LogEntry, LogLevel } from './middleware/logging';
+export { useRateLimit, createRateLimitMiddleware } from './middleware/rate-limit';
+export type { RateLimitOptions } from './middleware/rate-limit';
 
 // 🎯 LEVEL 4: Types for TypeScript users
 export type { FetchMiddleware as InterceptMiddleware } from './client/fetch-client';
