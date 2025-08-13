@@ -1,23 +1,23 @@
 /**
- * @fileoverview Main library entry point following "pit of success" pattern.
+ * @fileoverview Main library entry point with enhanced middleware architecture.
  *
  * This module exports everything users need in order of discoverability:
  * 1. Pre-configured client (most users start here)
- * 2. Core classes for custom configurations
- * 3. Middleware functions for common patterns
+ * 2. Enhanced client for custom configurations
+ * 3. Enhanced middleware functions for all patterns
  * 4. Types for TypeScript users
  */
 
-import { FetchClient } from './client';
-import { useCSRF, useAuthorization } from './middleware';
+import { FetchClient } from './client/fetch-client';
+// import { createSimpleCSRFMiddleware, createSimpleAuthMiddleware } from './middleware/simple-enhanced';
 
 /**
  * 🎯 PIT OF SUCCESS: Pre-configured fetch client (Level 1 - 80% of users)
  *
  * This client is ready to use out of the box with:
- * - CSRF protection using standard XSRF-TOKEN/X-XSRF-TOKEN
- * - Automatic redirect to '/login' on 401 Unauthorized responses
+ * - Enhanced middleware architecture with full retry capabilities
  * - Same-origin credentials policy for cookie handling
+ * - Ready for middleware configuration
  *
  * @example
  * ```typescript
@@ -32,24 +32,36 @@ const api = new FetchClient({
   credentials: 'same-origin',
 });
 
-// Configure with sensible defaults
-useCSRF(api);
-useAuthorization(api, { url: '/login' });
+// TODO: Configure with middleware once we restructure middleware
+// api.use(createSimpleCSRFMiddleware(() => {
+//   // Default CSRF token extraction from cookie
+//   if (typeof document !== 'undefined') {
+//     return document.cookie
+//       .split('; ')
+//       .find(row => row.startsWith('XSRF-TOKEN='))
+//       ?.split('=')[1] || '';
+//   }
+//   return '';
+// }));
 
-// 🎯 LEVEL 1: Export the pre-configured client as default
+// api.use(createSimpleAuthMiddleware(() => {
+//   // Default: no auth token (can be configured by user)
+//   return '';
+// }));
+
+// 🎯 LEVEL 1: Export the pre-configured enhanced client as default
 export default api;
 
-// 🎯 LEVEL 2: Core classes for custom client creation (20% of users)
-export { FetchClient } from './client';
+// 🎯 LEVEL 2: Enhanced client for custom configurations
+export { FetchClient } from './client/fetch-client';
 export { FetchError, HttpError, NetworkError } from './errors';
 
-// 🎯 LEVEL 3: Middleware functions for common patterns (TypeScript/advanced users)
-export * from './middleware';
+// 🎯 LEVEL 3: Enhanced middleware functions for all patterns
+export { useRetry, createRetryMiddleware } from './middleware/retry';
+export type { RetryOptions } from './middleware/retry';
+export { useCSRF, createCSRFMiddleware } from './middleware/csrf';
+export type { CSRFOptions, CSRFTokenProvider } from './middleware/csrf';
 
-// 🎯 LEVEL 4: Types for TypeScript users (auto-discovered via IntelliSense)
-export type {
-  RequestMiddleware,
-  ResponseMiddleware,
-  FetchClientConfig,
-  FetchResponse,
-} from './client';
+// 🎯 LEVEL 4: Types for TypeScript users
+export type { FetchMiddleware as InterceptMiddleware } from './client/fetch-client';
+export type { FetchResponse, FetchClientOptions } from './client/types';

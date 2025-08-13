@@ -1,62 +1,64 @@
 /**
- * @fileoverview Type definitions for the HTTP client module.
+ * @fileoverview Type definitions for the HTTP client.
  *
- * This file contains all TypeScript interfaces and types used by the FetchClient,
- * including middleware function types, response interfaces, and configuration options.
+ * This file contains core TypeScript interfaces and types for FetchClient.
+ * Designed for discoverability and type safety.
  */
 
 /**
- * Middleware function that processes requests before they are sent.
- * Can modify request options and URL.
- * @param req - The request configuration object
- * @param url - The request URL
- * @returns A promise that resolves to a tuple of [modified request, modified URL]
- */
-export type RequestMiddleware = (
-  req: RequestInit,
-  url: string,
-) => Promise<[RequestInit, string]>;
-
-/**
- * Middleware function that processes responses after they are received.
- * Can modify or replace the response, with access to the original request.
- * @param req - The original request object
- * @param res - The response object
- * @returns A promise that resolves to the modified response
- */
-export type ResponseMiddleware = (
-  req: Request,
-  res: Response,
-) => Promise<Response>;
-
-/**
- * Typed response wrapper that includes response metadata.
- * @template T - The type of the response data
+ * Typed response wrapper with consistent shape.
+ *
+ * ✅ Always returns this shape (never throws)
+ * ✅ Use `.ok` to check success
+ * ✅ Use `.data` for parsed response
+ * ✅ Use `.error` for failure details
+ *
+ * @template T - The expected type of the response data
+ *
+ * @example
+ * ```typescript
+ * const result = await client.get<User[]>('/api/users');
+ * if (result.ok) {
+ *   console.log(result.data); // Type is User[]
+ * } else {
+ *   console.error(result.error?.message); // Handle error
+ * }
+ * ```
  */
 export interface FetchResponse<T> {
-  /** The parsed response data */
-  data: T;
-  /** HTTP status code */
+  /** The parsed response data (null if request failed) */
+  data: T | null;
+  /** HTTP status code (0 for network errors) */
   status: number;
-  /** HTTP status text */
+  /** HTTP status text ('Network Error' for network failures) */
   statusText: string;
   /** Response headers */
   headers: Headers;
-  /** The original URL */
+  /** The request URL */
   url: string;
-  /** Whether the response was successful (status 200-299) */
+  /** True if status 200-299, false otherwise */
   ok: boolean;
-  /** Error information if the request failed */
+  /** Error details when ok is false */
   error?: {
+    /** Human-readable error message */
     message: string;
+    /** Raw error response body */
     body?: unknown;
   };
 }
 
 /**
  * Configuration options for FetchClient.
+ *
+ * Optimized for "pit of success" - good defaults, minimal required config.
  */
 export interface FetchClientOptions {
-  /** Controls whether credentials are sent with requests. Defaults to 'same-origin'. */
-  credentials?: RequestCredentials; // 'omit' | 'same-origin' | 'include'
+  /**
+   * Controls credential handling for requests.
+   *
+   * - 'same-origin' (default): Send cookies for same-origin requests
+   * - 'include': Always send cookies
+   * - 'omit': Never send cookies
+   */
+  credentials?: RequestCredentials;
 }

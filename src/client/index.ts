@@ -1,18 +1,14 @@
 /**
- * @fileoverview Client module exports - "Pit of Success" pattern.
+ * @fileoverview Client module exports - "Pit of Success" design.
  *
- * This module exports client functionality in order of discoverability:
- * 1. FetchClient class (main thing users need)
- * 2. Types for TypeScript users (auto-discovered via IntelliSense)
+ * This module provides a clean, discoverable API:
+ * 🎯 Level 1: FetchClient class (what 90% of users need)
+ * 🎯 Level 2: Types for TypeScript users (auto-discovered via IntelliSense)
  */
 
-// 🎯 LEVEL 1: Main client class (what users need most)
+// 🎯 LEVEL 1: Main client class - the "pit of success" entry point
 export { FetchClient } from './fetch-client';
 
 // 🎯 LEVEL 2: Types for TypeScript users (discovered when needed)
-export type {
-  RequestMiddleware,
-  ResponseMiddleware,
-  FetchResponse,
-  FetchClientOptions as FetchClientConfig,
-} from './types';
+export type { FetchMiddleware } from './fetch-client';
+export type { FetchResponse, FetchClientOptions } from './types';
