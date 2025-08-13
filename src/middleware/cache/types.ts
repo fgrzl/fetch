@@ -16,6 +16,7 @@ export type CacheKeyGenerator = (
  */
 export interface CacheStorage {
   get(key: string): Promise<CacheEntry | null>;
+  getWithExpiry?(key: string): Promise<{ entry: CacheEntry | null; isExpired: boolean }>;
   set(key: string, entry: CacheEntry): Promise<void>;
   delete(key: string): Promise<void>;
   clear(): Promise<void>;

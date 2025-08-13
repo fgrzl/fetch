@@ -10,7 +10,7 @@ const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
 beforeEach(() => {
-  vi.useFakeTimers();
+  vi.useFakeTimers({ toFake: ['Date'] });
   mockFetch.mockClear();
   mockFetch.mockImplementation(() =>
     Promise.resolve(

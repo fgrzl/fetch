@@ -15,9 +15,10 @@ class TokenBucket {
   constructor(
     private maxTokens: number,
     private refillRate: number, // tokens per millisecond
+    private timeProvider: () => number = () => Date.now(),
   ) {
     this.tokens = maxTokens;
-    this.lastRefill = Date.now();
+    this.lastRefill = this.timeProvider();
   }
 
   tryConsume(): { allowed: boolean; retryAfter?: number } {
@@ -34,7 +35,7 @@ class TokenBucket {
   }
 
   private refill() {
-    const now = Date.now();
+    const now = this.timeProvider();
     const timePassed = now - this.lastRefill;
     const tokensToAdd = timePassed * this.refillRate;
 
@@ -87,8 +88,11 @@ export function createRateLimitMiddleware(
 
     if (!result.allowed) {
       if (onRateLimitExceeded) {
-        await onRateLimitExceeded(result.retryAfter || 0, request);
-        return next(request); // Let handler decide what to do
+        const customResponse = await onRateLimitExceeded(result.retryAfter || 0, request);
+        // If the custom handler returns a response, use it
+        if (customResponse) {
+          return customResponse;
+        }
       }
 
       // Return a 429 Too Many Requests response instead of throwing

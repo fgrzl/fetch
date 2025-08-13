@@ -69,15 +69,32 @@ export interface RateLimitOptions {
 
   /**
    * Custom handler called when rate limit is exceeded
-   * If not provided, throws an error
+   * Can return a custom response or void to use default behavior
    *
    * @param retryAfter - Milliseconds until next request is allowed
    * @param request - The rate-limited request
+   * @returns Custom response or void for default behavior
    */
   onRateLimitExceeded?: (
     retryAfter: number,
     request: RequestInit & { url?: string },
-  ) => void | Promise<void>;
+  ) => void | Promise<void> | { 
+    data: unknown;
+    status: number;
+    statusText: string;
+    headers: Headers;
+    url: string;
+    ok: boolean;
+    error?: { message: string; body?: unknown };
+  } | Promise<{ 
+    data: unknown;
+    status: number;
+    statusText: string;
+    headers: Headers;
+    url: string;
+    ok: boolean;
+    error?: { message: string; body?: unknown };
+  }>;
 }
 
 // Ensure this file is treated as a module
