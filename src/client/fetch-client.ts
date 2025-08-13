@@ -205,6 +205,94 @@ export class FetchClient {
   // 🎯 PIT OF SUCCESS: Convenience methods with smart defaults
 
   /**
+   * HEAD request with query parameter support.
+   * 
+   * HEAD requests are used to retrieve metadata about a resource without downloading
+   * the response body. Useful for checking if a resource exists, getting content length,
+   * last modified date, etc.
+   *
+   * @template T - Expected response data type (will be null for HEAD requests)
+   * @param url - Request URL
+   * @param params - Query parameters to append to URL
+   * @returns Promise resolving to typed response (data will always be null)
+   *
+   * @example Check if resource exists:
+   * ```typescript
+   * const headResponse = await client.head('/api/large-file.zip');
+   * if (headResponse.ok) {
+   *   const contentLength = headResponse.headers.get('content-length');
+   *   const lastModified = headResponse.headers.get('last-modified');
+   *   console.log(`File size: ${contentLength} bytes`);
+   * }
+   * ```
+   * 
+   * @example Check with query parameters:
+   * ```typescript
+   * const exists = await client.head('/api/users', { id: 123 });
+   * if (exists.status === 404) {
+   *   console.log('User not found');
+   * }
+   * ```
+   */
+  head<T = null>(
+    url: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<FetchResponse<T>> {
+    const finalUrl = this.buildUrlWithParams(url, params);
+    return this.request<T>(finalUrl, { method: 'HEAD' });
+  }
+
+  /**
+   * HEAD request that returns useful metadata about a resource.
+   * 
+   * This is a convenience method that extracts common metadata from HEAD responses
+   * for easier consumption.
+   *
+   * @param url - Request URL
+   * @param params - Query parameters to append to URL
+   * @returns Promise resolving to response with extracted metadata
+   *
+   * @example Get resource metadata:
+   * ```typescript
+   * const metadata = await client.headMetadata('/api/large-file.zip');
+   * if (metadata.ok) {
+   *   console.log('File exists:', metadata.exists);
+   *   console.log('Content type:', metadata.contentType);
+   *   console.log('Size:', metadata.contentLength, 'bytes');
+   *   console.log('Last modified:', metadata.lastModified);
+   * }
+   * ```
+   */
+  async headMetadata(
+    url: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<
+    FetchResponse<null> & {
+      exists: boolean;
+      contentType: string | undefined;
+      contentLength: number | undefined;
+      lastModified: Date | undefined;
+      etag: string | undefined;
+      cacheControl: string | undefined;
+    }
+  > {
+    const response = await this.head(url, params);
+    
+    const contentLengthHeader = response.headers.get('content-length');
+    const lastModifiedHeader = response.headers.get('last-modified');
+    
+    return {
+      ...response,
+      exists: response.ok,
+      contentType: response.headers.get('content-type') || undefined,
+      contentLength: contentLengthHeader ? parseInt(contentLengthHeader, 10) : undefined,
+      lastModified: lastModifiedHeader ? new Date(lastModifiedHeader) : undefined,
+      etag: response.headers.get('etag') || undefined,
+      cacheControl: response.headers.get('cache-control') || undefined,
+    };
+  }
+
+  /**
    * GET request with query parameter support.
    *
    * @template T - Expected response data type

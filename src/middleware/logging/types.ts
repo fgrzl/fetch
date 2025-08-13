@@ -20,18 +20,18 @@ export interface LogEntry {
   error?: Error;
   requestHeaders?: Record<string, string>;
   responseHeaders?: Record<string, string>;
-  requestBody?: any;
-  responseBody?: any;
+  requestBody?: unknown;
+  responseBody?: unknown;
 }
 
 /**
  * Custom logger interface.
  */
 export interface Logger {
-  debug(message: string, data?: any): void;
-  info(message: string, data?: any): void;
-  warn(message: string, data?: any): void;
-  error(message: string, data?: any): void;
+  debug(message: string, data?: unknown): void;
+  info(message: string, data?: unknown): void;
+  warn(message: string, data?: unknown): void;
+  error(message: string, data?: unknown): void;
 }
 
 /**

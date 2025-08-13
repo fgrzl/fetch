@@ -3,6 +3,7 @@
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
+import type { FetchResponse } from '../../client/types';
 import type {
   CacheOptions,
   CacheStorage,
@@ -124,7 +125,7 @@ export function createCacheMiddleware(
           ...cached.response,
           headers: new Headers(cached.response.headers),
           data: cached.response.data,
-        } as any;
+        } as FetchResponse<unknown>;
       }
 
       // If stale-while-revalidate and we have cached data, return it immediately
@@ -135,7 +136,7 @@ export function createCacheMiddleware(
           ...cached.response,
           headers: new Headers(cached.response.headers),
           data: cached.response.data,
-        } as any;
+        } as FetchResponse<unknown>;
 
         // Update cache in background
         next(request)

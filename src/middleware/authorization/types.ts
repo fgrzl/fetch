@@ -2,11 +2,13 @@
  * @fileoverview Authorization middleware types and configuration.
  */
 
+import type { FetchResponse } from '../../client/types';
+
 /**
- * Handler function called when unauthorized (401) response is received.
+ * Handler function for unauthorized/forbidden responses.
  */
 export type UnauthorizedHandler = (
-  response: Response,
+  response: FetchResponse<unknown>,
   request: RequestInit & { url?: string },
 ) => void | Promise<void>;
 

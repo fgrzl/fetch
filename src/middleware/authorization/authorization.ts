@@ -68,12 +68,13 @@ export function createAuthorizationMiddleware(
     if (statusCodes.includes(response.status)) {
       try {
         if (response.status === 401 && onUnauthorized) {
-          await onUnauthorized(response as any, request);
+          await onUnauthorized(response, request);
         } else if (response.status === 403 && onForbidden) {
-          await onForbidden(response as any, request);
+          await onForbidden(response, request);
         }
       } catch (error) {
         // If handler fails, log but don't break the response chain
+        // eslint-disable-next-line no-console
         console.warn('Authorization handler failed:', error);
       }
     }

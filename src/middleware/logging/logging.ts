@@ -9,10 +9,14 @@ import type { LoggingOptions, Logger, LogEntry, LogLevel } from './types';
  * Default console logger implementation.
  */
 const defaultLogger: Logger = {
-  debug: (message: string, data?: any) => console.debug(message, data),
-  info: (message: string, data?: any) => console.info(message, data),
-  warn: (message: string, data?: any) => console.warn(message, data),
-  error: (message: string, data?: any) => console.error(message, data),
+  // eslint-disable-next-line no-console
+  debug: (message: string, data?: unknown) => console.debug(message, data),
+  // eslint-disable-next-line no-console
+  info: (message: string, data?: unknown) => console.info(message, data),
+  // eslint-disable-next-line no-console
+  warn: (message: string, data?: unknown) => console.warn(message, data),
+  // eslint-disable-next-line no-console
+  error: (message: string, data?: unknown) => console.error(message, data),
 };
 
 /**
@@ -110,7 +114,7 @@ export function createLoggingMiddleware(
     // Log request start (debug level)
     if (LOG_LEVELS.debug >= minLevel) {
       const requestHeaders = includeRequestHeaders
-        ? getHeadersObject(request.headers as any)
+        ? getHeadersObject(request.headers as Headers | Record<string, string> | undefined)
         : undefined;
       const requestBody = includeRequestBody ? request.body : undefined;
 
@@ -187,16 +191,21 @@ export function createLoggingMiddleware(
  * Convert Headers object to plain object.
  */
 function getHeadersObject(
-  headers: Headers | undefined,
+  headers: Headers | Record<string, string> | undefined,
 ): Record<string, string> | undefined {
   if (!headers) {
     return undefined;
   }
 
   const obj: Record<string, string> = {};
-  headers.forEach((value, key) => {
-    obj[key] = value;
-  });
-
-  return obj;
+  
+  if (headers instanceof Headers) {
+    headers.forEach((value, key) => {
+      obj[key] = value;
+    });
+    return obj;
+  } else {
+    // It's already a Record<string, string>
+    return headers;
+  }
 }
