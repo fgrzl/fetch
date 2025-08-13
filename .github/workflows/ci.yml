@@ -35,7 +35,7 @@ jobs:
         run: npm run build
 
       - name: Test
-        run: npm run test -- --coverage
+        run: npm run test:coverage
 
       - name: Workflow Cleanup
         uses: fgrzl/actions/workflow-cleanup@v0.0.3

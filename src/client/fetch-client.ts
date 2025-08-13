@@ -174,23 +174,46 @@ export class FetchClient {
     return null;
   }
 
+  // Helper method to build URL with query parameters
+  private buildUrlWithParams(url: string, params?: Record<string, string | number | boolean | undefined>): string {
+    if (!params) return url;
+
+    const urlObj = new URL(url, url.startsWith('http') ? undefined : 'http://localhost');
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        urlObj.searchParams.set(key, String(value));
+      }
+    });
+
+    // If the original URL was relative, return just the pathname + search
+    if (!url.startsWith('http')) {
+      return urlObj.pathname + urlObj.search;
+    }
+
+    return urlObj.toString();
+  }
+
   // 🎯 PIT OF SUCCESS: Convenience methods with smart defaults
 
   /**
-   * GET request - simple and clean.
+   * GET request with query parameter support.
    *
    * @template T - Expected response data type
    * @param url - Request URL
+   * @param params - Query parameters to append to URL
    * @returns Promise resolving to typed response
    *
    * @example
    * ```typescript
    * const users = await client.get<User[]>('/api/users');
+   * const filteredUsers = await client.get<User[]>('/api/users', { status: 'active', limit: 10 });
    * if (users.ok) console.log(users.data);
    * ```
    */
-  get<T>(url: string): Promise<FetchResponse<T>> {
-    return this.request<T>(url, { method: 'GET' });
+  get<T>(url: string, params?: Record<string, string | number | boolean | undefined>): Promise<FetchResponse<T>> {
+    const finalUrl = this.buildUrlWithParams(url, params);
+    return this.request<T>(finalUrl, { method: 'GET' });
   }
 
   /**
@@ -277,19 +300,22 @@ export class FetchClient {
   }
 
   /**
-   * DELETE request.
+   * DELETE request with query parameter support.
    *
    * @template T - Expected response data type
    * @param url - Request URL
+   * @param params - Query parameters to append to URL
    * @returns Promise resolving to typed response
    *
    * @example
    * ```typescript
    * const result = await client.del('/api/users/123');
+   * const bulkResult = await client.del('/api/users', { status: 'inactive', force: true });
    * if (result.ok) console.log('Deleted successfully');
    * ```
    */
-  del<T>(url: string): Promise<FetchResponse<T>> {
-    return this.request<T>(url, { method: 'DELETE' });
+  del<T>(url: string, params?: Record<string, string | number | boolean | undefined>): Promise<FetchResponse<T>> {
+    const finalUrl = this.buildUrlWithParams(url, params);
+    return this.request<T>(finalUrl, { method: 'DELETE' });
   }
 }
