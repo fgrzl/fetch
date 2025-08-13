@@ -22,6 +22,6 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true
   },
-  "include": ["src/**/*.ts", "test/middleware/authentication/authentication.test.ts", "test/errors/index.test.ts", "test/client/fetch-client.test.ts", "test/middleware/authorization/authorization.test.ts", "test/middleware/cache/cache.test.ts", "test/middleware/csrf/csrf.test.ts", "test/middleware/logging/logging.test.ts", "test/middleware/rate-limit/rate-limit.test.ts", "test/middleware/retry/retry.test.ts", "test/test-utils.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["dist", "node_modules", "**/*.test.ts"]
 }
