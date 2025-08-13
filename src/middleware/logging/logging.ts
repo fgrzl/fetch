@@ -12,7 +12,7 @@ const defaultLogger: Logger = {
   debug: (message: string, data?: any) => console.debug(message, data),
   info: (message: string, data?: any) => console.info(message, data),
   warn: (message: string, data?: any) => console.warn(message, data),
-  error: (message: string, data?: any) => console.error(message, data)
+  error: (message: string, data?: any) => console.error(message, data),
 };
 
 /**
@@ -22,7 +22,7 @@ const LOG_LEVELS: Record<LogLevel, number> = {
   debug: 0,
   info: 1,
   warn: 2,
-  error: 3
+  error: 3,
 };
 
 /**
@@ -31,23 +31,26 @@ const LOG_LEVELS: Record<LogLevel, number> = {
 const defaultFormatter = (entry: LogEntry): string => {
   const { method, url, status, duration } = entry;
   let message = `${method} ${url}`;
-  
+
   if (status) {
     message += ` → ${status}`;
   }
-  
+
   if (duration) {
     message += ` (${duration}ms)`;
   }
-  
+
   return message;
 };
 
 /**
  * Checks if a URL should skip logging based on configured patterns.
  */
-function shouldSkipLogging(url: string, skipPatterns: (RegExp | string)[] = []): boolean {
-  return skipPatterns.some(pattern => {
+function shouldSkipLogging(
+  url: string,
+  skipPatterns: (RegExp | string)[] = [],
+): boolean {
+  return skipPatterns.some((pattern) => {
     if (typeof pattern === 'string') {
       return url.includes(pattern);
     }
@@ -58,16 +61,16 @@ function shouldSkipLogging(url: string, skipPatterns: (RegExp | string)[] = []):
 /**
  * Creates logging middleware with smart defaults.
  * Logs HTTP requests and responses for debugging and monitoring.
- * 
+ *
  * @param options - Logging configuration options
  * @returns Logging middleware for use with FetchClient
- * 
+ *
  * @example Basic logging:
  * ```typescript
  * const loggedClient = useLogging(client);
  * // Logs all requests to console
  * ```
- * 
+ *
  * @example Custom logger:
  * ```typescript
  * const loggedClient = useLogging(client, {
@@ -77,7 +80,9 @@ function shouldSkipLogging(url: string, skipPatterns: (RegExp | string)[] = []):
  * });
  * ```
  */
-export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMiddleware {
+export function createLoggingMiddleware(
+  options: LoggingOptions = {},
+): FetchMiddleware {
   const {
     level = 'info',
     logger = defaultLogger,
@@ -86,7 +91,7 @@ export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMidd
     includeRequestBody = false,
     includeResponseBody = false,
     skipPatterns = [],
-    formatter = defaultFormatter
+    formatter = defaultFormatter,
   } = options;
 
   const minLevel = LOG_LEVELS[level];
@@ -94,7 +99,7 @@ export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMidd
   return async (request, next) => {
     const url = request.url || '';
     const method = (request.method || 'GET').toUpperCase();
-    
+
     // Skip logging if URL matches skip patterns
     if (shouldSkipLogging(url, skipPatterns)) {
       return next(request);
@@ -104,16 +109,18 @@ export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMidd
 
     // Log request start (debug level)
     if (LOG_LEVELS.debug >= minLevel) {
-      const requestHeaders = includeRequestHeaders ? getHeadersObject(request.headers as any) : undefined;
+      const requestHeaders = includeRequestHeaders
+        ? getHeadersObject(request.headers as any)
+        : undefined;
       const requestBody = includeRequestBody ? request.body : undefined;
-      
+
       const requestEntry: LogEntry = {
         level: 'debug',
         timestamp: startTime,
         method,
         url,
         ...(requestHeaders && { requestHeaders }),
-        ...(requestBody && { requestBody })
+        ...(requestBody && { requestBody }),
       };
 
       logger.debug(`→ ${formatter(requestEntry)}`, requestEntry);
@@ -128,9 +135,11 @@ export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMidd
 
       // Log response (info/error level)
       if (LOG_LEVELS[logLevel] >= minLevel) {
-        const responseHeaders = includeResponseHeaders ? getHeadersObject(response.headers) : undefined;
+        const responseHeaders = includeResponseHeaders
+          ? getHeadersObject(response.headers)
+          : undefined;
         const responseBody = includeResponseBody ? response.data : undefined;
-        
+
         const responseEntry: LogEntry = {
           level: logLevel,
           timestamp: Date.now(),
@@ -139,11 +148,11 @@ export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMidd
           status: response.status,
           duration,
           ...(responseHeaders ? { responseHeaders } : {}),
-          ...(responseBody !== undefined ? { responseBody } : {})
+          ...(responseBody !== undefined ? { responseBody } : {}),
         };
 
         const logMessage = `← ${formatter(responseEntry)}`;
-        
+
         if (logLevel === 'error') {
           logger.error(logMessage, responseEntry);
         } else {
@@ -163,7 +172,7 @@ export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMidd
           method,
           url,
           duration,
-          error: error instanceof Error ? error : new Error(String(error))
+          error: error instanceof Error ? error : new Error(String(error)),
         };
 
         logger.error(`✗ ${formatter(errorEntry)}`, errorEntry);
@@ -177,13 +186,15 @@ export function createLoggingMiddleware(options: LoggingOptions = {}): FetchMidd
 /**
  * Convert Headers object to plain object.
  */
-function getHeadersObject(headers: Headers | undefined): Record<string, string> | undefined {
+function getHeadersObject(
+  headers: Headers | undefined,
+): Record<string, string> | undefined {
   if (!headers) return undefined;
-  
+
   const obj: Record<string, string> = {};
   headers.forEach((value, key) => {
     obj[key] = value;
   });
-  
+
   return obj;
 }

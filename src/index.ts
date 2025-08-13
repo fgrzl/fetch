@@ -30,25 +30,25 @@ import { useProductionStack } from './middleware';
  * // Works immediately - no setup required!
  * const users = await api.get('/api/users');
  * const newUser = await api.post('/api/users', { name: 'John' });
- * 
+ *
  * // With query parameters
  * const activeUsers = await api.get('/api/users', { status: 'active', limit: 10 });
  * ```
- * 
+ *
  * @example Configure authentication:
  * ```typescript
  * import api from '@fgrzl/fetch';
  * import { useAuthentication } from '@fgrzl/fetch/middleware';
- * 
+ *
  * const authClient = useAuthentication(api, {
  *   tokenProvider: () => localStorage.getItem('auth-token') || ''
  * });
  * ```
- * 
+ *
  * @example For token-only auth (no cookies):
  * ```typescript
  * import { FetchClient, useAuthentication } from '@fgrzl/fetch';
- * 
+ *
  * const tokenClient = useAuthentication(new FetchClient({
  *   credentials: 'omit' // Don't send cookies
  * }), {
@@ -56,28 +56,31 @@ import { useProductionStack } from './middleware';
  * });
  * ```
  */
-const api = useProductionStack(new FetchClient({
-  // Smart default: include cookies for session-based auth
-  // Can be overridden by creating a custom FetchClient
-  credentials: 'same-origin',
-}), {
-  // Smart defaults - users can override as needed
-  retry: { 
-    maxRetries: 2,
-    delay: 1000,
+const api = useProductionStack(
+  new FetchClient({
+    // Smart default: include cookies for session-based auth
+    // Can be overridden by creating a custom FetchClient
+    credentials: 'same-origin',
+  }),
+  {
+    // Smart defaults - users can override as needed
+    retry: {
+      maxRetries: 2,
+      delay: 1000,
+    },
+    cache: {
+      ttl: 5 * 60 * 1000, // 5 minutes
+      methods: ['GET'],
+    },
+    logging: {
+      level: 'info',
+    },
+    rateLimit: {
+      maxRequests: 100,
+      windowMs: 60 * 1000, // 100 requests per minute
+    },
   },
-  cache: { 
-    ttl: 5 * 60 * 1000, // 5 minutes
-    methods: ['GET']
-  },
-  logging: { 
-    level: 'info' 
-  },
-  rateLimit: {
-    maxRequests: 100,
-    windowMs: 60 * 1000 // 100 requests per minute
-  }
-});
+);
 
 // 🎯 LEVEL 1: Export the production-ready client as default
 export default api;
@@ -92,7 +95,7 @@ export {
   useAuthentication,
   createAuthenticationMiddleware,
   // Authorization
-  useAuthorization, 
+  useAuthorization,
   createAuthorizationMiddleware,
   // Cache
   useCache,
@@ -107,14 +110,14 @@ export {
   createRateLimitMiddleware,
   // Retry
   useRetry,
-  createRetryMiddleware
+  createRetryMiddleware,
 } from './middleware';
 
 // 🎯 LEVEL 4: Pre-built middleware stacks for common scenarios
 export {
   useProductionStack,
   useDevelopmentStack,
-  useBasicStack
+  useBasicStack,
 } from './middleware';
 
 // 🎯 LEVEL 5: Types for TypeScript users
@@ -142,5 +145,5 @@ export type {
   RateLimitOptions,
   RateLimitAlgorithm,
   // Retry types
-  RetryOptions
+  RetryOptions,
 } from './middleware';

@@ -6,7 +6,9 @@
  * Cache key generator function.
  * Should return a unique key for the request.
  */
-export type CacheKeyGenerator = (request: RequestInit & { url?: string }) => string;
+export type CacheKeyGenerator = (
+  request: RequestInit & { url?: string },
+) => string;
 
 /**
  * Cache storage interface.
@@ -35,7 +37,7 @@ export interface CacheEntry {
 
 /**
  * Cache configuration options - optimized for "pit of success".
- * 
+ *
  * Smart defaults:
  * - Only caches GET requests
  * - 5 minute default TTL
@@ -64,7 +66,7 @@ export interface CacheOptions {
   /**
    * Custom cache key generator (default: URL + method + headers)
    * Should return a unique key for each request
-   * 
+   *
    * @example Custom key generator:
    * ```typescript
    * keyGenerator: (request) => `${request.method}:${request.url}`
@@ -74,7 +76,7 @@ export interface CacheOptions {
 
   /**
    * Skip caching for requests matching these URL patterns
-   * 
+   *
    * @example
    * ```typescript
    * skipPatterns: [/\/api\/user/, '/dynamic-data']

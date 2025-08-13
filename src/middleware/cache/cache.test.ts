@@ -15,8 +15,8 @@ beforeEach(() => {
   mockFetch.mockResolvedValue(
     new Response('{"data": "test"}', {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    })
+      headers: { 'Content-Type': 'application/json' },
+    }),
   );
 });
 
@@ -42,20 +42,24 @@ describe('Cache Middleware', () => {
       const cachedClient = useCache(client);
 
       // First POST
-      await cachedClient.post('https://api.example.com/users', { name: 'John' });
+      await cachedClient.post('https://api.example.com/users', {
+        name: 'John',
+      });
       expect(mockFetch).toHaveBeenCalledTimes(1);
 
       // Second POST - should not use cache
-      await cachedClient.post('https://api.example.com/users', { name: 'Jane' });
+      await cachedClient.post('https://api.example.com/users', {
+        name: 'Jane',
+      });
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
     it('should respect custom TTL', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
       const cachedClient = useCache(client, {
-        ttl: 1000 // 1 second
+        ttl: 1000, // 1 second
       });
 
       // First call
@@ -78,22 +82,26 @@ describe('Cache Middleware', () => {
     it('should cache custom methods when configured', async () => {
       const client = new FetchClient();
       const cachedClient = useCache(client, {
-        methods: ['GET', 'POST']
+        methods: ['GET', 'POST'],
       });
 
       // First POST
-      await cachedClient.post('https://api.example.com/search', { query: 'test' });
+      await cachedClient.post('https://api.example.com/search', {
+        query: 'test',
+      });
       expect(mockFetch).toHaveBeenCalledTimes(1);
 
       // Second identical POST - should use cache
-      await cachedClient.post('https://api.example.com/search', { query: 'test' });
+      await cachedClient.post('https://api.example.com/search', {
+        query: 'test',
+      });
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it('should skip caching for URLs matching skip patterns', async () => {
       const client = new FetchClient();
       const cachedClient = useCache(client, {
-        skipPatterns: ['/dynamic', /\/user\//]
+        skipPatterns: ['/dynamic', /\/user\//],
       });
 
       // First call to dynamic endpoint
@@ -118,14 +126,14 @@ describe('Cache Middleware', () => {
     it('should use custom cache key generator', async () => {
       const client = new FetchClient();
       const cachedClient = useCache(client, {
-        keyGenerator: (request) => request.url || 'default'
+        keyGenerator: (request) => request.url || 'default',
       });
 
       // Same URL, different headers - should use same cache key
       await cachedClient.get('https://api.example.com/users');
       await cachedClient.request('https://api.example.com/users', {
         method: 'GET',
-        headers: { 'X-Custom': 'header' }
+        headers: { 'X-Custom': 'header' },
       });
 
       expect(mockFetch).toHaveBeenCalledTimes(1); // Only one call due to same URL
@@ -133,11 +141,11 @@ describe('Cache Middleware', () => {
 
     it('should handle stale-while-revalidate', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
       const cachedClient = useCache(client, {
         ttl: 1000,
-        staleWhileRevalidate: true
+        staleWhileRevalidate: true,
       });
 
       // First call
@@ -151,8 +159,8 @@ describe('Cache Middleware', () => {
       mockFetch.mockResolvedValueOnce(
         new Response('{"data": "updated"}', {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        })
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       // Second call - should return stale data immediately and update in background
@@ -173,12 +181,12 @@ describe('Cache Middleware', () => {
         get: vi.fn().mockResolvedValue(null),
         set: vi.fn().mockResolvedValue(undefined),
         delete: vi.fn().mockResolvedValue(undefined),
-        clear: vi.fn().mockResolvedValue(undefined)
+        clear: vi.fn().mockResolvedValue(undefined),
       };
 
       const client = new FetchClient();
       const cachedClient = useCache(client, {
-        storage: mockStorage
+        storage: mockStorage,
       });
 
       await cachedClient.get('https://api.example.com/users');
@@ -189,11 +197,11 @@ describe('Cache Middleware', () => {
         expect.objectContaining({
           response: expect.objectContaining({
             status: 200,
-            data: { data: 'test' }
+            data: { data: 'test' },
           }),
           timestamp: expect.any(Number),
-          expiresAt: expect.any(Number)
-        })
+          expiresAt: expect.any(Number),
+        }),
       );
     });
 
@@ -202,12 +210,12 @@ describe('Cache Middleware', () => {
         get: vi.fn().mockRejectedValue(new Error('Storage error')),
         set: vi.fn().mockRejectedValue(new Error('Storage error')),
         delete: vi.fn().mockResolvedValue(undefined),
-        clear: vi.fn().mockResolvedValue(undefined)
+        clear: vi.fn().mockResolvedValue(undefined),
       };
 
       const client = new FetchClient();
       const cachedClient = useCache(client, {
-        storage: faultyStorage
+        storage: faultyStorage,
       });
 
       // Should not throw, should fallback to network
@@ -221,7 +229,7 @@ describe('Cache Middleware', () => {
     it('should create middleware with custom options', async () => {
       const middleware = createCacheMiddleware({
         ttl: 2000,
-        methods: ['GET', 'HEAD']
+        methods: ['GET', 'HEAD'],
       });
 
       const client = new FetchClient();
@@ -235,11 +243,11 @@ describe('Cache Middleware', () => {
 
     it('should work in middleware chain', async () => {
       const cache1 = createCacheMiddleware({
-        keyGenerator: (req) => `cache1:${req.url}`
+        keyGenerator: (req) => `cache1:${req.url}`,
       });
 
       const cache2 = createCacheMiddleware({
-        keyGenerator: (req) => `cache2:${req.url}`
+        keyGenerator: (req) => `cache2:${req.url}`,
       });
 
       const client = new FetchClient();
@@ -264,7 +272,9 @@ describe('Cache Middleware', () => {
 
       // Different methods
       await cachedClient.get('https://api.example.com/data');
-      await cachedClient.request('https://api.example.com/data', { method: 'HEAD' });
+      await cachedClient.request('https://api.example.com/data', {
+        method: 'HEAD',
+      });
 
       expect(mockFetch).toHaveBeenCalledTimes(4); // All different requests
     });
@@ -272,12 +282,16 @@ describe('Cache Middleware', () => {
     it('should generate same key for identical requests', async () => {
       const client = new FetchClient();
       const cachedClient = useCache(client, {
-        methods: ['GET', 'POST']
+        methods: ['GET', 'POST'],
       });
 
       // Same POST requests
-      await cachedClient.post('https://api.example.com/search', { query: 'test' });
-      await cachedClient.post('https://api.example.com/search', { query: 'test' });
+      await cachedClient.post('https://api.example.com/search', {
+        query: 'test',
+      });
+      await cachedClient.post('https://api.example.com/search', {
+        query: 'test',
+      });
 
       expect(mockFetch).toHaveBeenCalledTimes(1); // Should use cache
     });
@@ -285,20 +299,22 @@ describe('Cache Middleware', () => {
 
   describe('Error handling', () => {
     it('should not cache error responses', async () => {
-      mockFetch.mockResolvedValue(
-        new Response('Not Found', { status: 404 })
-      );
+      mockFetch.mockResolvedValue(new Response('Not Found', { status: 404 }));
 
       const client = new FetchClient();
       const cachedClient = useCache(client);
 
       // First 404 call
-      const response1 = await cachedClient.get('https://api.example.com/missing');
+      const response1 = await cachedClient.get(
+        'https://api.example.com/missing',
+      );
       expect(response1.status).toBe(404);
       expect(mockFetch).toHaveBeenCalledTimes(1);
 
       // Second call - should not use cache for error responses
-      const response2 = await cachedClient.get('https://api.example.com/missing');
+      const response2 = await cachedClient.get(
+        'https://api.example.com/missing',
+      );
       expect(response2.status).toBe(404);
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
@@ -309,7 +325,9 @@ describe('Cache Middleware', () => {
       const client = new FetchClient();
       const cachedClient = useCache(client);
 
-      await expect(cachedClient.get('https://api.example.com/users')).rejects.toThrow('Network error');
+      await expect(
+        cachedClient.get('https://api.example.com/users'),
+      ).rejects.toThrow('Network error');
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
@@ -317,11 +335,11 @@ describe('Cache Middleware', () => {
   describe('Integration with other middleware', () => {
     it('should work with authentication middleware', async () => {
       const client = new FetchClient();
-      
+
       const { useAuthentication } = await import('../authentication');
-      
+
       const authCachedClient = useAuthentication(client, {
-        tokenProvider: () => 'test-token'
+        tokenProvider: () => 'test-token',
       }).use(createCacheMiddleware());
 
       // First call
@@ -337,9 +355,9 @@ describe('Cache Middleware', () => {
         'https://api.example.com/secure',
         expect.objectContaining({
           headers: expect.objectContaining({
-            Authorization: 'Bearer test-token'
-          })
-        })
+            Authorization: 'Bearer test-token',
+          }),
+        }),
       );
     });
   });

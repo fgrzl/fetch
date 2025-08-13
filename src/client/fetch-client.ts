@@ -175,11 +175,17 @@ export class FetchClient {
   }
 
   // Helper method to build URL with query parameters
-  private buildUrlWithParams(url: string, params?: Record<string, string | number | boolean | undefined>): string {
+  private buildUrlWithParams(
+    url: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): string {
     if (!params) return url;
 
-    const urlObj = new URL(url, url.startsWith('http') ? undefined : 'http://localhost');
-    
+    const urlObj = new URL(
+      url,
+      url.startsWith('http') ? undefined : 'http://localhost',
+    );
+
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         urlObj.searchParams.set(key, String(value));
@@ -211,7 +217,10 @@ export class FetchClient {
    * if (users.ok) console.log(users.data);
    * ```
    */
-  get<T>(url: string, params?: Record<string, string | number | boolean | undefined>): Promise<FetchResponse<T>> {
+  get<T>(
+    url: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
     return this.request<T>(finalUrl, { method: 'GET' });
   }
@@ -314,7 +323,10 @@ export class FetchClient {
    * if (result.ok) console.log('Deleted successfully');
    * ```
    */
-  del<T>(url: string, params?: Record<string, string | number | boolean | undefined>): Promise<FetchResponse<T>> {
+  del<T>(
+    url: string,
+    params?: Record<string, string | number | boolean | undefined>,
+  ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
     return this.request<T>(finalUrl, { method: 'DELETE' });
   }

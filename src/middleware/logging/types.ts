@@ -36,7 +36,7 @@ export interface Logger {
 
 /**
  * Logging configuration options - optimized for "pit of success".
- * 
+ *
  * Smart defaults:
  * - Logs to console
  * - Info level by default
@@ -83,7 +83,7 @@ export interface LoggingOptions {
   /**
    * Skip logging for requests matching these URL patterns
    * Useful for health checks, metrics endpoints, etc.
-   * 
+   *
    * @example
    * ```typescript
    * skipPatterns: ['/health', '/metrics', /\/static\//]

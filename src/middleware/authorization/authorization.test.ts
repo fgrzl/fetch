@@ -21,8 +21,8 @@ describe('Authorization Middleware', () => {
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', {
           status: 401,
-          statusText: 'Unauthorized'
-        })
+          statusText: 'Unauthorized',
+        }),
       );
 
       const client = new FetchClient();
@@ -33,7 +33,7 @@ describe('Authorization Middleware', () => {
       expect(response.status).toBe(401);
       expect(onUnauthorized).toHaveBeenCalledWith(
         expect.objectContaining({ status: 401 }),
-        expect.objectContaining({ url: 'https://api.example.com/secure' })
+        expect.objectContaining({ url: 'https://api.example.com/secure' }),
       );
     });
 
@@ -43,15 +43,15 @@ describe('Authorization Middleware', () => {
       mockFetch.mockResolvedValue(
         new Response('Forbidden', {
           status: 403,
-          statusText: 'Forbidden'
-        })
+          statusText: 'Forbidden',
+        }),
       );
 
       const client = new FetchClient();
       const authzClient = useAuthorization(client, {
         onUnauthorized,
         onForbidden,
-        statusCodes: [401, 403]
+        statusCodes: [401, 403],
       });
 
       await authzClient.get('https://api.example.com/admin');
@@ -59,7 +59,7 @@ describe('Authorization Middleware', () => {
       expect(onUnauthorized).not.toHaveBeenCalled();
       expect(onForbidden).toHaveBeenCalledWith(
         expect.objectContaining({ status: 403 }),
-        expect.objectContaining({ url: 'https://api.example.com/admin' })
+        expect.objectContaining({ url: 'https://api.example.com/admin' }),
       );
     });
 
@@ -69,15 +69,15 @@ describe('Authorization Middleware', () => {
       mockFetch.mockResolvedValue(
         new Response('{"success": true}', {
           status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        })
+          headers: { 'Content-Type': 'application/json' },
+        }),
       );
 
       const client = new FetchClient();
       const authzClient = useAuthorization(client, {
         onUnauthorized,
         onForbidden,
-        statusCodes: [401, 403]
+        statusCodes: [401, 403],
       });
 
       await authzClient.get('https://api.example.com/data');
@@ -91,14 +91,14 @@ describe('Authorization Middleware', () => {
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', {
           status: 401,
-          statusText: 'Unauthorized'
-        })
+          statusText: 'Unauthorized',
+        }),
       );
 
       const client = new FetchClient();
       const authzClient = useAuthorization(client, {
         onUnauthorized,
-        skipPatterns: ['/login', /^\/auth/]
+        skipPatterns: ['/login', /^\/auth/],
       });
 
       await authzClient.post('https://api.example.com/login', {});
@@ -109,17 +109,17 @@ describe('Authorization Middleware', () => {
       expect(onUnauthorized).toHaveBeenCalledTimes(1);
       expect(onUnauthorized).toHaveBeenCalledWith(
         expect.objectContaining({ status: 401 }),
-        expect.objectContaining({ url: 'https://api.example.com/secure' })
+        expect.objectContaining({ url: 'https://api.example.com/secure' }),
       );
     });
 
     it('should handle async unauthorized handler', async () => {
       const onUnauthorized = vi.fn().mockImplementation(async () => {
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
       });
-      
+
       mockFetch.mockResolvedValue(
-        new Response('Unauthorized', { status: 401 })
+        new Response('Unauthorized', { status: 401 }),
       );
 
       const client = new FetchClient();
@@ -134,11 +134,11 @@ describe('Authorization Middleware', () => {
       const onUnauthorized = vi.fn().mockImplementation(() => {
         throw new Error('Handler error');
       });
-      
+
       const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      
+
       mockFetch.mockResolvedValue(
-        new Response('Unauthorized', { status: 401 })
+        new Response('Unauthorized', { status: 401 }),
       );
 
       const client = new FetchClient();
@@ -150,24 +150,22 @@ describe('Authorization Middleware', () => {
       expect(onUnauthorized).toHaveBeenCalled();
       expect(consoleSpy).toHaveBeenCalledWith(
         'Authorization handler failed:',
-        expect.any(Error)
+        expect.any(Error),
       );
-      
+
       consoleSpy.mockRestore();
     });
 
     it('should only handle configured status codes', async () => {
       const onUnauthorized = vi.fn();
-      
+
       // Test with 403 but only 401 configured
-      mockFetch.mockResolvedValue(
-        new Response('Forbidden', { status: 403 })
-      );
+      mockFetch.mockResolvedValue(new Response('Forbidden', { status: 403 }));
 
       const client = new FetchClient();
       const authzClient = useAuthorization(client, {
         onUnauthorized,
-        statusCodes: [401] // Only 401, not 403
+        statusCodes: [401], // Only 401, not 403
       });
 
       await authzClient.get('https://api.example.com/admin');
@@ -180,15 +178,15 @@ describe('Authorization Middleware', () => {
     it('should create middleware with custom status codes', async () => {
       const onUnauthorized = vi.fn();
       const onForbidden = vi.fn();
-      
+
       mockFetch.mockResolvedValue(
-        new Response('Payment Required', { status: 402 })
+        new Response('Payment Required', { status: 402 }),
       );
 
       const middleware = createAuthorizationMiddleware({
         onUnauthorized,
         onForbidden,
-        statusCodes: [402] // Custom status code
+        statusCodes: [402], // Custom status code
       });
 
       const client = new FetchClient();
@@ -199,24 +197,24 @@ describe('Authorization Middleware', () => {
       // Should call onUnauthorized for 402 since it's the first handler
       expect(onUnauthorized).toHaveBeenCalledWith(
         expect.objectContaining({ status: 402 }),
-        expect.objectContaining({ url: 'https://api.example.com/premium' })
+        expect.objectContaining({ url: 'https://api.example.com/premium' }),
       );
     });
 
     it('should work in middleware chain', async () => {
       const handler1 = vi.fn();
       const handler2 = vi.fn();
-      
+
       mockFetch.mockResolvedValue(
-        new Response('Unauthorized', { status: 401 })
+        new Response('Unauthorized', { status: 401 }),
       );
 
       const auth1 = createAuthorizationMiddleware({
-        onUnauthorized: handler1
+        onUnauthorized: handler1,
       });
 
       const auth2 = createAuthorizationMiddleware({
-        onUnauthorized: handler2
+        onUnauthorized: handler2,
       });
 
       const client = new FetchClient();
@@ -233,22 +231,22 @@ describe('Authorization Middleware', () => {
   describe('Real-world scenarios', () => {
     it('should handle redirect to login scenario', async () => {
       const mockLocation = {
-        href: ''
+        href: '',
       };
       Object.defineProperty(global, 'window', {
         value: { location: mockLocation },
-        writable: true
+        writable: true,
       });
 
       mockFetch.mockResolvedValue(
-        new Response('Unauthorized', { status: 401 })
+        new Response('Unauthorized', { status: 401 }),
       );
 
       const client = new FetchClient();
       const authzClient = useAuthorization(client, {
         onUnauthorized: () => {
           window.location.href = '/login';
-        }
+        },
       });
 
       await authzClient.get('https://api.example.com/secure');
@@ -258,22 +256,22 @@ describe('Authorization Middleware', () => {
 
     it('should handle token cleanup scenario', async () => {
       const mockLocalStorage = {
-        removeItem: vi.fn()
+        removeItem: vi.fn(),
       };
       Object.defineProperty(global, 'localStorage', {
         value: mockLocalStorage,
-        writable: true
+        writable: true,
       });
 
       mockFetch.mockResolvedValue(
-        new Response('Unauthorized', { status: 401 })
+        new Response('Unauthorized', { status: 401 }),
       );
 
       const client = new FetchClient();
       const authzClient = useAuthorization(client, {
         onUnauthorized: () => {
           localStorage.removeItem('auth-token');
-        }
+        },
       });
 
       await authzClient.get('https://api.example.com/secure');

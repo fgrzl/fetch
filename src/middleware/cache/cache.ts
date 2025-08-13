@@ -3,7 +3,12 @@
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
-import type { CacheOptions, CacheStorage, CacheEntry, CacheKeyGenerator } from './types';
+import type {
+  CacheOptions,
+  CacheStorage,
+  CacheEntry,
+  CacheKeyGenerator,
+} from './types';
 
 /**
  * Default in-memory cache storage implementation.
@@ -14,13 +19,13 @@ class MemoryStorage implements CacheStorage {
   async get(key: string): Promise<CacheEntry | null> {
     const entry = this.cache.get(key);
     if (!entry) return null;
-    
+
     // Check if expired
     if (Date.now() > entry.expiresAt) {
       this.cache.delete(key);
       return null;
     }
-    
+
     return entry;
   }
 
@@ -50,8 +55,11 @@ const defaultKeyGenerator: CacheKeyGenerator = (request) => {
 /**
  * Checks if a URL should skip caching based on configured patterns.
  */
-function shouldSkipCache(url: string, skipPatterns: (RegExp | string)[] = []): boolean {
-  return skipPatterns.some(pattern => {
+function shouldSkipCache(
+  url: string,
+  skipPatterns: (RegExp | string)[] = [],
+): boolean {
+  return skipPatterns.some((pattern) => {
     if (typeof pattern === 'string') {
       return url.includes(pattern);
     }
@@ -62,16 +70,16 @@ function shouldSkipCache(url: string, skipPatterns: (RegExp | string)[] = []): b
 /**
  * Creates cache middleware with smart defaults.
  * Caches GET responses for faster subsequent requests.
- * 
+ *
  * @param options - Cache configuration options
  * @returns Cache middleware for use with FetchClient
- * 
+ *
  * @example Basic caching:
  * ```typescript
  * const cachedClient = useCache(client);
  * // GET requests will be cached for 5 minutes
  * ```
- * 
+ *
  * @example Custom TTL:
  * ```typescript
  * const cachedClient = useCache(client, {
@@ -79,20 +87,22 @@ function shouldSkipCache(url: string, skipPatterns: (RegExp | string)[] = []): b
  * });
  * ```
  */
-export function createCacheMiddleware(options: CacheOptions = {}): FetchMiddleware {
+export function createCacheMiddleware(
+  options: CacheOptions = {},
+): FetchMiddleware {
   const {
     ttl = 5 * 60 * 1000, // 5 minutes
     methods = ['GET'],
     storage = new MemoryStorage(),
     keyGenerator = defaultKeyGenerator,
     skipPatterns = [],
-    staleWhileRevalidate = false
+    staleWhileRevalidate = false,
   } = options;
 
   return async (request, next) => {
     const method = (request.method || 'GET').toUpperCase();
     const url = request.url || '';
-    
+
     // Skip caching if:
     // 1. Method is not in cached methods list
     // 2. URL matches a skip pattern
@@ -101,17 +111,17 @@ export function createCacheMiddleware(options: CacheOptions = {}): FetchMiddlewa
     }
 
     const cacheKey = keyGenerator(request);
-    
+
     try {
       // Try to get cached response
       const cached = await storage.get(cacheKey);
-      
+
       if (cached && !staleWhileRevalidate) {
         // Return cached response
         return {
           ...cached.response,
           headers: new Headers(cached.response.headers),
-          data: cached.response.data
+          data: cached.response.data,
         } as any;
       }
 
@@ -122,30 +132,32 @@ export function createCacheMiddleware(options: CacheOptions = {}): FetchMiddlewa
         const staleResponse = {
           ...cached.response,
           headers: new Headers(cached.response.headers),
-          data: cached.response.data
+          data: cached.response.data,
         } as any;
 
         // Update cache in background
-        next(request).then(async (freshResponse) => {
-          const headersObj: Record<string, string> = {};
-          freshResponse.headers.forEach((value, key) => {
-            headersObj[key] = value;
-          });
+        next(request)
+          .then(async (freshResponse) => {
+            const headersObj: Record<string, string> = {};
+            freshResponse.headers.forEach((value, key) => {
+              headersObj[key] = value;
+            });
 
-          const cacheEntry: CacheEntry = {
-            response: {
-              status: freshResponse.status,
-              statusText: freshResponse.statusText,
-              headers: headersObj,
-              data: freshResponse.data
-            },
-            timestamp: Date.now(),
-            expiresAt: Date.now() + ttl
-          };
-          await storage.set(cacheKey, cacheEntry);
-        }).catch(() => {
-          // Ignore background update errors
-        });
+            const cacheEntry: CacheEntry = {
+              response: {
+                status: freshResponse.status,
+                statusText: freshResponse.statusText,
+                headers: headersObj,
+                data: freshResponse.data,
+              },
+              timestamp: Date.now(),
+              expiresAt: Date.now() + ttl,
+            };
+            await storage.set(cacheKey, cacheEntry);
+          })
+          .catch(() => {
+            // Ignore background update errors
+          });
 
         return staleResponse;
       }
@@ -165,10 +177,10 @@ export function createCacheMiddleware(options: CacheOptions = {}): FetchMiddlewa
             status: response.status,
             statusText: response.statusText,
             headers: headersObj,
-            data: response.data
+            data: response.data,
           },
           timestamp: Date.now(),
-          expiresAt: Date.now() + ttl
+          expiresAt: Date.now() + ttl,
         };
 
         await storage.set(cacheKey, cacheEntry);

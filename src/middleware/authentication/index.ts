@@ -13,18 +13,18 @@ export { createAuthenticationMiddleware } from './authentication';
 /**
  * "Pit of success" API for adding authentication to a FetchClient.
  * Automatically adds Bearer tokens to requests.
- * 
+ *
  * @param client - The FetchClient to add authentication to
  * @param options - Authentication configuration
  * @returns A new FetchClient with authentication middleware
- * 
+ *
  * @example Basic token from localStorage:
  * ```typescript
  * const authClient = useAuthentication(client, {
  *   tokenProvider: () => localStorage.getItem('auth-token') || ''
  * });
  * ```
- * 
+ *
  * @example Async token with refresh:
  * ```typescript
  * const authClient = useAuthentication(client, {
@@ -38,6 +38,9 @@ export { createAuthenticationMiddleware } from './authentication';
  * });
  * ```
  */
-export function useAuthentication(client: FetchClient, options: AuthenticationOptions): FetchClient {
+export function useAuthentication(
+  client: FetchClient,
+  options: AuthenticationOptions,
+): FetchClient {
   return client.use(createAuthenticationMiddleware(options));
 }

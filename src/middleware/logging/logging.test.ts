@@ -15,8 +15,8 @@ beforeEach(() => {
   mockFetch.mockResolvedValue(
     new Response('{"success": true}', {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    })
+      headers: { 'Content-Type': 'application/json' },
+    }),
   );
 });
 
@@ -38,8 +38,8 @@ describe('Logging Middleware', () => {
           method: 'GET',
           url: 'https://api.example.com/users',
           status: 200,
-          duration: expect.any(Number)
-        })
+          duration: expect.any(Number),
+        }),
       );
 
       infoSpy.mockRestore();
@@ -48,7 +48,7 @@ describe('Logging Middleware', () => {
 
     it('should log errors for 4xx/5xx responses', async () => {
       mockFetch.mockResolvedValue(
-        new Response('Server Error', { status: 500 })
+        new Response('Server Error', { status: 500 }),
       );
 
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -64,8 +64,8 @@ describe('Logging Middleware', () => {
           level: 'error',
           method: 'GET',
           url: 'https://api.example.com/error',
-          status: 500
-        })
+          status: 500,
+        }),
       );
 
       errorSpy.mockRestore();
@@ -76,12 +76,12 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
-        logger: mockLogger
+        logger: mockLogger,
       });
 
       await loggedClient.post('https://api.example.com/data', { test: true });
@@ -92,8 +92,8 @@ describe('Logging Middleware', () => {
           level: 'info',
           method: 'POST',
           url: 'https://api.example.com/data',
-          status: 200
-        })
+          status: 200,
+        }),
       );
     });
 
@@ -102,13 +102,13 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
         logger: mockLogger,
-        level: 'warn' // Only warn and error
+        level: 'warn', // Only warn and error
       });
 
       await loggedClient.get('https://api.example.com/users');
@@ -124,13 +124,13 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
         logger: mockLogger,
-        level: 'debug'
+        level: 'debug',
       });
 
       await loggedClient.get('https://api.example.com/users');
@@ -140,16 +140,16 @@ describe('Logging Middleware', () => {
         expect.objectContaining({
           level: 'debug',
           method: 'GET',
-          url: 'https://api.example.com/users'
-        })
+          url: 'https://api.example.com/users',
+        }),
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('← GET https://api.example.com/users → 200'),
         expect.objectContaining({
           level: 'info',
-          status: 200
-        })
+          status: 200,
+        }),
       );
     });
 
@@ -158,13 +158,13 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
         logger: mockLogger,
-        skipPatterns: ['/health', /\/metrics/]
+        skipPatterns: ['/health', /\/metrics/],
       });
 
       await loggedClient.get('https://api.example.com/health');
@@ -175,7 +175,7 @@ describe('Logging Middleware', () => {
       expect(mockLogger.info).toHaveBeenCalledTimes(1);
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('/users'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -184,28 +184,31 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
         logger: mockLogger,
         level: 'debug',
-        includeRequestHeaders: true
+        includeRequestHeaders: true,
       });
 
-      const response = await loggedClient.request('https://api.example.com/users', {
-        method: 'GET',
-        headers: { 'X-Custom': 'test-header' }
-      });
+      const response = await loggedClient.request(
+        'https://api.example.com/users',
+        {
+          method: 'GET',
+          headers: { 'X-Custom': 'test-header' },
+        },
+      );
 
       expect(mockLogger.debug).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
           requestHeaders: expect.objectContaining({
-            'X-Custom': 'test-header'
-          })
-        })
+            'X-Custom': 'test-header',
+          }),
+        }),
       );
     });
 
@@ -213,24 +216,24 @@ describe('Logging Middleware', () => {
       mockFetch.mockResolvedValue(
         new Response('{"data": true}', {
           status: 200,
-          headers: { 
+          headers: {
             'Content-Type': 'application/json',
-            'X-Response': 'custom-header'
-          }
-        })
+            'X-Response': 'custom-header',
+          },
+        }),
       );
 
       const mockLogger: Logger = {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
         logger: mockLogger,
-        includeResponseHeaders: true
+        includeResponseHeaders: true,
       });
 
       await loggedClient.get('https://api.example.com/users');
@@ -240,9 +243,9 @@ describe('Logging Middleware', () => {
         expect.objectContaining({
           responseHeaders: expect.objectContaining({
             'Content-Type': 'application/json',
-            'X-Response': 'custom-header'
-          })
-        })
+            'X-Response': 'custom-header',
+          }),
+        }),
       );
     });
 
@@ -251,7 +254,7 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
@@ -259,23 +262,25 @@ describe('Logging Middleware', () => {
         logger: mockLogger,
         level: 'debug',
         includeRequestBody: true,
-        includeResponseBody: true
+        includeResponseBody: true,
       });
 
-      await loggedClient.post('https://api.example.com/users', { name: 'John' });
+      await loggedClient.post('https://api.example.com/users', {
+        name: 'John',
+      });
 
       expect(mockLogger.debug).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          requestBody: expect.stringContaining('John')
-        })
+          requestBody: expect.stringContaining('John'),
+        }),
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          responseBody: { success: true }
-        })
+          responseBody: { success: true },
+        }),
       );
     });
 
@@ -285,13 +290,13 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
         logger: mockLogger,
-        formatter: customFormatter
+        formatter: customFormatter,
       });
 
       await loggedClient.get('https://api.example.com/users');
@@ -300,13 +305,13 @@ describe('Logging Middleware', () => {
         expect.objectContaining({
           method: 'GET',
           url: 'https://api.example.com/users',
-          status: 200
-        })
+          status: 200,
+        }),
       );
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('CUSTOM LOG MESSAGE'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
 
@@ -317,15 +322,17 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
-        logger: mockLogger
+        logger: mockLogger,
       });
 
-      await expect(loggedClient.get('https://api.example.com/users')).rejects.toThrow('Network failure');
+      await expect(
+        loggedClient.get('https://api.example.com/users'),
+      ).rejects.toThrow('Network failure');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('✗ GET https://api.example.com/users'),
@@ -334,10 +341,10 @@ describe('Logging Middleware', () => {
           method: 'GET',
           url: 'https://api.example.com/users',
           error: expect.objectContaining({
-            message: 'Network failure'
+            message: 'Network failure',
           }),
-          duration: expect.any(Number)
-        })
+          duration: expect.any(Number),
+        }),
       );
     });
 
@@ -348,27 +355,27 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
       const loggedClient = useLogging(client, {
-        logger: mockLogger
+        logger: mockLogger,
       });
 
       // Mock a delayed response
       const responsePromise = loggedClient.get('https://api.example.com/users');
-      
+
       // Advance time by 100ms
       vi.advanceTimersByTime(100);
-      
+
       await responsePromise;
 
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('(100ms)'),
         expect.objectContaining({
-          duration: 100
-        })
+          duration: 100,
+        }),
       );
 
       vi.useRealTimers();
@@ -381,12 +388,12 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const middleware = createLoggingMiddleware({
         logger: mockLogger,
-        level: 'warn'
+        level: 'warn',
       });
 
       const client = new FetchClient();
@@ -403,24 +410,24 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const logger2: Logger = {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const logging1 = createLoggingMiddleware({
         logger: logger1,
-        formatter: () => 'Logger 1'
+        formatter: () => 'Logger 1',
       });
 
       const logging2 = createLoggingMiddleware({
         logger: logger2,
-        formatter: () => 'Logger 2'
+        formatter: () => 'Logger 2',
       });
 
       const client = new FetchClient();
@@ -430,12 +437,12 @@ describe('Logging Middleware', () => {
 
       expect(logger1.info).toHaveBeenCalledWith(
         expect.stringContaining('Logger 1'),
-        expect.any(Object)
+        expect.any(Object),
       );
 
       expect(logger2.info).toHaveBeenCalledWith(
         expect.stringContaining('Logger 2'),
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -446,19 +453,21 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const client = new FetchClient();
-      
+
       const { useAuthentication } = await import('../authentication');
-      
+
       const authLoggedClient = useAuthentication(client, {
-        tokenProvider: () => 'test-token'
-      }).use(createLoggingMiddleware({
-        logger: mockLogger,
-        includeRequestHeaders: true
-      }));
+        tokenProvider: () => 'test-token',
+      }).use(
+        createLoggingMiddleware({
+          logger: mockLogger,
+          includeRequestHeaders: true,
+        }),
+      );
 
       await authLoggedClient.get('https://api.example.com/secure');
 
@@ -466,8 +475,8 @@ describe('Logging Middleware', () => {
       expect(mockLogger.info).toHaveBeenCalledWith(
         expect.stringContaining('GET https://api.example.com/secure'),
         expect.objectContaining({
-          responseHeaders: expect.any(Object)
-        })
+          responseHeaders: expect.any(Object),
+        }),
       );
     });
 
@@ -476,25 +485,29 @@ describe('Logging Middleware', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
-      const faultyMiddleware = vi.fn().mockRejectedValue(new Error('Middleware error'));
+      const faultyMiddleware = vi
+        .fn()
+        .mockRejectedValue(new Error('Middleware error'));
 
       const client = new FetchClient();
       const loggedClient = client
         .use(faultyMiddleware)
         .use(createLoggingMiddleware({ logger: mockLogger }));
 
-      await expect(loggedClient.get('https://api.example.com/test')).rejects.toThrow('Middleware error');
+      await expect(
+        loggedClient.get('https://api.example.com/test'),
+      ).rejects.toThrow('Middleware error');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('✗ GET https://api.example.com/test'),
         expect.objectContaining({
           error: expect.objectContaining({
-            message: 'Middleware error'
-          })
-        })
+            message: 'Middleware error',
+          }),
+        }),
       );
     });
   });
@@ -508,19 +521,19 @@ describe('Logging Middleware', () => {
           debug: vi.fn(),
           info: vi.fn(),
           warn: vi.fn(),
-          error: vi.fn()
+          error: vi.fn(),
         };
 
         const client = new FetchClient();
         const loggedClient = useLogging(client, {
           logger: mockLogger,
-          level: minLevel
+          level: minLevel,
         });
 
         // Successful request (info level)
         await loggedClient.get('https://api.example.com/users');
 
-        // Error request (error level)  
+        // Error request (error level)
         mockFetch.mockResolvedValueOnce(new Response('Error', { status: 500 }));
         await loggedClient.get('https://api.example.com/error');
 

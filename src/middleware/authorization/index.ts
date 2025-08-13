@@ -13,11 +13,11 @@ export { createAuthorizationMiddleware } from './authorization';
 /**
  * "Pit of success" API for adding authorization handling to a FetchClient.
  * Automatically handles 401 Unauthorized responses.
- * 
+ *
  * @param client - The FetchClient to add authorization handling to
  * @param options - Authorization configuration
  * @returns A new FetchClient with authorization middleware
- * 
+ *
  * @example Basic redirect on 401:
  * ```typescript
  * const authzClient = useAuthorization(client, {
@@ -27,7 +27,7 @@ export { createAuthorizationMiddleware } from './authorization';
  *   }
  * });
  * ```
- * 
+ *
  * @example Handle multiple status codes:
  * ```typescript
  * const authzClient = useAuthorization(client, {
@@ -37,6 +37,9 @@ export { createAuthorizationMiddleware } from './authorization';
  * });
  * ```
  */
-export function useAuthorization(client: FetchClient, options: AuthorizationOptions): FetchClient {
+export function useAuthorization(
+  client: FetchClient,
+  options: AuthorizationOptions,
+): FetchClient {
   return client.use(createAuthorizationMiddleware(options));
 }

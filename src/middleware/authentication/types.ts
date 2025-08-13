@@ -10,7 +10,7 @@ export type AuthTokenProvider = () => string | Promise<string>;
 
 /**
  * Authentication configuration options - optimized for "pit of success".
- * 
+ *
  * Smart defaults:
  * - Uses standard Authorization header with Bearer token
  * - Applies to all requests by default
@@ -20,14 +20,14 @@ export interface AuthenticationOptions {
   /**
    * Function to get the current authentication token.
    * Can be synchronous or asynchronous.
-   * 
+   *
    * @returns The auth token or empty string if not available
-   * 
+   *
    * @example Token from localStorage:
    * ```typescript
    * const getToken = () => localStorage.getItem('auth-token') || '';
    * ```
-   * 
+   *
    * @example Async token refresh:
    * ```typescript
    * const getToken = async () => {
@@ -56,7 +56,7 @@ export interface AuthenticationOptions {
   /**
    * Skip authentication for requests matching these URL patterns
    * Useful for public endpoints that don't need auth
-   * 
+   *
    * @example
    * ```typescript
    * skipPatterns: [/^\/public\//, '/health', '/login']
@@ -67,7 +67,7 @@ export interface AuthenticationOptions {
   /**
    * Only apply authentication to requests matching these patterns
    * If specified, only these patterns will get auth headers
-   * 
+   *
    * @example
    * ```typescript
    * includePatterns: [/^\/api\//, '/graphql']

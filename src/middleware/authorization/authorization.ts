@@ -8,8 +8,11 @@ import type { AuthorizationOptions } from './types';
 /**
  * Checks if a URL should skip authorization handling based on configured patterns.
  */
-function shouldSkipAuth(url: string, skipPatterns: (RegExp | string)[] = []): boolean {
-  return skipPatterns.some(pattern => {
+function shouldSkipAuth(
+  url: string,
+  skipPatterns: (RegExp | string)[] = [],
+): boolean {
+  return skipPatterns.some((pattern) => {
     if (typeof pattern === 'string') {
       return url.includes(pattern);
     }
@@ -20,17 +23,17 @@ function shouldSkipAuth(url: string, skipPatterns: (RegExp | string)[] = []): bo
 /**
  * Creates authorization middleware with smart defaults.
  * Handles 401/403 responses by calling configured handlers.
- * 
+ *
  * @param options - Authorization configuration options
  * @returns Authorization middleware for use with FetchClient
- * 
+ *
  * @example Basic redirect on 401:
  * ```typescript
  * const authzClient = useAuthorization(client, {
  *   onUnauthorized: () => window.location.href = '/login'
  * });
  * ```
- * 
+ *
  * @example Handle both 401 and 403:
  * ```typescript
  * const authzClient = useAuthorization(client, {
@@ -40,17 +43,19 @@ function shouldSkipAuth(url: string, skipPatterns: (RegExp | string)[] = []): bo
  * });
  * ```
  */
-export function createAuthorizationMiddleware(options: AuthorizationOptions): FetchMiddleware {
+export function createAuthorizationMiddleware(
+  options: AuthorizationOptions,
+): FetchMiddleware {
   const {
     onUnauthorized,
     onForbidden,
     skipPatterns = [],
-    statusCodes = [401]
+    statusCodes = [401],
   } = options;
 
   return async (request, next) => {
     const url = request.url || '';
-    
+
     // Skip authorization handling if URL matches skip patterns
     if (shouldSkipAuth(url, skipPatterns)) {
       return next(request);

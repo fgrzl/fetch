@@ -13,20 +13,20 @@ export { createLoggingMiddleware } from './logging';
 /**
  * "Pit of success" API for adding logging to a FetchClient.
  * Logs HTTP requests and responses for debugging and monitoring.
- * 
+ *
  * @param client - The FetchClient to add logging to
  * @param options - Logging configuration options
  * @returns A new FetchClient with logging middleware
- * 
+ *
  * @example Basic logging to console:
  * ```typescript
  * const loggedClient = useLogging(client);
- * 
+ *
  * // Logs: → GET /api/users
  * // Logs: ← GET /api/users → 200 (245ms)
  * await loggedClient.get('/api/users');
  * ```
- * 
+ *
  * @example Custom log level and headers:
  * ```typescript
  * const loggedClient = useLogging(client, {
@@ -35,7 +35,7 @@ export { createLoggingMiddleware } from './logging';
  *   includeResponseHeaders: true
  * });
  * ```
- * 
+ *
  * @example Skip health check endpoints:
  * ```typescript
  * const loggedClient = useLogging(client, {
@@ -43,6 +43,9 @@ export { createLoggingMiddleware } from './logging';
  * });
  * ```
  */
-export function useLogging(client: FetchClient, options: LoggingOptions = {}): FetchClient {
+export function useLogging(
+  client: FetchClient,
+  options: LoggingOptions = {},
+): FetchClient {
   return client.use(createLoggingMiddleware(options));
 }

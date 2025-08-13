@@ -5,11 +5,14 @@
 /**
  * Handler function called when unauthorized (401) response is received.
  */
-export type UnauthorizedHandler = (response: Response, request: RequestInit & { url?: string }) => void | Promise<void>;
+export type UnauthorizedHandler = (
+  response: Response,
+  request: RequestInit & { url?: string },
+) => void | Promise<void>;
 
 /**
  * Authorization configuration options - optimized for "pit of success".
- * 
+ *
  * Smart defaults:
  * - Handles 401 Unauthorized responses
  * - Optionally handles 403 Forbidden responses
@@ -18,17 +21,17 @@ export type UnauthorizedHandler = (response: Response, request: RequestInit & { 
 export interface AuthorizationOptions {
   /**
    * Handler called when 401 Unauthorized response is received.
-   * 
+   *
    * @param response - The 401 response object
    * @param request - The original request that was unauthorized
-   * 
+   *
    * @example Redirect to login:
    * ```typescript
    * onUnauthorized: () => {
    *   window.location.href = '/login';
    * }
    * ```
-   * 
+   *
    * @example Clear token and reload:
    * ```typescript
    * onUnauthorized: () => {
@@ -42,7 +45,7 @@ export interface AuthorizationOptions {
   /**
    * Handler called when 403 Forbidden response is received.
    * Optional - if not provided, 403 responses are ignored.
-   * 
+   *
    * @param response - The 403 response object
    * @param request - The original request that was forbidden
    */
@@ -51,7 +54,7 @@ export interface AuthorizationOptions {
   /**
    * Skip authorization handling for requests matching these URL patterns
    * Useful for login/public endpoints where 401 is expected
-   * 
+   *
    * @example
    * ```typescript
    * skipPatterns: ['/login', '/register', /^\/public\//]

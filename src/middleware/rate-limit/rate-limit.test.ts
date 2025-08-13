@@ -16,8 +16,8 @@ beforeEach(() => {
   mockFetch.mockResolvedValue(
     new Response('{"success": true}', {
       status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    })
+      headers: { 'Content-Type': 'application/json' },
+    }),
   );
 });
 
@@ -31,19 +31,19 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 5,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       // Make 3 requests quickly
       const promises = [
         rateLimitedClient.get('https://api.example.com/test1'),
         rateLimitedClient.get('https://api.example.com/test2'),
-        rateLimitedClient.get('https://api.example.com/test3')
+        rateLimitedClient.get('https://api.example.com/test3'),
       ];
 
       const results = await Promise.all(promises);
 
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.ok).toBe(true);
       });
 
@@ -54,17 +54,21 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 2,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       // Make 3 requests - third should be rate limited
       await rateLimitedClient.get('https://api.example.com/test1');
       await rateLimitedClient.get('https://api.example.com/test2');
-      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test3');
+      const rateLimitedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test3',
+      );
 
       expect(rateLimitedResponse.status).toBe(429);
       expect(rateLimitedResponse.ok).toBe(false);
-      expect(rateLimitedResponse.error?.message).toContain('Rate limit exceeded');
+      expect(rateLimitedResponse.error?.message).toContain(
+        'Rate limit exceeded',
+      );
       expect(mockFetch).toHaveBeenCalledTimes(2); // Only first two went through
     });
 
@@ -72,7 +76,7 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 2,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       // Use up the quota
@@ -80,14 +84,18 @@ describe('Rate Limit Middleware', () => {
       await rateLimitedClient.get('https://api.example.com/test2');
 
       // This should be blocked
-      const blockedResponse = await rateLimitedClient.get('https://api.example.com/test3');
+      const blockedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test3',
+      );
       expect(blockedResponse.status).toBe(429);
 
       // Advance time past the window
       vi.advanceTimersByTime(1100);
 
       // This should now work
-      const allowedResponse = await rateLimitedClient.get('https://api.example.com/test4');
+      const allowedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test4',
+      );
       expect(allowedResponse.ok).toBe(true);
       expect(mockFetch).toHaveBeenCalledTimes(3); // 2 initial + 1 after reset
     });
@@ -98,13 +106,13 @@ describe('Rate Limit Middleware', () => {
 
       // Should allow many requests with generous defaults
       const promises = Array.from({ length: 50 }, (_, i) =>
-        rateLimitedClient.get(`https://api.example.com/test${i}`)
+        rateLimitedClient.get(`https://api.example.com/test${i}`),
       );
 
       const results = await Promise.all(promises);
-      
+
       // All should succeed with default limits
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result.ok).toBe(true);
       });
     });
@@ -117,7 +125,7 @@ describe('Rate Limit Middleware', () => {
         keyGenerator: (request) => {
           const url = new URL(request.url || '');
           return url.pathname; // Different limits per path
-        }
+        },
       });
 
       // Each endpoint should have its own bucket
@@ -127,8 +135,12 @@ describe('Rate Limit Middleware', () => {
       await rateLimitedClient.get('https://api.example.com/posts');
 
       // Both endpoints should be at their limits
-      const usersResponse = await rateLimitedClient.get('https://api.example.com/users');
-      const postsResponse = await rateLimitedClient.get('https://api.example.com/posts');
+      const usersResponse = await rateLimitedClient.get(
+        'https://api.example.com/users',
+      );
+      const postsResponse = await rateLimitedClient.get(
+        'https://api.example.com/posts',
+      );
 
       expect(usersResponse.status).toBe(429);
       expect(postsResponse.status).toBe(429);
@@ -140,16 +152,22 @@ describe('Rate Limit Middleware', () => {
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
-        skipPatterns: ['/health', /\/metrics/]
+        skipPatterns: ['/health', /\/metrics/],
       });
 
       // Use up the quota with a regular request
       await rateLimitedClient.get('https://api.example.com/users');
 
       // These should bypass rate limiting
-      const healthResponse = await rateLimitedClient.get('https://api.example.com/health');
-      const metricsResponse = await rateLimitedClient.get('https://api.example.com/metrics/cpu');
-      const regularResponse = await rateLimitedClient.get('https://api.example.com/posts');
+      const healthResponse = await rateLimitedClient.get(
+        'https://api.example.com/health',
+      );
+      const metricsResponse = await rateLimitedClient.get(
+        'https://api.example.com/metrics/cpu',
+      );
+      const regularResponse = await rateLimitedClient.get(
+        'https://api.example.com/posts',
+      );
 
       expect(healthResponse.ok).toBe(true);
       expect(metricsResponse.ok).toBe(true);
@@ -162,11 +180,13 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 1,
-        windowMs: 5000
+        windowMs: 5000,
       });
 
       await rateLimitedClient.get('https://api.example.com/test');
-      const blockedResponse = await rateLimitedClient.get('https://api.example.com/test');
+      const blockedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test',
+      );
 
       expect(blockedResponse.status).toBe(429);
       expect(blockedResponse.headers.get('Retry-After')).toBe('5');
@@ -176,7 +196,7 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 2,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       // Use one token
@@ -189,14 +209,18 @@ describe('Rate Limit Middleware', () => {
       await rateLimitedClient.get('https://api.example.com/test2');
 
       // This should be blocked (no tokens left)
-      const blockedResponse = await rateLimitedClient.get('https://api.example.com/test3');
+      const blockedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test3',
+      );
       expect(blockedResponse.status).toBe(429);
 
       // Wait for partial refill (first token should be available)
       vi.advanceTimersByTime(600); // Total: 1100ms
 
       // Should work now (first token refilled)
-      const allowedResponse = await rateLimitedClient.get('https://api.example.com/test4');
+      const allowedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test4',
+      );
       expect(allowedResponse.ok).toBe(true);
 
       expect(mockFetch).toHaveBeenCalledTimes(3);
@@ -210,23 +234,25 @@ describe('Rate Limit Middleware', () => {
         headers: new Headers({ 'X-Custom': 'rate-limited' }),
         url: 'https://api.example.com/test',
         ok: false,
-        error: { message: 'Custom rate limit error' }
+        error: { message: 'Custom rate limit error' },
       });
 
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
-        onRateLimitExceeded: customHandler
+        onRateLimitExceeded: customHandler,
       });
 
       await rateLimitedClient.get('https://api.example.com/test');
-      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test');
+      const rateLimitedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test',
+      );
 
       expect(customHandler).toHaveBeenCalledWith(
         expect.objectContaining({
-          url: 'https://api.example.com/test'
-        })
+          url: 'https://api.example.com/test',
+        }),
       );
 
       expect(rateLimitedResponse.status).toBe(503);
@@ -239,7 +265,7 @@ describe('Rate Limit Middleware', () => {
       const middleware = createRateLimitMiddleware({
         maxRequests: 3,
         windowMs: 2000,
-        keyGenerator: () => 'global'
+        keyGenerator: () => 'global',
       });
 
       const client = new FetchClient();
@@ -247,43 +273,56 @@ describe('Rate Limit Middleware', () => {
 
       // Should allow 3 requests
       for (let i = 0; i < 3; i++) {
-        const response = await rateLimitedClient.get(`https://api.example.com/test${i}`);
+        const response = await rateLimitedClient.get(
+          `https://api.example.com/test${i}`,
+        );
         expect(response.ok).toBe(true);
       }
 
       // Fourth should be blocked
-      const blockedResponse = await rateLimitedClient.get('https://api.example.com/test4');
+      const blockedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test4',
+      );
       expect(blockedResponse.status).toBe(429);
     });
 
     it('should work in middleware chain with other middleware', async () => {
-      const authMiddleware = vi.fn().mockImplementation(async (request, next) => {
-        request.headers = { ...request.headers, Authorization: 'Bearer token' };
-        return next(request);
-      });
+      const authMiddleware = vi
+        .fn()
+        .mockImplementation(async (request, next) => {
+          request.headers = {
+            ...request.headers,
+            Authorization: 'Bearer token',
+          };
+          return next(request);
+        });
 
       const rateLimitMiddleware = createRateLimitMiddleware({
         maxRequests: 2,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       const client = new FetchClient();
-      const chainedClient = client
-        .use(authMiddleware)
-        .use(rateLimitMiddleware);
+      const chainedClient = client.use(authMiddleware).use(rateLimitMiddleware);
 
       // First request should go through both middleware
-      const firstResponse = await chainedClient.get('https://api.example.com/test');
+      const firstResponse = await chainedClient.get(
+        'https://api.example.com/test',
+      );
       expect(firstResponse.ok).toBe(true);
       expect(authMiddleware).toHaveBeenCalledTimes(1);
 
       // Second should also work
-      const secondResponse = await chainedClient.get('https://api.example.com/test');
+      const secondResponse = await chainedClient.get(
+        'https://api.example.com/test',
+      );
       expect(secondResponse.ok).toBe(true);
       expect(authMiddleware).toHaveBeenCalledTimes(2);
 
       // Third should be rate limited (auth middleware shouldn't be called)
-      const thirdResponse = await chainedClient.get('https://api.example.com/test');
+      const thirdResponse = await chainedClient.get(
+        'https://api.example.com/test',
+      );
       expect(thirdResponse.status).toBe(429);
       expect(authMiddleware).toHaveBeenCalledTimes(2); // Not called for rate-limited request
     });
@@ -297,27 +336,36 @@ describe('Rate Limit Middleware', () => {
         .mockResolvedValue(new Response('{"success": true}', { status: 200 }));
 
       const client = new FetchClient();
-      
+
       const { useRetry } = await import('../retry');
-      
-      const rateLimitedRetryClient = useRateLimit(useRetry(client, {
-        maxRetries: 2,
-        delayMs: 100
-      }), {
-        maxRequests: 3,
-        windowMs: 1000
-      });
+
+      const rateLimitedRetryClient = useRateLimit(
+        useRetry(client, {
+          maxRetries: 2,
+          delayMs: 100,
+        }),
+        {
+          maxRequests: 3,
+          windowMs: 1000,
+        },
+      );
 
       // Should succeed after retry, consuming 2 rate limit tokens
-      const response = await rateLimitedRetryClient.get('https://api.example.com/test');
+      const response = await rateLimitedRetryClient.get(
+        'https://api.example.com/test',
+      );
       expect(response.ok).toBe(true);
 
       // Should still have one more token available
-      const secondResponse = await rateLimitedRetryClient.get('https://api.example.com/test2');
+      const secondResponse = await rateLimitedRetryClient.get(
+        'https://api.example.com/test2',
+      );
       expect(secondResponse.ok).toBe(true);
 
       // Fourth request should be rate limited
-      const rateLimitedResponse = await rateLimitedRetryClient.get('https://api.example.com/test3');
+      const rateLimitedResponse = await rateLimitedRetryClient.get(
+        'https://api.example.com/test3',
+      );
       expect(rateLimitedResponse.status).toBe(429);
     });
 
@@ -325,19 +373,19 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 3,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       // Make 5 concurrent requests
       const promises = Array.from({ length: 5 }, (_, i) =>
-        rateLimitedClient.get(`https://api.example.com/test${i}`)
+        rateLimitedClient.get(`https://api.example.com/test${i}`),
       );
 
       const responses = await Promise.all(promises);
 
       // 3 should succeed, 2 should be rate limited
-      const successful = responses.filter(r => r.ok);
-      const rateLimited = responses.filter(r => r.status === 429);
+      const successful = responses.filter((r) => r.ok);
+      const rateLimited = responses.filter((r) => r.status === 429);
 
       expect(successful).toHaveLength(3);
       expect(rateLimited).toHaveLength(2);
@@ -345,24 +393,32 @@ describe('Rate Limit Middleware', () => {
     });
 
     it('should handle errors in other middleware gracefully', async () => {
-      const faultyMiddleware = vi.fn().mockRejectedValue(new Error('Middleware error'));
+      const faultyMiddleware = vi
+        .fn()
+        .mockRejectedValue(new Error('Middleware error'));
 
       const client = new FetchClient();
-      const rateLimitedClient = client
-        .use(faultyMiddleware)
-        .use(createRateLimitMiddleware({
+      const rateLimitedClient = client.use(faultyMiddleware).use(
+        createRateLimitMiddleware({
           maxRequests: 2,
-          windowMs: 1000
-        }));
+          windowMs: 1000,
+        }),
+      );
 
       // Error should propagate, but rate limit should track the attempt
-      await expect(rateLimitedClient.get('https://api.example.com/test')).rejects.toThrow('Middleware error');
+      await expect(
+        rateLimitedClient.get('https://api.example.com/test'),
+      ).rejects.toThrow('Middleware error');
 
       // Second request should also error but not be rate limited
-      await expect(rateLimitedClient.get('https://api.example.com/test')).rejects.toThrow('Middleware error');
+      await expect(
+        rateLimitedClient.get('https://api.example.com/test'),
+      ).rejects.toThrow('Middleware error');
 
       // Third request should still error (not rate limited yet since errors don't consume tokens)
-      await expect(rateLimitedClient.get('https://api.example.com/test')).rejects.toThrow('Middleware error');
+      await expect(
+        rateLimitedClient.get('https://api.example.com/test'),
+      ).rejects.toThrow('Middleware error');
     });
   });
 
@@ -371,19 +427,21 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 10,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       // Make requests in rapid succession
       const promises = [];
       for (let i = 0; i < 15; i++) {
-        promises.push(rateLimitedClient.get(`https://api.example.com/test${i}`));
+        promises.push(
+          rateLimitedClient.get(`https://api.example.com/test${i}`),
+        );
       }
 
       const responses = await Promise.all(promises);
 
-      const successful = responses.filter(r => r.ok);
-      const rateLimited = responses.filter(r => r.status === 429);
+      const successful = responses.filter((r) => r.ok);
+      const rateLimited = responses.filter((r) => r.status === 429);
 
       expect(successful).toHaveLength(10);
       expect(rateLimited).toHaveLength(5);
@@ -397,7 +455,7 @@ describe('Rate Limit Middleware', () => {
         keyGenerator: (request) => {
           const url = new URL(request.url || '');
           return url.searchParams.get('userId') || 'anonymous';
-        }
+        },
       });
 
       // User 1 makes 2 requests
@@ -405,11 +463,15 @@ describe('Rate Limit Middleware', () => {
       await rateLimitedClient.get('https://api.example.com/api?userId=1');
 
       // User 2 should still be able to make requests
-      const user2Response = await rateLimitedClient.get('https://api.example.com/api?userId=2');
+      const user2Response = await rateLimitedClient.get(
+        'https://api.example.com/api?userId=2',
+      );
       expect(user2Response.ok).toBe(true);
 
       // User 1 should be rate limited
-      const user1Response = await rateLimitedClient.get('https://api.example.com/api?userId=1');
+      const user1Response = await rateLimitedClient.get(
+        'https://api.example.com/api?userId=1',
+      );
       expect(user1Response.status).toBe(429);
 
       expect(mockFetch).toHaveBeenCalledTimes(3);
@@ -419,7 +481,7 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 2,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       // Use up tokens
@@ -430,8 +492,12 @@ describe('Rate Limit Middleware', () => {
       vi.advanceTimersByTime(10000);
 
       // Should have full capacity restored
-      const response1 = await rateLimitedClient.get('https://api.example.com/test3');
-      const response2 = await rateLimitedClient.get('https://api.example.com/test4');
+      const response1 = await rateLimitedClient.get(
+        'https://api.example.com/test3',
+      );
+      const response2 = await rateLimitedClient.get(
+        'https://api.example.com/test4',
+      );
 
       expect(response1.ok).toBe(true);
       expect(response2.ok).toBe(true);

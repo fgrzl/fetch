@@ -5,11 +5,14 @@
 /**
  * Rate limiting algorithm types.
  */
-export type RateLimitAlgorithm = 'token-bucket' | 'sliding-window' | 'fixed-window';
+export type RateLimitAlgorithm =
+  | 'token-bucket'
+  | 'sliding-window'
+  | 'fixed-window';
 
 /**
  * Rate limiting configuration options - optimized for "pit of success".
- * 
+ *
  * Smart defaults:
  * - 60 requests per minute
  * - Token bucket algorithm
@@ -38,12 +41,12 @@ export interface RateLimitOptions {
   /**
    * Custom key generator for rate limiting scope
    * Default: single global rate limit for all requests
-   * 
+   *
    * @example Per-endpoint rate limiting:
    * ```typescript
    * keyGenerator: (request) => request.url || 'default'
    * ```
-   * 
+   *
    * @example Per-user rate limiting:
    * ```typescript
    * keyGenerator: (request) => {
@@ -56,7 +59,7 @@ export interface RateLimitOptions {
 
   /**
    * Skip rate limiting for requests matching these URL patterns
-   * 
+   *
    * @example
    * ```typescript
    * skipPatterns: ['/health', /^\/public\//]
@@ -67,11 +70,14 @@ export interface RateLimitOptions {
   /**
    * Custom handler called when rate limit is exceeded
    * If not provided, throws an error
-   * 
+   *
    * @param retryAfter - Milliseconds until next request is allowed
    * @param request - The rate-limited request
    */
-  onRateLimitExceeded?: (retryAfter: number, request: RequestInit & { url?: string }) => void | Promise<void>;
+  onRateLimitExceeded?: (
+    retryAfter: number,
+    request: RequestInit & { url?: string },
+  ) => void | Promise<void>;
 }
 
 // Ensure this file is treated as a module

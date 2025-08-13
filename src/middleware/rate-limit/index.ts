@@ -17,6 +17,9 @@ export { createRateLimitMiddleware } from './rate-limit';
  * - Bulk operations that need throttling
  * - Pay-per-request API cost management
  */
-export function useRateLimit(client: FetchClient, options: RateLimitOptions = {}): FetchClient {
+export function useRateLimit(
+  client: FetchClient,
+  options: RateLimitOptions = {},
+): FetchClient {
   return client.use(createRateLimitMiddleware(options));
 }
