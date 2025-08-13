@@ -23,7 +23,7 @@ const defaultRetryOptions: Required<RetryOptions> = {
 function calculateDelay(
   attempt: number,
   baseDelay: number,
-  strategy: 'fixed' | 'linear' | 'exponential'
+  strategy: 'fixed' | 'linear' | 'exponential',
 ): number {
   switch (strategy) {
     case 'fixed':
@@ -46,21 +46,21 @@ function sleep(ms: number): Promise<void> {
 
 /**
  * Creates a response middleware that implements retry logic.
- * 
+ *
  * Note: This implementation works as a response middleware but is limited
  * because Response objects are immutable and don't contain the original request.
- * For full retry capability, this would need to be implemented as a request 
+ * For full retry capability, this would need to be implemented as a request
  * middleware or as part of the core fetch client logic.
- * 
+ *
  * @param options - Retry configuration options
  * @returns Response middleware function
- * 
+ *
  * @example
  * ```typescript
  * // Default retry (3 attempts, exponential backoff, retry 5xx/429)
  * const retryMiddleware = createRetryMiddleware();
  * client.useResponseMiddleware(retryMiddleware);
- * 
+ *
  * // Custom retry configuration
  * const customRetry = createRetryMiddleware({
  *   maxRetries: 5,
@@ -71,9 +71,11 @@ function sleep(ms: number): Promise<void> {
  * });
  * ```
  */
-export function createRetryMiddleware(options: RetryOptions = {}): ResponseMiddleware {
+export function createRetryMiddleware(
+  options: RetryOptions = {},
+): ResponseMiddleware {
   const config = { ...defaultRetryOptions, ...options };
-  
+
   // Track retry attempts per request
   const retryAttempts = new WeakMap<Request, number>();
 
@@ -114,12 +116,12 @@ export function createRetryMiddleware(options: RetryOptions = {}): ResponseMiddl
     // Make the retry request with the original request configuration
     try {
       const retryResponse = await fetch(clonedRequest);
-      
+
       // If retry succeeds, clean up retry tracking
       if (retryResponse.ok) {
         retryAttempts.delete(request);
       }
-      
+
       return retryResponse;
     } catch {
       // If retry fails completely, clean up and return original response
@@ -131,14 +133,14 @@ export function createRetryMiddleware(options: RetryOptions = {}): ResponseMiddl
 
 /**
  * Creates retry middleware with exponential backoff strategy.
- * 
+ *
  * @param maxRetries - Maximum number of retry attempts (default: 3)
  * @param baseDelay - Base delay in milliseconds (default: 1000)
  * @returns Response middleware with exponential backoff
  */
 export function createExponentialRetry(
   maxRetries = 3,
-  baseDelay = 1000
+  baseDelay = 1000,
 ): ResponseMiddleware {
   return createRetryMiddleware({
     maxRetries,
@@ -149,7 +151,7 @@ export function createExponentialRetry(
 
 /**
  * Creates retry middleware for server errors only (5xx status codes).
- * 
+ *
  * @param maxRetries - Maximum number of retry attempts (default: 3)
  * @returns Response middleware that retries server errors
  */
@@ -188,9 +190,6 @@ export function createServerErrorRetry(maxRetries = 3): ResponseMiddleware {
  * });
  * ```
  */
-export function useRetry(
-  client: FetchClient,
-  config: RetryOptions = {}
-) {
+export function useRetry(client: FetchClient, config: RetryOptions = {}) {
   client.useResponseMiddleware(createRetryMiddleware(config));
 }

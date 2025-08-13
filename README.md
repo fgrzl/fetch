@@ -7,7 +7,7 @@ A lightweight, middleware-friendly fetch client for TypeScript projects.
 
 ## ✨ Features
 
-- **Pit of Success Design**: Simple defaults that just work, customizable when needed  
+- **Pit of Success Design**: Simple defaults that just work, customizable when needed
 - Simple API: `api.get('/api/user')`
 - Built-in CSRF token support (XSRF-TOKEN standard)
 - Automatic 401 redirect handling
@@ -47,7 +47,7 @@ const client = new FetchClient({
 
 // Smart defaults - just works
 useCSRF(client);
-useAuthorization(client);  
+useAuthorization(client);
 useRetry(client);
 
 // All requests now return FetchResponse<T>

@@ -275,12 +275,14 @@ describe('FetchClient', () => {
   });
 
   it('handles binary response content (blobs)', async () => {
-    const binaryData = new Blob(['binary data'], { type: 'application/octet-stream' });
+    const binaryData = new Blob(['binary data'], {
+      type: 'application/octet-stream',
+    });
     mockFetch.mockResolvedValueOnce(
       new Response(binaryData, {
         status: 200,
-        headers: { 'content-type': 'application/octet-stream' }
-      })
+        headers: { 'content-type': 'application/octet-stream' },
+      }),
     );
 
     const client = new FetchClient();
@@ -298,8 +300,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response(imageBlob, {
         status: 200,
-        headers: { 'content-type': 'image/png' }
-      })
+        headers: { 'content-type': 'image/png' },
+      }),
     );
 
     const client = new FetchClient();
@@ -317,8 +319,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response(videoBlob, {
         status: 200,
-        headers: { 'content-type': 'video/mp4' }
-      })
+        headers: { 'content-type': 'video/mp4' },
+      }),
     );
 
     const client = new FetchClient();
@@ -336,8 +338,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response(audioBlob, {
         status: 200,
-        headers: { 'content-type': 'audio/mp3' }
-      })
+        headers: { 'content-type': 'audio/mp3' },
+      }),
     );
 
     const client = new FetchClient();
@@ -354,8 +356,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response('plain text content', {
         status: 200,
-        headers: {} // No content-type
-      })
+        headers: {}, // No content-type
+      }),
     );
 
     const client = new FetchClient();
@@ -369,8 +371,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response('', {
         status: 200,
-        headers: {} // No content-type
-      })
+        headers: {}, // No content-type
+      }),
     );
 
     const client = new FetchClient();
@@ -415,8 +417,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response(null, {
         status: 204,
-        headers: {}
-      })
+        headers: {},
+      }),
     );
 
     const client = new FetchClient();
@@ -431,8 +433,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response('plain text content', {
         status: 200,
-        headers: {} // No content-type header
-      })
+        headers: {}, // No content-type header
+      }),
     );
 
     const client = new FetchClient();
@@ -447,8 +449,8 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(
       new Response('', {
         status: 200,
-        headers: {}
-      })
+        headers: {},
+      }),
     );
 
     const client = new FetchClient();
@@ -463,7 +465,9 @@ describe('FetchClient', () => {
 
     const client = new FetchClient();
     // Test with a URL that might cause issues in URL constructor
-    const result = await client.get<{ success: boolean }>('data:text/plain,hello');
+    const result = await client.get<{ success: boolean }>(
+      'data:text/plain,hello',
+    );
 
     expect(result.ok).toBe(true);
     expect((result.data as { success: boolean }).success).toBe(true);
@@ -474,7 +478,9 @@ describe('FetchClient', () => {
 
     const client = new FetchClient();
     // Test with URL that should fallback to absolute assumption
-    const result = await client.get<{ success: boolean }>(':::invalid:::url:::');
+    const result = await client.get<{ success: boolean }>(
+      ':::invalid:::url:::',
+    );
 
     expect(result.ok).toBe(true);
     expect((result.data as { success: boolean }).success).toBe(true);
@@ -484,14 +490,16 @@ describe('FetchClient', () => {
     mockFetch.mockResolvedValueOnce(createMockResponse({ success: true }));
 
     const client = new FetchClient();
-    
+
     // Mock globalThis.location to be undefined to trigger fallback paths
     const originalLocation = (globalThis as any).location;
     (globalThis as any).location = undefined;
-    
+
     try {
       // This should trigger the fallback URL construction logic but still succeed
-      const result = await client.get<{ success: boolean }>('http://example.com/test');
+      const result = await client.get<{ success: boolean }>(
+        'http://example.com/test',
+      );
       expect(result.ok).toBe(true);
       expect((result.data as { success: boolean }).success).toBe(true);
     } finally {
@@ -506,12 +514,12 @@ describe('FetchClient', () => {
       start(controller) {
         controller.enqueue(new TextEncoder().encode(''));
         controller.close();
-      }
+      },
     });
 
     const mockResponse = new Response(bodyStream, {
       status: 200,
-      headers: {}
+      headers: {},
     });
 
     mockFetch.mockResolvedValueOnce(mockResponse);
@@ -533,13 +541,15 @@ describe('Coverage Edge Cases', () => {
   it('tests default retry shouldRetry logic directly', async () => {
     // Test the default shouldRetry function behavior
     const middleware = createRetryMiddleware();
-    
+
     // Test server errors (5xx)
-    mockFetch.mockResolvedValueOnce(new Response('Server Error', { status: 500 }));
-    
+    mockFetch.mockResolvedValueOnce(
+      new Response('Server Error', { status: 500 }),
+    );
+
     const client = new FetchClient();
     client.useResponseMiddleware(middleware);
-    
+
     try {
       await client.get('/server-error');
     } catch (error) {
@@ -552,13 +562,15 @@ describe('Coverage Edge Cases', () => {
 
   it('tests rate limit retry logic', async () => {
     const middleware = createRetryMiddleware({ maxRetries: 1 });
-    
+
     // Test rate limiting (429)
-    mockFetch.mockResolvedValueOnce(new Response('Rate Limited', { status: 429 }));
-    
+    mockFetch.mockResolvedValueOnce(
+      new Response('Rate Limited', { status: 429 }),
+    );
+
     const client = new FetchClient();
     client.useResponseMiddleware(middleware);
-    
+
     try {
       await client.get('/rate-limited');
     } catch (error) {
@@ -570,17 +582,19 @@ describe('Coverage Edge Cases', () => {
 
   it('tests onRetry callback execution', async () => {
     const onRetryCallback = vi.fn();
-    const middleware = createRetryMiddleware({ 
-      maxRetries: 1, 
+    const middleware = createRetryMiddleware({
+      maxRetries: 1,
       onRetry: onRetryCallback,
-      delay: 10 // Short delay for testing
+      delay: 10, // Short delay for testing
     });
-    
-    mockFetch.mockResolvedValueOnce(new Response('Server Error', { status: 500 }));
-    
+
+    mockFetch.mockResolvedValueOnce(
+      new Response('Server Error', { status: 500 }),
+    );
+
     const client = new FetchClient();
     client.useResponseMiddleware(middleware);
-    
+
     try {
       await client.get('/server-error-callback');
     } catch (error) {

@@ -5,6 +5,7 @@ This document explains how to use and compose request/response middleware in the
 ## Built-in Middleware
 
 ### CSRF Protection
+
 Automatically includes CSRF tokens in requests:
 
 ```ts
@@ -12,19 +13,20 @@ import { useCSRF, createCSRFMiddleware } from "@fgrzl/fetch";
 
 // Simple usage
 useCSRF(client, {
-  cookieName: "XSRF-TOKEN",      // Industry standard
-  headerName: "X-XSRF-TOKEN",    // HTTP header convention
+  cookieName: "XSRF-TOKEN", // Industry standard
+  headerName: "X-XSRF-TOKEN", // HTTP header convention
 });
 
 // Advanced usage with factory
 const CSRFMiddleware = createCSRFMiddleware({
   cookieName: "XSRF-TOKEN",
-  headerName: "X-XSRF-TOKEN"
+  headerName: "X-XSRF-TOKEN",
 });
 client.useRequestMiddleware(CSRFMiddleware);
 ```
 
 ### Authorization Redirect
+
 Automatically redirects on 401 responses:
 
 ```ts
@@ -33,18 +35,19 @@ import { useAuthorization, createAuthorizationMiddleware } from "@fgrzl/fetch";
 // Simple usage
 useAuthorization(client, {
   url: "/login",
-  param: "redirect_uri"
+  param: "redirect_uri",
 });
 
 // Advanced usage with factory
 const authMiddleware = createAuthorizationMiddleware({
   url: "/login",
-  param: "redirect_uri"
+  param: "redirect_uri",
 });
 client.useResponseMiddleware(authMiddleware);
 ```
 
 ### Retry Middleware
+
 Retries failed requests with configurable strategies:
 
 ```ts
@@ -54,15 +57,17 @@ import { createRetryMiddleware } from "@fgrzl/fetch";
 client.useResponseMiddleware(createRetryMiddleware());
 
 // Custom retry configuration
-client.useResponseMiddleware(createRetryMiddleware({
-  maxRetries: 5,
-  delay: 500,
-  strategy: 'linear', // 'fixed', 'linear', or 'exponential'
-  shouldRetry: (response) => response.status >= 400,
-  onRetry: (response, attempt) => {
-    console.log(`Retry attempt ${attempt} for ${response.status}`);
-  }
-}));
+client.useResponseMiddleware(
+  createRetryMiddleware({
+    maxRetries: 5,
+    delay: 500,
+    strategy: "linear", // 'fixed', 'linear', or 'exponential'
+    shouldRetry: (response) => response.status >= 400,
+    onRetry: (response, attempt) => {
+      console.log(`Retry attempt ${attempt} for ${response.status}`);
+    },
+  }),
+);
 
 // Helper functions
 client.useResponseMiddleware(createExponentialRetry(3, 1000));
@@ -82,9 +87,9 @@ client.useRequestMiddleware(async (req, url) => {
   // Add authentication header
   req.headers = {
     ...req.headers,
-    'Authorization': `Bearer ${getToken()}`
+    Authorization: `Bearer ${getToken()}`,
   };
-  
+
   return [req, url];
 });
 ```
@@ -97,7 +102,7 @@ Response middleware runs after the HTTP response is received. You can process or
 client.useResponseMiddleware(async (response) => {
   // Log all responses
   console.log(`${response.status} ${response.url}`);
-  
+
   // Return modified response
   return response;
 });
@@ -106,6 +111,7 @@ client.useResponseMiddleware(async (response) => {
 ## Execution Order
 
 Middlewares execute in the order they are registered:
+
 1. Request middlewares (in registration order)
 2. HTTP request
 3. Response middlewares (in registration order)
@@ -113,6 +119,7 @@ Middlewares execute in the order they are registered:
 ## Advanced Patterns
 
 ### Conditional Middleware
+
 ```ts
 client.useResponseMiddleware(async (response) => {
   if (response.status >= 400) {
@@ -124,6 +131,7 @@ client.useResponseMiddleware(async (response) => {
 ```
 
 ### Middleware Composition
+
 ```ts
 function createAuthMiddleware(token: string) {
   return async (req: RequestInit, url: string) => {

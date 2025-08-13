@@ -3,7 +3,7 @@
  *
  * This module exports everything users need in order of discoverability:
  * 1. Pre-configured client (most users start here)
- * 2. Core classes for custom configurations  
+ * 2. Core classes for custom configurations
  * 3. Middleware functions for common patterns
  * 4. Types for TypeScript users
  */
@@ -16,7 +16,7 @@ import { useCSRF, useAuthorization } from './middleware';
  *
  * This client is ready to use out of the box with:
  * - CSRF protection using standard XSRF-TOKEN/X-XSRF-TOKEN
- * - Automatic redirect to '/login' on 401 Unauthorized responses  
+ * - Automatic redirect to '/login' on 401 Unauthorized responses
  * - Same-origin credentials policy for cookie handling
  *
  * @example

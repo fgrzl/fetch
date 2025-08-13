@@ -8,7 +8,9 @@ import type { CSRFOptions } from './types';
  * @param config - CSRF configuration options
  * @returns Request middleware function
  */
-export function createCSRFMiddleware(config: CSRFOptions = {}): RequestMiddleware {
+export function createCSRFMiddleware(
+  config: CSRFOptions = {},
+): RequestMiddleware {
   return async (req, url) => {
     const cookieName = config.cookieName || 'XSRF-TOKEN';
     const headerName = config.headerName || 'X-XSRF-TOKEN';

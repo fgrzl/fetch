@@ -1,9 +1,9 @@
 /**
  * @fileoverview Custom error classes - "Pit of Success" pattern.
- * 
+ *
  * 🎯 LEVEL 1: HttpError, NetworkError - Most common error types you'll catch
  * 🎯 LEVEL 2: FetchError - Base error class for advanced error handling
- * 
+ *
  * @example
  * ```typescript
  * try {

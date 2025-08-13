@@ -7,11 +7,12 @@ This document explains the "pit of success" export structure that guides users t
 The `src/index.ts` follows a carefully designed "pit of success" pattern:
 
 ### 🎯 Level 1: Pre-configured Client (80% of users)
+
 ```typescript
-import api from '@fgrzl/fetch';
+import api from "@fgrzl/fetch";
 
 // Just works - no configuration needed!
-const users = await api.get('/api/users');
+const users = await api.get("/api/users");
 ```
 
 **What:** Default export with sensible defaults (CSRF + auth redirect)  
@@ -19,8 +20,9 @@ const users = await api.get('/api/users');
 **Success:** Zero configuration, maximum functionality
 
 ### 🎯 Level 2: Custom Client Creation (15% of users)
+
 ```typescript
-import { FetchClient, useCSRF, useAuthorization, useRetry } from '@fgrzl/fetch';
+import { FetchClient, useCSRF, useAuthorization, useRetry } from "@fgrzl/fetch";
 
 const client = new FetchClient(config);
 useCSRF(client);
@@ -31,8 +33,9 @@ useCSRF(client);
 **Success:** Clean, consistent API across all middleware
 
 ### 🎯 Level 3: TypeScript Integration (TypeScript users)
+
 ```typescript
-import type { FetchClientConfig, CSRFOptions } from '@fgrzl/fetch';
+import type { FetchClientConfig, CSRFOptions } from "@fgrzl/fetch";
 ```
 
 **What:** Type definitions for configuration objects  
@@ -40,8 +43,9 @@ import type { FetchClientConfig, CSRFOptions } from '@fgrzl/fetch';
 **Success:** Type safety without learning complex APIs
 
 ### 🎯 Level 4: Error Handling (As needed)
+
 ```typescript
-import { HttpError, NetworkError } from '@fgrzl/fetch';
+import { HttpError, NetworkError } from "@fgrzl/fetch";
 ```
 
 **What:** Error classes for sophisticated error handling  

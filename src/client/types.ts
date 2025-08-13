@@ -24,7 +24,10 @@ export type RequestMiddleware = (
  * @param res - The response object
  * @returns A promise that resolves to the modified response
  */
-export type ResponseMiddleware = (req: Request, res: Response) => Promise<Response>;
+export type ResponseMiddleware = (
+  req: Request,
+  res: Response,
+) => Promise<Response>;
 
 /**
  * Typed response wrapper that includes response metadata.

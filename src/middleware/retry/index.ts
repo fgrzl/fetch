@@ -22,8 +22,8 @@ export { useRetry } from './retry-middleware';
 export type { RetryOptions } from './types';
 
 // 🎯 LEVEL 3: Factory functions for advanced use cases
-export { 
+export {
   createRetryMiddleware,
   createExponentialRetry,
-  createServerErrorRetry
+  createServerErrorRetry,
 } from './retry-middleware';

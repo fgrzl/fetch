@@ -126,9 +126,10 @@ export class FetchClient {
       let absoluteUrl: string;
       try {
         // Try to create URL with global base if available
-        const base = typeof globalThis !== 'undefined' && globalThis.location 
-          ? globalThis.location.href 
-          : 'http://localhost/';
+        const base =
+          typeof globalThis !== 'undefined' && globalThis.location
+            ? globalThis.location.href
+            : 'http://localhost/';
         absoluteUrl = new URL(url, base).href;
       } catch {
         // Fallback to assuming it's already absolute or use default base
