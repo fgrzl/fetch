@@ -3,7 +3,7 @@
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
-import type { AuthorizationOptions, RedirectAuthorizationConfig } from './types';
+import type { AuthorizationOptions, RedirectAuthorizationConfig, UnauthorizedHandler } from './types';
 
 /**
  * Creates a smart default redirect handler for unauthorized responses.
@@ -29,6 +29,21 @@ function createRedirectHandler(config: RedirectAuthorizationConfig = {}) {
       window.location.href = redirectUrl;
     }
   };
+}
+
+/**
+ * Selects the appropriate unauthorized handler based on provided options.
+ * Priority: explicit onUnauthorized > redirectConfig > smart default
+ */
+function selectUnauthorizedHandler(
+  providedHandler?: UnauthorizedHandler,
+  redirectConfig?: RedirectAuthorizationConfig
+): UnauthorizedHandler {
+  if (providedHandler) {
+    return providedHandler;
+  }
+  
+  return createRedirectHandler(redirectConfig);
 }
 
 /**
@@ -103,10 +118,7 @@ export function createAuthorizationMiddleware(
     statusCodes = [401],
   } = options;
 
-  // Use smart default if no explicit handler is provided
-  // Priority: explicit onUnauthorized > redirectConfig > smart default
-  const onUnauthorized = providedOnUnauthorized ?? 
-    (redirectConfig ? createRedirectHandler(redirectConfig) : createRedirectHandler());
+  const onUnauthorized = selectUnauthorizedHandler(providedOnUnauthorized, redirectConfig);
 
   return async (request, next) => {
     const url = request.url || '';
