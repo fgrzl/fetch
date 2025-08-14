@@ -76,6 +76,86 @@ if (response.ok) {
 }
 ```
 
+## Working with APIs
+
+### Setting Up a Base URL
+
+When working with a specific API, set a base URL to avoid repeating the domain:
+
+```typescript
+import { FetchClient } from "@fgrzl/fetch";
+
+// Create a client for your API
+const apiClient = new FetchClient({
+  baseUrl: "https://api.example.com",
+});
+
+// Now all relative URLs are prefixed automatically
+const users = await apiClient.get("/users"); // → GET https://api.example.com/users
+const posts = await apiClient.get("/posts?page=1"); // → GET https://api.example.com/posts?page=1
+
+// Create new resources
+const newPost = await apiClient.post("/posts", {
+  title: "Hello World",
+  content: "My first post!",
+}); // → POST https://api.example.com/posts
+```
+
+### Multiple APIs
+
+Create different clients for different services:
+
+```typescript
+const userAPI = new FetchClient({ baseUrl: "https://users.api.com" });
+const paymentAPI = new FetchClient({ baseUrl: "https://payments.api.com" });
+
+// Each client manages its own base URL
+const user = await userAPI.get("/profile"); // → users.api.com
+const invoice = await paymentAPI.get("/invoices/123"); // → payments.api.com
+```
+
+### Dynamic Base URL Updates
+
+Need to change the base URL after creating a client? Use `setBaseUrl()`:
+
+```typescript
+import { FetchClient, useProductionStack } from "@fgrzl/fetch";
+
+// Start with a client
+const client = new FetchClient();
+
+// Set base URL dynamically
+client.setBaseUrl("https://api.example.com");
+await client.get("/users"); // → GET https://api.example.com/users
+
+// Update to a different environment
+client.setBaseUrl("https://staging-api.example.com");
+await client.get("/users"); // → GET https://staging-api.example.com/users
+
+// Works great with middleware stacks
+const prodClient = useProductionStack(new FetchClient(), {
+  auth: { tokenProvider: () => getAuthToken() },
+  retry: { maxRetries: 3 },
+  logging: { level: "info" },
+}).setBaseUrl(process.env.API_BASE_URL!); // Method chaining!
+
+// Now you can use it
+await prodClient.get("/users");
+```
+
+### Environment-Based Setup
+
+Perfect for different deployment environments:
+
+```typescript
+// Environment-aware setup
+const client = useProductionStack(new FetchClient()).setBaseUrl(
+  process.env.NODE_ENV === "production"
+    ? "https://api.mycompany.com"
+    : "http://localhost:3000/api",
+);
+```
+
 ## What's Next?
 
 - **Need authentication?** → [Configuration Guide](./configuration.md)

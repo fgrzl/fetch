@@ -290,6 +290,67 @@ export default defineConfig({
 });
 ```
 
+### Base URL Configuration Issues
+
+**Problem:** Requests going to wrong URLs or base URL not working
+
+**Symptoms:**
+
+- 404 errors when base URL is configured
+- Relative URLs not being resolved correctly
+- Absolute URLs being modified unexpectedly
+
+**Solutions:**
+
+1. **Check base URL format:**
+
+```typescript
+// ✅ Correct formats
+const client1 = new FetchClient({ baseUrl: "https://api.example.com" });
+const client2 = new FetchClient({ baseUrl: "https://api.example.com/" }); // Trailing slash OK
+
+// ❌ Invalid formats
+const badClient = new FetchClient({ baseUrl: "api.example.com" }); // Missing protocol
+```
+
+2. **Verify URL resolution:**
+
+```typescript
+const client = new FetchClient({ baseUrl: "https://api.example.com" });
+
+// These should work:
+await client.get("/users"); // → https://api.example.com/users
+await client.get("users"); // → https://api.example.com/users
+await client.get("https://other-api.com/data"); // → https://other-api.com/data (absolute)
+
+// Debug URL resolution
+console.log("Making request to:", "/users");
+const response = await client.get("/users");
+```
+
+3. **Environment-specific debugging:**
+
+```typescript
+const getBaseUrl = () => {
+  const baseUrl = process.env.API_BASE_URL || "http://localhost:3001";
+  console.log("Using base URL:", baseUrl);
+  return baseUrl;
+};
+
+const client = new FetchClient({ baseUrl: getBaseUrl() });
+```
+
+4. **Check for conflicting absolute URLs:**
+
+```typescript
+// If you expect base URL to be used but it's not:
+// ❌ This will NOT use base URL (absolute URL)
+await client.get("http://localhost:3000/api/users");
+
+// ✅ This WILL use base URL (relative URL)
+await client.get("/api/users");
+```
+
 ## Middleware Issues
 
 ### Middleware Order Problems

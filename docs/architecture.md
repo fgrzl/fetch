@@ -94,6 +94,102 @@ For common scenarios, we provide pre-configured stacks:
 - **Development Stack**: Auth + Retry + Verbose Logging
 - **Basic Stack**: Auth + Retry
 
+## Service Organization
+
+### Base URL Strategy
+
+Modern applications often work with multiple APIs and services. Base URLs provide clean service boundaries:
+
+```typescript
+// Service-specific clients
+const userService = new FetchClient({
+  baseUrl: "https://users.api.myapp.com",
+});
+
+const orderService = new FetchClient({
+  baseUrl: "https://orders.api.myapp.com",
+});
+
+const paymentService = new FetchClient({
+  baseUrl: "https://payments.api.myapp.com",
+});
+
+// Each service has its own error handling and middleware
+const authUserService = useAuthentication(userService, userAuthConfig);
+const retryOrderService = useRetry(orderService, orderRetryConfig);
+```
+
+### Environment Configuration
+
+Base URLs enable clean environment management:
+
+```typescript
+const createApiClient = (environment: string) => {
+  const baseUrls = {
+    development: "http://localhost:3001",
+    staging: "https://api-staging.myapp.com",
+    production: "https://api.myapp.com",
+  };
+
+  return new FetchClient({
+    baseUrl: baseUrls[environment] || baseUrls.development,
+  });
+};
+
+// Same code works across all environments
+const apiClient = createApiClient(process.env.NODE_ENV);
+```
+
+### API Versioning Architecture
+
+Use base URLs to manage API versions cleanly:
+
+```typescript
+// Version-specific clients
+const apiV1 = new FetchClient({
+  baseUrl: "https://api.myapp.com/v1",
+});
+
+const apiV2 = new FetchClient({
+  baseUrl: "https://api.myapp.com/v2",
+});
+
+// Gradual migration strategy
+const getUsersV1 = (id: string) => apiV1.get(`/users/${id}`);
+const getUsersV2 = (id: string) => apiV2.get(`/users/${id}`);
+
+// Feature flagged migration
+const getUsers = featureFlags.useV2Api ? getUsersV2 : getUsersV1;
+```
+
+### Microservices Integration
+
+Each microservice gets its own configured client:
+
+```typescript
+// services/api.ts
+export const authService = useAuthentication(
+  new FetchClient({ baseUrl: config.AUTH_SERVICE_URL }),
+  { tokenProvider: getAuthToken },
+);
+
+export const userService = useProductionStack(
+  new FetchClient({ baseUrl: config.USER_SERVICE_URL }),
+  productionConfig,
+);
+
+export const notificationService = useRetry(
+  new FetchClient({ baseUrl: config.NOTIFICATION_SERVICE_URL }),
+  { maxRetries: 5, delay: 1000 },
+);
+
+// Usage throughout the application
+import { userService, notificationService } from "./services/api";
+
+const user = await userService.get(`/users/${userId}`);
+await notificationService.post("/send", { userId, message });
+```
+
 ## Error Handling Strategy
 
 ### Response-Based Error Handling
