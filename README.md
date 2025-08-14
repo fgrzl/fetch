@@ -3,8 +3,9 @@
 
 # @fgrzl/fetch
 
-A lightweight, middleware-friendly fetch client for TypeScript projects.
+A production-ready HTTP client for TypeScript that **just works** out of the box.
 
+<<<<<<< HEAD
 ## ✨ Features
 
 - **Pit of Success Design**: Simple defaults that just work, customizable when needed
@@ -16,35 +17,40 @@ A lightweight, middleware-friendly fetch client for TypeScript projects.
 - TypeScript-first, small and dependency-free
 
 ## 📦 Installation
+=======
+## 🚀 Get Started in 60 Seconds
+>>>>>>> origin/develop
 
+**Install**
 ```bash
 npm install @fgrzl/fetch
 ```
 
-## 🚀 Quick Start
-
-**Level 1: Just works with defaults**
-
+**Use immediately** - no configuration required:
 ```ts
 import api from "@fgrzl/fetch";
 
-const response = await api.get("/api/user");
-if (response.ok) {
-  console.log(response.data); // Your typed data
+// It just works! 🎉
+const users = await api.get("/api/users");
+const newUser = await api.post("/api/users", { name: "John" });
+
+// Built-in error handling
+if (users.ok) {
+  console.log("Users:", users.data);
 } else {
-  console.error(`Error ${response.status}:`, response.error?.message);
+  console.error("Error:", users.error?.message);
 }
 ```
 
-**Level 2: Custom configuration when needed**
-
+**Need custom config?** Add it when you need it:
 ```ts
-import { FetchClient, useCSRF, useAuthorization, useRetry } from "@fgrzl/fetch";
+import { FetchClient, useAuthentication } from "@fgrzl/fetch";
 
-const client = new FetchClient({
-  credentials: "same-origin",
+const authClient = useAuthentication(new FetchClient(), {
+  tokenProvider: () => localStorage.getItem("token") || ""
 });
 
+<<<<<<< HEAD
 // Smart defaults - just works
 useCSRF(client);
 useAuthorization(client); // Redirects to /login with return URL
@@ -61,18 +67,40 @@ if (userResponse.ok) {
 } else {
   console.error(`Failed with status ${userResponse.status}`);
 }
+=======
+const profile = await authClient.get<UserProfile>("/api/profile");
+>>>>>>> origin/develop
 ```
 
----
+## ✨ What You Get Out of the Box
 
-## Documentation
+- **Zero Configuration** - Works immediately with smart defaults
+- **CSRF Protection** - Automatic XSRF-TOKEN handling
+- **Retry Logic** - Exponential backoff for failed requests  
+- **Request Logging** - Built-in observability
+- **TypeScript First** - Full type safety and IntelliSense
+- **Middleware System** - Composable and extensible
 
-- [Project Overview](docs/overview.md)
-- [Middleware](docs/middleware.md)
-- [Error Handling](docs/errors.md)
-- [Testing](docs/testing.md)
+## 📚 Documentation
 
----
+Ready to go deeper? Check out our comprehensive guides:
+
+- **[Getting Started](docs/getting-started.md)** - Installation and basic usage
+- **[Configuration](docs/configuration.md)** - Advanced client setup
+- **[Middleware](docs/middleware.md)** - Authentication, caching, retries
+- **[Error Handling](docs/error-handling.md)** - Robust error management
+- **[TypeScript Guide](docs/typescript.md)** - Type-safe API calls
+- **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
+
+## 🏗️ Architecture
+
+Built on a **"pit of success"** philosophy where:
+- Simple things are simple (`api.get("/path")`)
+- Complex things are possible (custom middleware stacks)
+- TypeScript guides you to correct usage
+- Smart defaults handle 80% of use cases
+
+[Learn more about our architecture →](docs/architecture.md)
 
 ## License
 
