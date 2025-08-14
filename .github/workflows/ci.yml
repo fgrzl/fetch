@@ -31,7 +31,10 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Lint
+      - name: Run Check Format
+        run: npm run lint:check
+
+      - name: Run Lint
         run: npm run lint
 
       - name: Test
