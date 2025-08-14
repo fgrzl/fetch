@@ -3,12 +3,15 @@
 ## [1.1.0-alpha.12] - 2025-08-14
 
 ### Added
+
 - New features and enhancements
 
 ### Changed
+
 - Updated dependencies and improvements
 
 ### Fixed
+
 - Bug fixes and patches
 
 All notable changes to this project will be documented in this file.
