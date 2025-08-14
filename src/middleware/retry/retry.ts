@@ -101,39 +101,42 @@ export function createRetryMiddleware(
     let attempt = 0;
 
     while (attempt <= maxRetries) {
-      attempt++;
-
       try {
         // Execute the request through the middleware chain
         const response = await next(request);
 
-        // If successful or shouldn't retry, return the response
-        if (
-          response.ok ||
-          !shouldRetry({ status: response.status, ok: response.ok }, attempt) ||
-          attempt > maxRetries
-        ) {
+        // If successful, return immediately
+        if (response.ok) {
           return response;
         }
 
-        // Store the failed response
+        // Check if we should retry this response with current attempt count
+        if (!shouldRetry({ status: response.status, ok: response.ok }, attempt + 1)) {
+          return response;
+        }
+
+        // If we've reached max retries, return the response
+        if (attempt >= maxRetries) {
+          return response;
+        }
+
+        // Store the failed response and increment attempt counter
         lastResponse = response;
+        attempt++;
 
         // Calculate delay for next attempt
-        if (attempt <= maxRetries) {
-          const retryDelay = calculateDelay(attempt, delay, backoff, maxDelay);
+        const retryDelay = calculateDelay(attempt, delay, backoff, maxDelay);
 
-          // Call onRetry callback if provided
-          if (onRetry) {
-            onRetry(attempt, retryDelay, {
-              status: response.status,
-              statusText: response.statusText,
-            });
-          }
-
-          // Wait before retrying
-          await sleep(retryDelay);
+        // Call onRetry callback if provided
+        if (onRetry) {
+          onRetry(attempt, retryDelay, {
+            status: response.status,
+            statusText: response.statusText,
+          });
         }
+
+        // Wait before retrying
+        await sleep(retryDelay);
       } catch (error) {
         // Handle unexpected errors - treat as network error (status 0)
         const errorResponse: FetchResponse<unknown> = {
@@ -149,26 +152,30 @@ export function createRetryMiddleware(
           },
         };
 
-        // If shouldn't retry or max attempts reached, return error
-        if (!shouldRetry(errorResponse, attempt) || attempt > maxRetries) {
+        // If shouldn't retry, return error immediately
+        if (!shouldRetry(errorResponse, attempt + 1)) {
+          return errorResponse;
+        }
+
+        // If we've reached max retries, return the error
+        if (attempt >= maxRetries) {
           return errorResponse;
         }
 
         lastResponse = errorResponse;
+        attempt++;
 
         // Calculate delay for next attempt
-        if (attempt <= maxRetries) {
-          const retryDelay = calculateDelay(attempt, delay, backoff, maxDelay);
+        const retryDelay = calculateDelay(attempt, delay, backoff, maxDelay);
 
-          if (onRetry) {
-            onRetry(attempt, retryDelay, {
-              status: errorResponse.status,
-              statusText: errorResponse.statusText,
-            });
-          }
-
-          await sleep(retryDelay);
+        if (onRetry) {
+          onRetry(attempt, retryDelay, {
+            status: errorResponse.status,
+            statusText: errorResponse.statusText,
+          });
         }
+
+        await sleep(retryDelay);
       }
     }
 

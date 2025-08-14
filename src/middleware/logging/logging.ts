@@ -9,13 +9,13 @@ import type { LoggingOptions, Logger, LogEntry, LogLevel } from './types';
  * Default console logger implementation.
  */
 const defaultLogger: Logger = {
-  // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console -- allow console.debug in logger implementation
   debug: (message: string, data?: unknown) => console.debug(message, data),
-  // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console -- allow console.info in logger implementation
   info: (message: string, data?: unknown) => console.info(message, data),
-  // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console -- allow console.warn in logger implementation
   warn: (message: string, data?: unknown) => console.warn(message, data),
-  // eslint-disable-next-line no-console
+  // eslint-disable-next-line no-console -- allow console.error in logger implementation
   error: (message: string, data?: unknown) => console.error(message, data),
 };
 

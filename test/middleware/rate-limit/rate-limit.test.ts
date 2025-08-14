@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
+import type { FetchResponse } from '../../../src/client/types';
 import { useRateLimit, createRateLimitMiddleware } from '../../../src/middleware/rate-limit/index';
 
 const mockFetch = vi.fn();
@@ -459,7 +460,7 @@ describe('Rate Limit Middleware', () => {
       });
 
       // Make requests in rapid succession
-      const promises: Array<Promise<any>> = [];
+      const promises: Array<Promise<FetchResponse<unknown>>> = [];
       for (let i = 0; i < 15; i++) {
         promises.push(
           rateLimitedClient.get(`https://api.example.com/test${i}`),
@@ -468,8 +469,8 @@ describe('Rate Limit Middleware', () => {
 
       const responses = await Promise.all(promises);
 
-      const successful = responses.filter((r: any) => r.ok);
-      const rateLimited = responses.filter((r: any) => r.status === 429);
+      const successful = responses.filter((r) => r.ok);
+      const rateLimited = responses.filter((r) => r.status === 429);
 
       expect(successful).toHaveLength(10);
       expect(rateLimited).toHaveLength(5);
