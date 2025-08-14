@@ -3,7 +3,11 @@
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
-import type { AuthorizationOptions, RedirectAuthorizationConfig, UnauthorizedHandler } from './types';
+import type {
+  AuthorizationOptions,
+  RedirectAuthorizationConfig,
+  UnauthorizedHandler,
+} from './types';
 
 /**
  * Creates a smart default redirect handler for unauthorized responses.
@@ -18,13 +22,13 @@ function createRedirectHandler(config: RedirectAuthorizationConfig = {}) {
 
   return () => {
     let redirectUrl = redirectPath;
-    
+
     if (includeReturnUrl && typeof window !== 'undefined') {
       const currentUrl = encodeURIComponent(window.location.href);
       const separator = redirectPath.includes('?') ? '&' : '?';
       redirectUrl = `${redirectPath}${separator}${returnUrlParam}=${currentUrl}`;
     }
-    
+
     if (typeof window !== 'undefined') {
       window.location.href = redirectUrl;
     }
@@ -37,12 +41,12 @@ function createRedirectHandler(config: RedirectAuthorizationConfig = {}) {
  */
 function selectUnauthorizedHandler(
   providedHandler?: UnauthorizedHandler,
-  redirectConfig?: RedirectAuthorizationConfig
+  redirectConfig?: RedirectAuthorizationConfig,
 ): UnauthorizedHandler {
   if (providedHandler) {
     return providedHandler;
   }
-  
+
   return createRedirectHandler(redirectConfig);
 }
 
@@ -85,7 +89,7 @@ function shouldSkipAuth(
  * @example Custom redirect configuration:
  * ```typescript
  * const authzClient = useAuthorization(client, {
- *   redirectConfig: { 
+ *   redirectConfig: {
  *     redirectPath: '/signin',
  *     returnUrlParam: 'redirect_to'
  *   }
@@ -118,7 +122,10 @@ export function createAuthorizationMiddleware(
     statusCodes = [401],
   } = options;
 
-  const onUnauthorized = selectUnauthorizedHandler(providedOnUnauthorized, redirectConfig);
+  const onUnauthorized = selectUnauthorizedHandler(
+    providedOnUnauthorized,
+    redirectConfig,
+  );
 
   return async (request, next) => {
     const url = request.url || '';

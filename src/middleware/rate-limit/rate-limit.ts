@@ -88,7 +88,10 @@ export function createRateLimitMiddleware(
 
     if (!result.allowed) {
       if (onRateLimitExceeded) {
-        const customResponse = await onRateLimitExceeded(result.retryAfter || 0, request);
+        const customResponse = await onRateLimitExceeded(
+          result.retryAfter || 0,
+          request,
+        );
         // If the custom handler returns a response, use it
         if (customResponse) {
           return customResponse;

@@ -70,6 +70,7 @@ Request  →  [Middleware 1]  →  [Middleware 2]  →  HTTP  →  [Middleware 2
 ```
 
 Each middleware can:
+
 - **Transform requests** before they're sent
 - **Process responses** after they're received
 - **Handle errors** at any stage
@@ -80,11 +81,7 @@ Each middleware can:
 Middleware is composable and non-blocking:
 
 ```typescript
-const client = useAuthentication(
-  useRetry(
-    useLogging(new FetchClient())
-  )
-);
+const client = useAuthentication(useRetry(useLogging(new FetchClient())));
 ```
 
 Each middleware returns a new enhanced client, enabling clean composition.
@@ -94,7 +91,7 @@ Each middleware returns a new enhanced client, enabling clean composition.
 For common scenarios, we provide pre-configured stacks:
 
 - **Production Stack**: Auth + Retry + Cache + Logging + Rate Limiting
-- **Development Stack**: Auth + Retry + Verbose Logging  
+- **Development Stack**: Auth + Retry + Verbose Logging
 - **Basic Stack**: Auth + Retry
 
 ## Error Handling Strategy
@@ -116,6 +113,7 @@ if (response.ok) {
 ```
 
 **Benefits:**
+
 - No try/catch required for HTTP errors
 - Consistent error handling across the application
 - TypeScript can ensure error handling paths are covered
@@ -130,18 +128,21 @@ Network errors (connection failed, timeout) throw exceptions since they represen
 // Base class for all fetch-related errors
 class FetchError extends Error {}
 
-// HTTP error responses (4xx, 5xx)  
+// HTTP error responses (4xx, 5xx)
 class HttpError extends FetchError {
   constructor(
     public status: number,
     public statusText: string,
-    public response: Response
+    public response: Response,
   ) {}
 }
 
 // Network failures
 class NetworkError extends FetchError {
-  constructor(message: string, public url: string) {}
+  constructor(
+    message: string,
+    public url: string,
+  ) {}
 }
 ```
 
@@ -177,7 +178,7 @@ Middleware functions are fully typed to prevent composition errors:
 ```typescript
 // This would be a TypeScript error:
 const invalid = useAuthentication(
-  useCache(client, { ttl: "5 minutes" }) // ❌ ttl must be number
+  useCache(client, { ttl: "5 minutes" }), // ❌ ttl must be number
 );
 ```
 
@@ -216,9 +217,9 @@ describe("Authentication Middleware", () => {
   it("adds authorization header", async () => {
     const mockClient = new FetchClient();
     const authClient = useAuthentication(mockClient, {
-      tokenProvider: () => "test-token"
+      tokenProvider: () => "test-token",
     });
-    
+
     // Test that requests include the header
   });
 });
@@ -256,8 +257,9 @@ Create middleware that integrates seamlessly:
 function createMetricsMiddleware(metricsClient: MetricsClient) {
   return (client: FetchClient) => {
     // Add request timing, success/error rates, etc.
-    return client.useRequestMiddleware(/* ... */)
-                .useResponseMiddleware(/* ... */);
+    return client
+      .useRequestMiddleware(/* ... */)
+      .useResponseMiddleware(/* ... */);
   };
 }
 
@@ -271,7 +273,10 @@ Extend the error hierarchy:
 
 ```typescript
 class APIError extends HttpError {
-  constructor(response: Response, public errorCode: string) {
+  constructor(
+    response: Response,
+    public errorCode: string,
+  ) {
     super(response.status, response.statusText, response);
   }
 }
@@ -283,20 +288,26 @@ For caching middleware:
 
 ```typescript
 class RedisStorage implements CacheStorage {
-  async get(key: string) { /* Redis get */ }
-  async set(key: string, value: any, ttl: number) { /* Redis setex */ }
-  async delete(key: string) { /* Redis del */ }
+  async get(key: string) {
+    /* Redis get */
+  }
+  async set(key: string, value: any, ttl: number) {
+    /* Redis setex */
+  }
+  async delete(key: string) {
+    /* Redis del */
+  }
 }
 
 const client = useCache(baseClient, {
-  storage: new RedisStorage()
+  storage: new RedisStorage(),
 });
 ```
 
 ## Design Principles
 
 1. **Progressive Disclosure**: Simple by default, powerful when needed
-2. **Composability**: Middleware composes cleanly without conflicts  
+2. **Composability**: Middleware composes cleanly without conflicts
 3. **Type Safety**: TypeScript prevents errors at compile time
 4. **Testability**: Every piece is independently testable
 5. **Performance**: Minimal overhead for unused features

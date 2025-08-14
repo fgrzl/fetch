@@ -7,7 +7,11 @@ import type { AuthorizationOptions } from './types';
 import { createAuthorizationMiddleware } from './authorization';
 
 // Re-export types for convenience
-export type { AuthorizationOptions, UnauthorizedHandler, RedirectAuthorizationConfig } from './types';
+export type {
+  AuthorizationOptions,
+  UnauthorizedHandler,
+  RedirectAuthorizationConfig,
+} from './types';
 export { createAuthorizationMiddleware } from './authorization';
 
 /**

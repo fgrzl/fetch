@@ -53,19 +53,21 @@ FetchError              // Base class for all fetch errors
 ### Error Properties
 
 **HttpError:**
+
 ```typescript
 class HttpError extends FetchError {
-  status: number;        // HTTP status code
-  statusText: string;    // HTTP status text
-  headers: Headers;      // Response headers
-  url: string;          // Request URL
+  status: number; // HTTP status code
+  statusText: string; // HTTP status text
+  headers: Headers; // Response headers
+  url: string; // Request URL
 }
 ```
 
 **NetworkError:**
+
 ```typescript
 class NetworkError extends FetchError {
-  url: string;          // Request URL that failed
+  url: string; // Request URL that failed
 }
 ```
 
@@ -83,7 +85,7 @@ const response = await api.get<User[]>("/api/users");
 
 if (response.ok) {
   // TypeScript knows response.data is User[] | null
-  response.data?.forEach(user => console.log(user.name));
+  response.data?.forEach((user) => console.log(user.name));
 } else {
   // TypeScript knows response.error exists
   switch (response.status) {
@@ -117,11 +119,11 @@ const client = useLogging(
     onForbidden: () => {
       // Global 403 handling
       showNotification("Access denied", "error");
-    }
+    },
   }),
   {
-    level: "error" // Log all errors
-  }
+    level: "error", // Log all errors
+  },
 );
 ```
 
@@ -135,13 +137,13 @@ const retryClient = useRetry(client, {
   retryOn: [429, 502, 503, 504], // Which status codes to retry
   onRetry: (attempt, response) => {
     console.log(`Retry ${attempt}/3 for ${response.status}`);
-    
+
     if (response.status === 429) {
       // Rate limited - extract retry-after header
       const retryAfter = response.headers.get("retry-after");
       console.log(`Rate limited, retry after ${retryAfter}s`);
     }
-  }
+  },
 });
 ```
 
@@ -159,7 +161,7 @@ if (!response.ok) {
     status: response.status,
     statusText: response.statusText,
     url: response.url,
-    error: response.error
+    error: response.error,
   });
 }
 ```
@@ -172,7 +174,7 @@ Enable verbose error logging in development:
 import { useDevelopmentStack } from "@fgrzl/fetch";
 
 const devClient = useDevelopmentStack(new FetchClient(), {
-  auth: { tokenProvider: () => getDevToken() }
+  auth: { tokenProvider: () => getDevToken() },
 });
 
 // Includes detailed request/response logging
@@ -188,16 +190,20 @@ const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), 5000);
 
 try {
-  const response = await api.get("/api/slow-endpoint", {}, {
-    signal: controller.signal
-  });
+  const response = await api.get(
+    "/api/slow-endpoint",
+    {},
+    {
+      signal: controller.signal,
+    },
+  );
   clearTimeout(timeoutId);
-  
+
   if (response.ok) {
     console.log(response.data);
   }
 } catch (error) {
-  if (error.name === 'AbortError') {
+  if (error.name === "AbortError") {
     console.log("Request timed out");
   }
 }
@@ -231,7 +237,7 @@ client.useResponseMiddleware(async (response) => {
     // Parse error details from response body
     try {
       const errorData = await response.clone().json();
-      
+
       // Enhance error with backend details
       if (response.error) {
         response.error.message = errorData.message || response.error.message;
@@ -242,7 +248,7 @@ client.useResponseMiddleware(async (response) => {
       // Couldn't parse error body, keep original error
     }
   }
-  
+
   return response;
 });
 ```
@@ -255,16 +261,14 @@ client.useResponseMiddleware(async (response) => {
 import { vi } from "vitest";
 
 // Mock network error
-global.fetch = vi.fn().mockRejectedValue(
-  new TypeError("Failed to fetch")
-);
+global.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
 
 // Mock HTTP error
 global.fetch = vi.fn().mockResolvedValue(
   new Response(JSON.stringify({ error: "Not found" }), {
     status: 404,
-    statusText: "Not Found"
-  })
+    statusText: "Not Found",
+  }),
 );
 ```
 
@@ -273,21 +277,17 @@ global.fetch = vi.fn().mockResolvedValue(
 ```typescript
 describe("Error Handling", () => {
   it("handles 404 responses gracefully", async () => {
-    mockFetch.mockResolvedValueOnce(
-      new Response(null, { status: 404 })
-    );
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
 
     const response = await api.get("/api/nonexistent");
-    
+
     expect(response.ok).toBe(false);
     expect(response.status).toBe(404);
     expect(response.data).toBeNull();
   });
 
   it("handles network errors", async () => {
-    mockFetch.mockRejectedValueOnce(
-      new TypeError("Failed to fetch")
-    );
+    mockFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
 
     await expect(api.get("/api/test")).rejects.toThrow(NetworkError);
   });

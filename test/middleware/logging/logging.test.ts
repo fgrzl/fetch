@@ -4,7 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
-import { useLogging, createLoggingMiddleware } from '../../../src/middleware/logging/index';
+import {
+  useLogging,
+  createLoggingMiddleware,
+} from '../../../src/middleware/logging/index';
 import type { Logger } from '../../../src/middleware/logging/types';
 
 const mockFetch = vi.fn();
@@ -213,13 +216,15 @@ describe('Logging Middleware', () => {
 
     it('should include response headers when configured', async () => {
       mockFetch.mockImplementation(() =>
-        Promise.resolve(new Response('{"data": true}', {
-          status: 200,
-          headers: {
-            'Content-Type': 'application/json',
-            'X-Response': 'custom-header',
-          },
-        }))
+        Promise.resolve(
+          new Response('{"data": true}', {
+            status: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Response': 'custom-header',
+            },
+          }),
+        ),
       );
 
       const mockLogger: Logger = {
@@ -459,7 +464,9 @@ describe('Logging Middleware', () => {
 
       const client = new FetchClient();
 
-      const { useAuthentication } = await import('../../../src/middleware/authentication');
+      const { useAuthentication } = await import(
+        '../../../src/middleware/authentication'
+      );
 
       const authLoggedClient = useAuthentication(client, {
         tokenProvider: () => 'test-token',

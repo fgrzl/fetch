@@ -18,11 +18,13 @@ A production-ready HTTP client for TypeScript that **just works** out of the box
 ## 📦 Installation
 
 **Install**
+
 ```bash
 npm install @fgrzl/fetch
 ```
 
 **Use immediately** - no configuration required:
+
 ```ts
 import api from "@fgrzl/fetch";
 
@@ -39,11 +41,12 @@ if (users.ok) {
 ```
 
 **Need custom config?** Add it when you need it:
+
 ```ts
 import { FetchClient, useAuthentication } from "@fgrzl/fetch";
 
 const authClient = useAuthentication(new FetchClient(), {
-  tokenProvider: () => localStorage.getItem("token") || ""
+  tokenProvider: () => localStorage.getItem("token") || "",
 });
 
 // Smart defaults - just works
@@ -68,7 +71,7 @@ if (userResponse.ok) {
 
 - **Zero Configuration** - Works immediately with smart defaults
 - **CSRF Protection** - Automatic XSRF-TOKEN handling
-- **Retry Logic** - Exponential backoff for failed requests  
+- **Retry Logic** - Exponential backoff for failed requests
 - **Request Logging** - Built-in observability
 - **TypeScript First** - Full type safety and IntelliSense
 - **Middleware System** - Composable and extensible
@@ -87,6 +90,7 @@ Ready to go deeper? Check out our comprehensive guides:
 ## 🏗️ Architecture
 
 Built on a **"pit of success"** philosophy where:
+
 - Simple things are simple (`api.get("/path")`)
 - Complex things are possible (custom middleware stacks)
 - TypeScript guides you to correct usage

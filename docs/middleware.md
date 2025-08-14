@@ -1,4 +1,3 @@
-
 # Middleware Overview
 
 This document explains how to use and compose request/response middleware in the fetch client.
@@ -19,23 +18,27 @@ This document explains how to use and compose request/response middleware in the
 The middleware module also provides pre-configured stacks for common use cases:
 
 ```ts
-import { useProductionStack, useDevelopmentStack, useBasicStack } from "@fgrzl/fetch";
+import {
+  useProductionStack,
+  useDevelopmentStack,
+  useBasicStack,
+} from "@fgrzl/fetch";
 
-// Production: auth + cache + retry + rate limiting + logging  
+// Production: auth + cache + retry + rate limiting + logging
 const prodClient = useProductionStack(client, {
   auth: { tokenProvider: () => getToken() },
   cache: { ttl: 5 * 60 * 1000 },
-  logging: { level: 'info' }
+  logging: { level: "info" },
 });
 
 // Development: auth + retry + comprehensive logging
 const devClient = useDevelopmentStack(client, {
-  auth: { tokenProvider: () => 'dev-token' }
+  auth: { tokenProvider: () => "dev-token" },
 });
 
 // Basic: just auth + retry
 const basicClient = useBasicStack(client, {
-  auth: { tokenProvider: () => getToken() }
+  auth: { tokenProvider: () => getToken() },
 });
 ```
 
@@ -43,11 +46,11 @@ const basicClient = useBasicStack(client, {
 
 ```ts
 import { FetchClient } from "@fgrzl/fetch";
-import { 
-  useAuthentication, 
-  useAuthorization, 
-  useRetry, 
-  useLogging 
+import {
+  useAuthentication,
+  useAuthorization,
+  useRetry,
+  useLogging,
 } from "@fgrzl/fetch";
 
 const client = new FetchClient();
@@ -57,15 +60,15 @@ const apiClient = useLogging(
   useRetry(
     useAuthorization(
       useAuthentication(client, {
-        tokenProvider: () => localStorage.getItem('token') || ''
-      })
-    )
+        tokenProvider: () => localStorage.getItem("token") || "",
+      }),
+    ),
   ),
-  { level: 'info' }
+  { level: "info" },
 );
 
 // Now use the enhanced client
-const users = await apiClient.get('/api/users');
+const users = await apiClient.get("/api/users");
 ```
 
 ### Alternative: Step-by-Step Composition
@@ -76,12 +79,12 @@ You can also apply middleware step by step for better readability:
 // Step-by-step composition (client is mutated in place)
 const client = new FetchClient();
 useAuthentication(client, {
-  tokenProvider: () => localStorage.getItem('token') || ''
+  tokenProvider: () => localStorage.getItem("token") || "",
 });
 useAuthorization(client);
 useRetry(client);
-useLogging(client, { level: 'info' });
+useLogging(client, { level: "info" });
 
 // Use the enhanced client
-const users = await client.get('/api/users');
+const users = await client.get("/api/users");
 ```

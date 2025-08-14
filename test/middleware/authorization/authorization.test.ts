@@ -4,7 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
-import { useAuthorization, createAuthorizationMiddleware } from '../../../src/middleware/authorization/index';
+import {
+  useAuthorization,
+  createAuthorizationMiddleware,
+} from '../../../src/middleware/authorization/index';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -90,10 +93,12 @@ describe('Authorization Middleware', () => {
     it('should skip handler for URLs matching skip patterns', async () => {
       const onUnauthorized = vi.fn();
       mockFetch.mockImplementation(() =>
-        Promise.resolve(new Response('Unauthorized', {
-          status: 401,
-          statusText: 'Unauthorized',
-        }))
+        Promise.resolve(
+          new Response('Unauthorized', {
+            status: 401,
+            statusText: 'Unauthorized',
+          }),
+        ),
       );
 
       const client = new FetchClient();
@@ -181,7 +186,7 @@ describe('Authorization Middleware', () => {
       const onForbidden = vi.fn();
 
       mockFetch.mockImplementation(() =>
-        Promise.resolve(new Response('Payment Required', { status: 402 }))
+        Promise.resolve(new Response('Payment Required', { status: 402 })),
       );
 
       const middleware = createAuthorizationMiddleware({
@@ -313,7 +318,9 @@ describe('Authorization Middleware', () => {
       });
 
       // Test with a malformed URL containing the pattern
-      await authzClient.request('malformed-url-api/public-endpoint', { method: 'GET' });
+      await authzClient.request('malformed-url-api/public-endpoint', {
+        method: 'GET',
+      });
 
       // Should skip the handler because the regex matches
       expect(onUnauthorized).not.toHaveBeenCalled();
@@ -355,7 +362,7 @@ describe('Authorization Middleware', () => {
 
     it('should use smart default redirect to /login with return_url', async () => {
       const client = new FetchClient();
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
@@ -367,13 +374,13 @@ describe('Authorization Middleware', () => {
       await authzClient.get('https://api.example.com/secure');
 
       expect(window.location.href).toBe(
-        '/login?return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+        '/login?return_url=https%3A%2F%2Fexample.com%2Fprotected-page',
       );
     });
 
     it('should use custom redirect path', async () => {
       const client = new FetchClient();
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
@@ -385,42 +392,42 @@ describe('Authorization Middleware', () => {
       await authzClient.get('https://api.example.com/secure');
 
       expect(window.location.href).toBe(
-        '/signin?return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+        '/signin?return_url=https%3A%2F%2Fexample.com%2Fprotected-page',
       );
     });
 
     it('should use custom return URL parameter name', async () => {
       const client = new FetchClient();
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
 
       const authzClient = useAuthorization(client, {
-        redirectConfig: { 
+        redirectConfig: {
           redirectPath: '/signin',
-          returnUrlParam: 'redirect_to' 
+          returnUrlParam: 'redirect_to',
         },
       });
 
       await authzClient.get('https://api.example.com/secure');
 
       expect(window.location.href).toBe(
-        '/signin?redirect_to=https%3A%2F%2Fexample.com%2Fprotected-page'
+        '/signin?redirect_to=https%3A%2F%2Fexample.com%2Fprotected-page',
       );
     });
 
     it('should not include return URL when includeReturnUrl is false', async () => {
       const client = new FetchClient();
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
 
       const authzClient = useAuthorization(client, {
-        redirectConfig: { 
+        redirectConfig: {
           redirectPath: '/login',
-          includeReturnUrl: false 
+          includeReturnUrl: false,
         },
       });
 
@@ -431,27 +438,27 @@ describe('Authorization Middleware', () => {
 
     it('should handle redirect path with existing query parameters', async () => {
       const client = new FetchClient();
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
 
       const authzClient = useAuthorization(client, {
-        redirectConfig: { 
-          redirectPath: '/login?theme=dark' 
+        redirectConfig: {
+          redirectPath: '/login?theme=dark',
         },
       });
 
       await authzClient.get('https://api.example.com/secure');
 
       expect(window.location.href).toBe(
-        '/login?theme=dark&return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+        '/login?theme=dark&return_url=https%3A%2F%2Fexample.com%2Fprotected-page',
       );
     });
 
     it('should work with no options (smart defaults)', async () => {
       const client = new FetchClient();
-      
+
       // Mock window.location
       Object.defineProperty(window, 'location', {
         value: {
@@ -459,7 +466,7 @@ describe('Authorization Middleware', () => {
         },
         writable: true,
       });
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
@@ -470,14 +477,14 @@ describe('Authorization Middleware', () => {
       await authzClient.get('https://api.example.com/secure');
 
       expect(window.location.href).toBe(
-        '/login?return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+        '/login?return_url=https%3A%2F%2Fexample.com%2Fprotected-page',
       );
     });
 
     it('should prioritize explicit onUnauthorized over redirectConfig', async () => {
       const onUnauthorized = vi.fn();
       const client = new FetchClient();
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
@@ -496,12 +503,12 @@ describe('Authorization Middleware', () => {
 
     it('should work in server environments (no window)', async () => {
       const client = new FetchClient();
-      
+
       // Mock server environment (no window)
       const originalWindow = global.window;
       // @ts-expect-error - Intentionally removing window for testing
       global.window = undefined;
-      
+
       mockFetch.mockResolvedValue(
         new Response('Unauthorized', { status: 401 }),
       );
@@ -511,8 +518,10 @@ describe('Authorization Middleware', () => {
       });
 
       // Should not throw error in server environment
-      await expect(authzClient.get('https://api.example.com/secure')).resolves.toBeDefined();
-      
+      await expect(
+        authzClient.get('https://api.example.com/secure'),
+      ).resolves.toBeDefined();
+
       // Restore window
       global.window = originalWindow;
     });

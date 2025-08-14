@@ -14,7 +14,7 @@ const loggedClient = useLogging(client);
 
 // Custom log level
 const debugClient = useLogging(client, {
-  level: 'debug'
+  level: "debug",
 });
 ```
 
@@ -25,19 +25,19 @@ import { useLogging, createLoggingMiddleware } from "@fgrzl/fetch";
 
 // Comprehensive logging configuration
 const loggedClient = useLogging(client, {
-  level: 'debug',
+  level: "debug",
   includeRequestHeaders: true,
   includeResponseHeaders: true,
   includeRequestBody: true,
   includeResponseBody: true,
   logger: console, // Custom logger
-  filter: (request) => !request.url?.includes('/health')
+  filter: (request) => !request.url?.includes("/health"),
 });
 
 // Factory approach
 const loggingMiddleware = createLoggingMiddleware({
-  level: 'info',
-  logger: customLogger
+  level: "info",
+  logger: customLogger,
 });
 client.use(loggingMiddleware);
 ```
@@ -49,15 +49,19 @@ import { useLogging } from "@fgrzl/fetch";
 
 // Custom logger implementation
 const customLogger = {
-  debug: (message: string, meta?: any) => console.debug(`[DEBUG] ${message}`, meta),
-  info: (message: string, meta?: any) => console.info(`[INFO] ${message}`, meta),
-  warn: (message: string, meta?: any) => console.warn(`[WARN] ${message}`, meta),
-  error: (message: string, meta?: any) => console.error(`[ERROR] ${message}`, meta)
+  debug: (message: string, meta?: any) =>
+    console.debug(`[DEBUG] ${message}`, meta),
+  info: (message: string, meta?: any) =>
+    console.info(`[INFO] ${message}`, meta),
+  warn: (message: string, meta?: any) =>
+    console.warn(`[WARN] ${message}`, meta),
+  error: (message: string, meta?: any) =>
+    console.error(`[ERROR] ${message}`, meta),
 };
 
 const loggedClient = useLogging(client, {
   logger: customLogger,
-  level: 'debug'
+  level: "debug",
 });
 ```
 
@@ -65,17 +69,17 @@ const loggedClient = useLogging(client, {
 
 ```ts
 interface LoggingOptions {
-  level?: LogLevel;                // Log level (default: 'info')
-  logger?: Logger;                 // Custom logger (default: console)
+  level?: LogLevel; // Log level (default: 'info')
+  logger?: Logger; // Custom logger (default: console)
   includeRequestHeaders?: boolean; // Log request headers (default: false)
-  includeResponseHeaders?: boolean; // Log response headers (default: false)  
-  includeRequestBody?: boolean;    // Log request body (default: false)
-  includeResponseBody?: boolean;   // Log response body (default: false)
+  includeResponseHeaders?: boolean; // Log response headers (default: false)
+  includeRequestBody?: boolean; // Log request body (default: false)
+  includeResponseBody?: boolean; // Log response body (default: false)
   filter?: (request: RequestInit & { url: string }) => boolean; // Request filter
-  sanitize?: (data: any) => any;   // Data sanitization function
+  sanitize?: (data: any) => any; // Data sanitization function
 }
 
-type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+type LogLevel = "debug" | "info" | "warn" | "error";
 
 interface Logger {
   debug(message: string, meta?: any): void;
@@ -146,7 +150,7 @@ interface Logger {
 ```ts
 // Production-safe logging configuration
 const productionClient = useLogging(client, {
-  level: 'info',
+  level: "info",
   includeRequestHeaders: false,
   includeResponseHeaders: false,
   includeRequestBody: false,
@@ -155,10 +159,10 @@ const productionClient = useLogging(client, {
     // Remove sensitive data
     const sanitized = { ...data };
     if (sanitized.requestHeaders?.authorization) {
-      sanitized.requestHeaders.authorization = '[REDACTED]';
+      sanitized.requestHeaders.authorization = "[REDACTED]";
     }
     return sanitized;
-  }
+  },
 });
 ```
 
@@ -167,11 +171,11 @@ const productionClient = useLogging(client, {
 ```ts
 // Full visibility for development
 const devClient = useLogging(client, {
-  level: 'debug',
+  level: "debug",
   includeRequestHeaders: true,
   includeResponseHeaders: true,
   includeRequestBody: true,
-  includeResponseBody: true
+  includeResponseBody: true,
 });
 ```
 
@@ -180,24 +184,21 @@ const devClient = useLogging(client, {
 ```ts
 // Only log API requests, skip health checks
 const selectiveClient = useLogging(client, {
-  filter: (request) => 
-    request.url?.startsWith('/api/') && 
-    !request.url.includes('/health'),
-  level: 'info'
+  filter: (request) =>
+    request.url?.startsWith("/api/") && !request.url.includes("/health"),
+  level: "info",
 });
 ```
 
 ### Structured Logging with Winston
 
 ```ts
-import winston from 'winston';
+import winston from "winston";
 
 const winstonLogger = winston.createLogger({
-  level: 'info',
+  level: "info",
   format: winston.format.json(),
-  transports: [
-    new winston.transports.File({ filename: 'api-requests.log' })
-  ]
+  transports: [new winston.transports.File({ filename: "api-requests.log" })],
 });
 
 const structuredClient = useLogging(client, {
@@ -205,10 +206,10 @@ const structuredClient = useLogging(client, {
     debug: (msg, meta) => winstonLogger.debug(msg, meta),
     info: (msg, meta) => winstonLogger.info(msg, meta),
     warn: (msg, meta) => winstonLogger.warn(msg, meta),
-    error: (msg, meta) => winstonLogger.error(msg, meta)
+    error: (msg, meta) => winstonLogger.error(msg, meta),
   },
   includeRequestBody: true,
-  includeResponseBody: true
+  includeResponseBody: true,
 });
 ```
 
@@ -224,20 +225,20 @@ const monitoredClient = useLogging(new FetchClient(), {
       console.log(message);
       // Send metrics to monitoring service
       if (meta?.duration > 1000) {
-        analytics.track('slow_api_request', {
+        analytics.track("slow_api_request", {
           url: meta.url,
-          duration: meta.duration
+          duration: meta.duration,
         });
       }
-    }
-  }
+    },
+  },
 });
 ```
 
 ### Error Tracking Integration
 
 ```ts
-import * as Sentry from '@sentry/node';
+import * as Sentry from "@sentry/node";
 
 const errorTrackingClient = useLogging(client, {
   logger: {
@@ -245,14 +246,14 @@ const errorTrackingClient = useLogging(client, {
       console.error(message, meta);
       if (meta?.status >= 400) {
         Sentry.addBreadcrumb({
-          category: 'http',
+          category: "http",
           message: `${meta.method} ${meta.url} → ${meta.status}`,
-          level: 'error',
-          data: meta
+          level: "error",
+          data: meta,
         });
       }
-    }
-  }
+    },
+  },
 });
 ```
 
@@ -264,27 +265,27 @@ const errorTrackingClient = useLogging(client, {
 const secureClient = useLogging(client, {
   sanitize: (data) => {
     const sanitized = { ...data };
-    
+
     // Redact sensitive headers
     if (sanitized.requestHeaders) {
-      ['authorization', 'cookie', 'x-api-key'].forEach(header => {
+      ["authorization", "cookie", "x-api-key"].forEach((header) => {
         if (sanitized.requestHeaders[header]) {
-          sanitized.requestHeaders[header] = '[REDACTED]';
+          sanitized.requestHeaders[header] = "[REDACTED]";
         }
       });
     }
-    
+
     // Redact sensitive body fields
-    if (sanitized.requestBody && typeof sanitized.requestBody === 'object') {
-      ['password', 'token', 'secret'].forEach(field => {
+    if (sanitized.requestBody && typeof sanitized.requestBody === "object") {
+      ["password", "token", "secret"].forEach((field) => {
         if (sanitized.requestBody[field]) {
-          sanitized.requestBody[field] = '[REDACTED]';
+          sanitized.requestBody[field] = "[REDACTED]";
         }
       });
     }
-    
+
     return sanitized;
-  }
+  },
 });
 ```
 

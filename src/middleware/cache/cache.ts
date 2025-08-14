@@ -32,7 +32,9 @@ export class MemoryStorage implements CacheStorage {
     return entry;
   }
 
-  async getWithExpiry(key: string): Promise<{ entry: CacheEntry | null; isExpired: boolean }> {
+  async getWithExpiry(
+    key: string,
+  ): Promise<{ entry: CacheEntry | null; isExpired: boolean }> {
     const entry = this.cache.get(key);
     if (!entry) {
       return { entry: null, isExpired: false };
@@ -128,7 +130,7 @@ export function createCacheMiddleware(
 
     try {
       // Try to get cached response with expiry info
-      const { entry: cached, isExpired } = storage.getWithExpiry 
+      const { entry: cached, isExpired } = storage.getWithExpiry
         ? await storage.getWithExpiry(cacheKey)
         : await (async () => {
             const entry = await storage.get(cacheKey);
@@ -216,11 +218,14 @@ export function createCacheMiddleware(
       // Only catch cache retrieval errors, let network errors through
       if (error && typeof error === 'object' && 'message' in error) {
         const errorMessage = (error as { message: string }).message;
-        if (errorMessage.includes('Network') || errorMessage.includes('fetch')) {
+        if (
+          errorMessage.includes('Network') ||
+          errorMessage.includes('fetch')
+        ) {
           throw error; // Re-throw network errors
         }
       }
-      
+
       // If cache retrieval fails, just proceed with the request
       return next(request);
     }

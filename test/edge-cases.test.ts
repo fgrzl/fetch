@@ -1,6 +1,6 @@
 /**
  * @fileoverview Additional tests for edge cases and error handling to reach 100% coverage.
- * 
+ *
  * This file tests specific scenarios that are not covered by the main test suites:
  * - Network errors and error handling
  * - Different response content types
@@ -29,10 +29,10 @@ describe('Edge Cases and Error Handling', () => {
     it('should handle network errors properly', async () => {
       // Mock fetch to throw a network error
       mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/test');
-      
+
       expect(response.ok).toBe(false);
       expect(response.status).toBe(0);
       expect(response.statusText).toBe('Network Error');
@@ -42,11 +42,13 @@ describe('Edge Cases and Error Handling', () => {
 
     it('should handle other TypeError network errors', async () => {
       // Mock fetch to throw a TypeError with 'fetch' in message
-      mockFetch.mockRejectedValueOnce(new TypeError('Network request failed: fetch error'));
-      
+      mockFetch.mockRejectedValueOnce(
+        new TypeError('Network request failed: fetch error'),
+      );
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/test');
-      
+
       expect(response.ok).toBe(false);
       expect(response.status).toBe(0);
       expect(response.statusText).toBe('Network Error');
@@ -57,20 +59,24 @@ describe('Edge Cases and Error Handling', () => {
       // Mock fetch to throw a different kind of TypeError
       const customError = new TypeError('Some other error');
       mockFetch.mockRejectedValueOnce(customError);
-      
+
       const client = new FetchClient();
-      
-      await expect(client.get('http://example.com/api/test')).rejects.toThrow(customError);
+
+      await expect(client.get('http://example.com/api/test')).rejects.toThrow(
+        customError,
+      );
     });
 
     it('should re-throw non-TypeError errors', async () => {
       // Mock fetch to throw a non-TypeError
       const customError = new Error('Some other error');
       mockFetch.mockRejectedValueOnce(customError);
-      
+
       const client = new FetchClient();
-      
-      await expect(client.get('http://example.com/api/test')).rejects.toThrow(customError);
+
+      await expect(client.get('http://example.com/api/test')).rejects.toThrow(
+        customError,
+      );
     });
   });
 
@@ -80,12 +86,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response('plain text response', {
           status: 200,
           headers: { 'content-type': 'text/plain' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/text');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBe('plain text response');
     });
@@ -95,12 +101,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response('<html><body>Hello</body></html>', {
           status: 200,
           headers: { 'content-type': 'text/html' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/html');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBe('<html><body>Hello</body></html>');
     });
@@ -111,12 +117,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response(mockBlob, {
           status: 200,
           headers: { 'content-type': 'image/png' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/image.png');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBeDefined();
       expect(response.data).toHaveProperty('type', 'image/png');
@@ -128,12 +134,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response(mockBlob, {
           status: 200,
           headers: { 'content-type': 'video/mp4' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/video.mp4');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBeDefined();
       expect(response.data).toHaveProperty('type', 'video/mp4');
@@ -145,12 +151,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response(mockBlob, {
           status: 200,
           headers: { 'content-type': 'audio/mp3' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/audio.mp3');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBeDefined();
       expect(response.data).toHaveProperty('type', 'audio/mp3');
@@ -162,12 +168,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response(mockBlob, {
           status: 200,
           headers: { 'content-type': 'application/octet-stream' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/binary');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBeDefined();
       // For octet-stream, we just verify it's blob-like
@@ -179,12 +185,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response('some content', {
           status: 200,
           headers: { 'content-type': 'application/unknown' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/unknown');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBe('some content');
     });
@@ -194,12 +200,12 @@ describe('Edge Cases and Error Handling', () => {
         new Response('', {
           status: 200,
           headers: { 'content-type': 'application/unknown' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/empty');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBeNull();
     });
@@ -214,14 +220,14 @@ describe('Edge Cases and Error Handling', () => {
         body: null,
         text: vi.fn().mockResolvedValue(''),
         json: vi.fn(),
-        blob: vi.fn()
+        blob: vi.fn(),
       };
-      
+
       mockFetch.mockResolvedValueOnce(mockResponse);
-      
+
       const client = new FetchClient();
       const response = await client.get('http://example.com/api/nocontent');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBeNull();
     });
@@ -230,7 +236,7 @@ describe('Edge Cases and Error Handling', () => {
   describe('Middleware Edge Cases', () => {
     it('should handle middleware that does not call next', async () => {
       const client = new FetchClient();
-      
+
       // Add a middleware that returns directly without calling next
       client.use(async () => {
         return {
@@ -242,9 +248,9 @@ describe('Edge Cases and Error Handling', () => {
           ok: true,
         };
       });
-      
+
       const response = await client.get('http://example.com/api/test');
-      
+
       expect(response.data).toBe('intercepted');
       expect(mockFetch).not.toHaveBeenCalled();
     });
@@ -256,7 +262,7 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
 
       const client = new FetchClient();
@@ -265,11 +271,11 @@ describe('Edge Cases and Error Handling', () => {
         cache: { ttl: 1000, methods: ['GET'] },
         retry: { maxRetries: 1 },
         logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 }
+        rateLimit: { maxRequests: 10, windowMs: 1000 },
       });
-      
+
       await prodClient.get('http://example.com/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
@@ -278,7 +284,7 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
 
       const client = new FetchClient();
@@ -287,11 +293,11 @@ describe('Edge Cases and Error Handling', () => {
         // cache: undefined - should skip cache middleware
         retry: { maxRetries: 1 },
         logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 }
+        rateLimit: { maxRequests: 10, windowMs: 1000 },
       });
-      
+
       await prodClient.get('http://example.com/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
@@ -300,7 +306,7 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
 
       const client = new FetchClient();
@@ -309,11 +315,11 @@ describe('Edge Cases and Error Handling', () => {
         cache: { ttl: 1000, methods: ['GET'] },
         // retry: undefined - should skip retry middleware
         logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 }
+        rateLimit: { maxRequests: 10, windowMs: 1000 },
       });
-      
+
       await prodClient.get('http://example.com/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
@@ -322,7 +328,7 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
 
       const client = new FetchClient();
@@ -333,9 +339,9 @@ describe('Edge Cases and Error Handling', () => {
         logging: { level: 'error' },
         // rateLimit: undefined - should skip rate limit middleware
       });
-      
+
       await prodClient.get('http://example.com/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
@@ -344,7 +350,7 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
 
       const client = new FetchClient();
@@ -353,11 +359,11 @@ describe('Edge Cases and Error Handling', () => {
         cache: { ttl: 1000, methods: ['GET'] },
         retry: { maxRetries: 1 },
         // logging: undefined - should skip logging middleware
-        rateLimit: { maxRequests: 10, windowMs: 1000 }
+        rateLimit: { maxRequests: 10, windowMs: 1000 },
       });
-      
+
       await prodClient.get('http://example.com/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
@@ -367,24 +373,24 @@ describe('Edge Cases and Error Handling', () => {
       mockFetch.mockResolvedValueOnce(
         new Response(null, {
           status: 200,
-          headers: { 
+          headers: {
             'content-type': 'text/plain',
             'content-length': '100',
             'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT',
-            'etag': '"abc123"',
-            'cache-control': 'max-age=3600'
+            etag: '"abc123"',
+            'cache-control': 'max-age=3600',
           },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const response = await client.head('http://example.com/api/resource');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toBe(''); // HEAD responses with text content-type return empty string
       expect(mockFetch).toHaveBeenCalledWith(
         'http://example.com/api/resource',
-        expect.objectContaining({ method: 'HEAD' })
+        expect.objectContaining({ method: 'HEAD' }),
       );
     });
 
@@ -393,15 +399,18 @@ describe('Edge Cases and Error Handling', () => {
         new Response(null, {
           status: 200,
           headers: { 'content-type': 'text/plain' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
-      await client.head('http://example.com/api/resource', { version: 'v1', format: 'json' });
-      
+      await client.head('http://example.com/api/resource', {
+        version: 'v1',
+        format: 'json',
+      });
+
       expect(mockFetch).toHaveBeenCalledWith(
         'http://example.com/api/resource?version=v1&format=json',
-        expect.objectContaining({ method: 'HEAD' })
+        expect.objectContaining({ method: 'HEAD' }),
       );
     });
 
@@ -409,19 +418,19 @@ describe('Edge Cases and Error Handling', () => {
       mockFetch.mockResolvedValueOnce(
         new Response(null, {
           status: 200,
-          headers: { 
+          headers: {
             'content-type': 'text/plain',
             'content-length': '150',
             'last-modified': 'Wed, 21 Oct 2015 07:28:00 GMT',
-            'etag': '"def456"',
-            'cache-control': 'max-age=7200'
+            etag: '"def456"',
+            'cache-control': 'max-age=7200',
           },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       const metadata = await client.headMetadata('http://example.com/api/data');
-      
+
       expect(metadata.ok).toBe(true);
       expect(metadata.exists).toBe(true);
       expect(metadata.contentType).toBe('text/plain');
@@ -436,12 +445,14 @@ describe('Edge Cases and Error Handling', () => {
         new Response(null, {
           status: 404,
           headers: {},
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
-      const metadata = await client.headMetadata('http://example.com/api/missing');
-      
+      const metadata = await client.headMetadata(
+        'http://example.com/api/missing',
+      );
+
       expect(metadata.ok).toBe(false);
       expect(metadata.exists).toBe(false);
       expect(metadata.contentType).toBeUndefined();
@@ -455,16 +466,18 @@ describe('Edge Cases and Error Handling', () => {
       mockFetch.mockResolvedValueOnce(
         new Response(null, {
           status: 200,
-          headers: { 
+          headers: {
             'content-type': 'text/plain',
             // Missing other headers to test undefined handling
           },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
-      const metadata = await client.headMetadata('http://example.com/api/simple');
-      
+      const metadata = await client.headMetadata(
+        'http://example.com/api/simple',
+      );
+
       expect(metadata.ok).toBe(true);
       expect(metadata.exists).toBe(true);
       expect(metadata.contentType).toBe('text/plain');
@@ -481,15 +494,15 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ data: 'test' }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       await client.get('/api/relative', { param: 'value' });
-      
+
       expect(mockFetch).toHaveBeenCalledWith(
         '/api/relative?param=value',
-        expect.any(Object)
+        expect.any(Object),
       );
     });
   });
@@ -500,13 +513,13 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ success: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
       // Don't add any middleware - should go straight to core fetch
       const response = await client.get('http://example.com/api/direct');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toEqual({ success: true });
     });
@@ -516,25 +529,25 @@ describe('Edge Cases and Error Handling', () => {
         new Response(JSON.stringify({ modified: true }), {
           status: 200,
           headers: { 'content-type': 'application/json' },
-        })
+        }),
       );
-      
+
       const client = new FetchClient();
-      
+
       // Add middleware that modifies request
       client.use(async (request, next) => {
-        const modifiedRequest = { 
+        const modifiedRequest = {
           ...request,
-          headers: { ...request.headers, 'X-Modified': 'true' }
+          headers: { ...request.headers, 'X-Modified': 'true' },
         };
         return await next(modifiedRequest);
       });
-      
+
       const response = await client.get('http://example.com/api/test');
-      
+
       expect(response.ok).toBe(true);
       expect(response.data).toEqual({ modified: true });
-      
+
       const [, options] = mockFetch.mock.calls[0];
       expect(options?.headers?.['X-Modified']).toBe('true');
     });

@@ -4,7 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
-import { useRetry, createRetryMiddleware } from '../../../src/middleware/retry/index';
+import {
+  useRetry,
+  createRetryMiddleware,
+} from '../../../src/middleware/retry/index';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -319,7 +322,7 @@ describe('Retry Middleware', () => {
             body: expect.any(Error),
           },
         },
-        1
+        1,
       );
       expect(result.ok).toBe(false);
     });
@@ -328,11 +331,13 @@ describe('Retry Middleware', () => {
       const client = new FetchClient();
       const shouldRetry = vi.fn((response, attempt) => attempt <= 2); // Only retry first 2 attempts
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 5, 
-        shouldRetry,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 5,
+          shouldRetry,
+          delay: 10,
+        }),
+      );
 
       mockFetch.mockRejectedValue(new Error('Always fails'));
 
@@ -349,20 +354,21 @@ describe('Retry Middleware', () => {
       const client = new FetchClient();
       const onRetry = vi.fn();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 1, 
-        onRetry,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 1,
+          onRetry,
+          delay: 10,
+        }),
+      );
 
       // Mock fetch to throw a non-Error object
-      mockFetch.mockRejectedValueOnce('String error')
-        .mockResolvedValueOnce(
-          new Response(JSON.stringify({ success: true }), {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          })
-        );
+      mockFetch.mockRejectedValueOnce('String error').mockResolvedValueOnce(
+        new Response(JSON.stringify({ success: true }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
 
       const requestPromise = client.get('/api/test');
       await vi.runAllTimersAsync();
@@ -380,17 +386,19 @@ describe('Retry Middleware', () => {
     it('should handle max retries reached', async () => {
       const client = new FetchClient();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 1,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 1,
+          delay: 10,
+        }),
+      );
 
       // Mock to always return 500 errors
       mockFetch.mockResolvedValue(
-        new Response('Server Error', { 
-          status: 500, 
-          statusText: 'Internal Server Error' 
-        })
+        new Response('Server Error', {
+          status: 500,
+          statusText: 'Internal Server Error',
+        }),
       );
 
       const requestPromise = client.get('/api/test');
@@ -406,11 +414,13 @@ describe('Retry Middleware', () => {
       const client = new FetchClient();
       const onRetry = vi.fn();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 2, 
-        onRetry,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 2,
+          onRetry,
+          delay: 10,
+        }),
+      );
 
       // Always throw network error
       mockFetch.mockRejectedValue(new Error('Connection timeout'));
@@ -429,20 +439,26 @@ describe('Retry Middleware', () => {
     it('should return last response when all retries exhausted', async () => {
       const client = new FetchClient();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 1,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 1,
+          delay: 10,
+        }),
+      );
 
       mockFetch
-        .mockResolvedValueOnce(new Response('Error 1', { 
-          status: 500, 
-          statusText: 'Internal Server Error' 
-        }))
-        .mockResolvedValueOnce(new Response('Error 2', { 
-          status: 502, 
-          statusText: 'Bad Gateway' 
-        }));
+        .mockResolvedValueOnce(
+          new Response('Error 1', {
+            status: 500,
+            statusText: 'Internal Server Error',
+          }),
+        )
+        .mockResolvedValueOnce(
+          new Response('Error 2', {
+            status: 502,
+            statusText: 'Bad Gateway',
+          }),
+        );
 
       const requestPromise = client.get('/api/test');
       await vi.runAllTimersAsync();
@@ -455,10 +471,12 @@ describe('Retry Middleware', () => {
     it('should handle successful response after network error', async () => {
       const client = new FetchClient();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 2,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 2,
+          delay: 10,
+        }),
+      );
 
       mockFetch
         .mockRejectedValueOnce(new Error('Network error'))
@@ -466,7 +484,7 @@ describe('Retry Middleware', () => {
           new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: { 'content-type': 'application/json' },
-          })
+          }),
         );
 
       const requestPromise = client.get('/api/test');
@@ -481,10 +499,12 @@ describe('Retry Middleware', () => {
     it('should handle non-Error objects when all retries exhausted', async () => {
       const client = new FetchClient();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 1,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 1,
+          delay: 10,
+        }),
+      );
 
       // Always throw a non-Error object
       mockFetch.mockRejectedValue('String error');
@@ -504,24 +524,26 @@ describe('Retry Middleware', () => {
       const client = new FetchClient();
       const onRetry = vi.fn();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 1, 
-        onRetry,
-        delay: 10 
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 1,
+          onRetry,
+          delay: 10,
+        }),
+      );
 
       mockFetch
         .mockResolvedValueOnce(
-          new Response('Server Error', { 
-            status: 500, 
-            statusText: 'Internal Server Error' 
-          })
+          new Response('Server Error', {
+            status: 500,
+            statusText: 'Internal Server Error',
+          }),
         )
         .mockResolvedValueOnce(
           new Response(JSON.stringify({ success: true }), {
             status: 200,
             headers: { 'content-type': 'application/json' },
-          })
+          }),
         );
 
       const requestPromise = client.get('/api/test');
@@ -538,16 +560,18 @@ describe('Retry Middleware', () => {
     it('should return last response when loop exhausted without explicit return', async () => {
       const client = new FetchClient();
 
-      client.use(createRetryMiddleware({ 
-        maxRetries: 0, // No retries, will exhaust immediately
-        delay: 10
-      }));
+      client.use(
+        createRetryMiddleware({
+          maxRetries: 0, // No retries, will exhaust immediately
+          delay: 10,
+        }),
+      );
 
       mockFetch.mockResolvedValueOnce(
-        new Response('Error', { 
-          status: 500, 
-          statusText: 'Internal Server Error' 
-        })
+        new Response('Error', {
+          status: 500,
+          statusText: 'Internal Server Error',
+        }),
       );
 
       const result = await client.get('/api/test');
@@ -574,7 +598,7 @@ describe('Retry Middleware', () => {
           statusText: 'Network Error',
           ok: false,
         }),
-        1
+        1,
       );
       expect(result.ok).toBe(false);
       expect(result.status).toBe(0);

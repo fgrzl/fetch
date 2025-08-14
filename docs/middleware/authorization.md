@@ -21,23 +21,23 @@ useAuthorization(client, {
   redirectConfig: {
     redirectPath: "/signin", // Default: "/login"
     returnUrlParam: "redirect_to", // Default: "return_url"
-  }
+  },
 });
 
 // Disable return URL if not needed
 useAuthorization(client, {
   redirectConfig: {
     redirectPath: "/login",
-    includeReturnUrl: false // Default: true
-  }
+    includeReturnUrl: false, // Default: true
+  },
 });
 
 // Works with existing query parameters
 useAuthorization(client, {
   redirectConfig: {
-    redirectPath: "/login?theme=dark&lang=en"
+    redirectPath: "/login?theme=dark&lang=en",
     // Results in: /login?theme=dark&lang=en&return_url=current-page
-  }
+  },
 });
 ```
 
@@ -51,7 +51,7 @@ useAuthorization(client, {
   onUnauthorized: (response, request) => {
     localStorage.removeItem("auth-token");
     window.location.href = "/login";
-  }
+  },
 });
 
 // Handle both 401 and 403 responses
@@ -59,7 +59,7 @@ useAuthorization(client, {
   onForbidden: (response) => {
     showAccessDeniedMessage();
   },
-  statusCodes: [401, 403] // Default: [401]
+  statusCodes: [401, 403], // Default: [401]
 });
 ```
 
@@ -68,14 +68,14 @@ useAuthorization(client, {
 ```ts
 // Skip authorization for certain endpoints
 useAuthorization(client, {
-  skipPatterns: ["/login", "/register", /^\/public\//]
+  skipPatterns: ["/login", "/register", /^\/public\//],
 });
 
 // Advanced usage with factory
 import { createAuthorizationMiddleware } from "@fgrzl/fetch";
 
 const authMiddleware = createAuthorizationMiddleware({
-  redirectConfig: { redirectPath: "/signin" }
+  redirectConfig: { redirectPath: "/signin" },
 });
 client.use(authMiddleware);
 ```
@@ -92,14 +92,14 @@ interface AuthorizationOptions {
 }
 
 interface RedirectAuthorizationConfig {
-  redirectPath?: string;        // Default: '/login'
-  returnUrlParam?: string;      // Default: 'return_url'
-  includeReturnUrl?: boolean;   // Default: true
+  redirectPath?: string; // Default: '/login'
+  returnUrlParam?: string; // Default: 'return_url'
+  includeReturnUrl?: boolean; // Default: true
 }
 
 type UnauthorizedHandler = (
   response: FetchResponse<unknown>,
-  request: RequestInit & { url?: string }
+  request: RequestInit & { url?: string },
 ) => void | Promise<void>;
 ```
 
@@ -116,14 +116,14 @@ const apiClient = useAuthorization(new FetchClient());
 // After successful login, redirect back:
 function LoginPage() {
   const [searchParams] = useSearchParams();
-  
+
   const handleLogin = async () => {
     await login();
-    const returnUrl = searchParams.get('return_url');
+    const returnUrl = searchParams.get("return_url");
     if (returnUrl) {
       window.location.href = decodeURIComponent(returnUrl);
     } else {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
   };
 }
@@ -142,7 +142,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (returnUrl) {
     res.redirect(decodeURIComponent(returnUrl));
   } else {
-    res.redirect('/dashboard');
+    res.redirect("/dashboard");
   }
 }
 ```

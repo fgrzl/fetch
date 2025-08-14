@@ -1,6 +1,6 @@
 /**
  * @fileoverview Tests for main library entry points and exports.
- * 
+ *
  * This test file ensures that:
  * 1. Main exports are available and functional
  * 2. Default client works out of the box
@@ -22,7 +22,7 @@ describe('Main Library Exports', () => {
       new Response(JSON.stringify({ id: 1, name: 'Test' }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
-      })
+      }),
     );
   });
 
@@ -41,7 +41,7 @@ describe('Main Library Exports', () => {
 
     it('should work out of the box for GET requests', async () => {
       const response = await api.get('/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(response.data).toEqual({ id: 1, name: 'Test' });
     });
@@ -49,10 +49,10 @@ describe('Main Library Exports', () => {
     it('should work out of the box for POST requests', async () => {
       const postData = { name: 'New Item' };
       const response = await api.post('/api/test', postData);
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(response.data).toEqual({ id: 1, name: 'Test' });
-      
+
       const [url, options] = mockFetch.mock.calls[0];
       expect(url).toBe('/api/test');
       expect(options?.method).toBe('POST');
@@ -61,14 +61,14 @@ describe('Main Library Exports', () => {
 
     it('should handle query parameters correctly', async () => {
       await api.get('/api/test', { status: 'active', limit: 10 });
-      
+
       const [url] = mockFetch.mock.calls[0];
       expect(url).toBe('/api/test?status=active&limit=10');
     });
 
     it('should include same-origin credentials by default', async () => {
       await api.get('http://example.com/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const [, options] = mockFetch.mock.calls[0];
       expect(options?.credentials).toBe('same-origin');
@@ -79,7 +79,7 @@ describe('Main Library Exports', () => {
     it('should export FetchClient class', () => {
       expect(fetchLib.FetchClient).toBeDefined();
       expect(typeof fetchLib.FetchClient).toBe('function');
-      
+
       const client = new fetchLib.FetchClient();
       expect(client).toBeDefined();
       expect(typeof client.get).toBe('function');
@@ -89,7 +89,7 @@ describe('Main Library Exports', () => {
       expect(fetchLib.FetchError).toBeDefined();
       expect(fetchLib.HttpError).toBeDefined();
       expect(fetchLib.NetworkError).toBeDefined();
-      
+
       expect(typeof fetchLib.FetchError).toBe('function');
       expect(typeof fetchLib.HttpError).toBe('function');
       expect(typeof fetchLib.NetworkError).toBeDefined();
@@ -150,7 +150,7 @@ describe('Main Library Exports', () => {
       expect(fetchLib.useProductionStack).toBeDefined();
       expect(fetchLib.useDevelopmentStack).toBeDefined();
       expect(fetchLib.useBasicStack).toBeDefined();
-      
+
       expect(typeof fetchLib.useProductionStack).toBe('function');
       expect(typeof fetchLib.useDevelopmentStack).toBe('function');
       expect(typeof fetchLib.useBasicStack).toBeDefined();
@@ -161,11 +161,11 @@ describe('Main Library Exports', () => {
     it('should be able to create authenticated client from exports', async () => {
       const client = new fetchLib.FetchClient();
       const authClient = fetchLib.useAuthentication(client, {
-        tokenProvider: () => 'test-token'
+        tokenProvider: () => 'test-token',
       });
-      
+
       await authClient.get('http://example.com/api/protected');
-      
+
       const [, options] = mockFetch.mock.calls[0];
       expect(options?.headers?.authorization).toBe('Bearer test-token');
     });
@@ -173,16 +173,21 @@ describe('Main Library Exports', () => {
     it('should be able to create client with multiple middleware', async () => {
       const client = new fetchLib.FetchClient();
       const enhancedClient = fetchLib.useAuthentication(client, {
-        tokenProvider: () => 'test-token'
+        tokenProvider: () => 'test-token',
       });
-      
+
       const finalClient = fetchLib.useLogging(enhancedClient, {
         level: 'info',
-        logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() }
+        logger: {
+          debug: vi.fn(),
+          error: vi.fn(),
+          warn: vi.fn(),
+          info: vi.fn(),
+        },
       });
-      
+
       await finalClient.get('http://example.com/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
       const [, options] = mockFetch.mock.calls[0];
       expect(options?.headers?.authorization).toBe('Bearer test-token');
@@ -194,11 +199,11 @@ describe('Main Library Exports', () => {
         retry: { maxRetries: 1 },
         cache: { ttl: 1000, methods: ['GET'] },
         logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 }
+        rateLimit: { maxRequests: 10, windowMs: 1000 },
       });
-      
+
       await prodClient.get('/api/test');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
@@ -208,7 +213,7 @@ describe('Main Library Exports', () => {
       // We can't directly test types, but we can ensure they're exported
       // by checking if they exist in the module
       const exportedNames = Object.keys(fetchLib);
-      
+
       // Check that middleware function exports exist (types are co-located)
       expect(exportedNames).toContain('useAuthentication');
       expect(exportedNames).toContain('useAuthorization');

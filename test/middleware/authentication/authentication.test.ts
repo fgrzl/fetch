@@ -4,7 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
-import { useAuthentication, createAuthenticationMiddleware } from '../../../src/middleware/authentication/index';
+import {
+  useAuthentication,
+  createAuthenticationMiddleware,
+} from '../../../src/middleware/authentication/index';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;

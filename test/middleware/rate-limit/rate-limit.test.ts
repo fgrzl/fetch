@@ -5,7 +5,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import type { FetchResponse } from '../../../src/client/types';
-import { useRateLimit, createRateLimitMiddleware } from '../../../src/middleware/rate-limit/index';
+import {
+  useRateLimit,
+  createRateLimitMiddleware,
+} from '../../../src/middleware/rate-limit/index';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -80,7 +83,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should reset tokens after window period', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 2,
@@ -107,7 +110,7 @@ describe('Rate Limit Middleware', () => {
       expect(allowedResponse.ok).toBe(true);
 
       expect(mockFetch).toHaveBeenCalledTimes(3);
-      
+
       vi.useRealTimers();
     });
 
@@ -205,7 +208,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should handle token bucket refill correctly', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 2,
@@ -243,7 +246,7 @@ describe('Rate Limit Middleware', () => {
       expect(finalResponse.ok).toBe(true);
 
       expect(mockFetch).toHaveBeenCalledTimes(4); // test1, test2, test3, test5
-      
+
       vi.useRealTimers();
     });
 
@@ -310,7 +313,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should work in middleware chain with other middleware', async () => {
       vi.useFakeTimers();
-      
+
       const authMiddleware = vi
         .fn()
         .mockImplementation(async (request, next) => {
@@ -352,7 +355,7 @@ describe('Rate Limit Middleware', () => {
       expect(thirdResponse.status).toBe(429);
       expect(authMiddleware).toHaveBeenCalledTimes(3); // Auth middleware called, but fetch blocked
       expect(mockFetch).toHaveBeenCalledTimes(2); // Only first two requests went to network
-      
+
       vi.useRealTimers();
     });
   });
@@ -369,7 +372,7 @@ describe('Rate Limit Middleware', () => {
       const { useRetry } = await import('../../../src/middleware/retry');
 
       // Test that rate limiting works correctly with retry middleware
-      // Rate limiting should only count external requests, not internal retries  
+      // Rate limiting should only count external requests, not internal retries
       const rateLimitedRetryClient = useRateLimit(
         useRetry(client, {
           maxRetries: 2,
@@ -387,12 +390,12 @@ describe('Rate Limit Middleware', () => {
       );
       expect(response.ok).toBe(true);
 
-      // Second request should be rate limited (would be 2nd request to rate limiter)  
+      // Second request should be rate limited (would be 2nd request to rate limiter)
       const secondResponse = await rateLimitedRetryClient.get(
         'https://api.example.com/test2',
       );
       expect(secondResponse.status).toBe(429);
-      
+
       // Verify network calls: failed attempt + successful retry = 2 calls
       // The rate limiter doesn't block the actual fetch attempts, just the middleware chain entry
       expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -508,7 +511,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should handle time jumps gracefully', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
       const rateLimitedClient = useRateLimit(client, {
         maxRequests: 2,
@@ -532,7 +535,7 @@ describe('Rate Limit Middleware', () => {
 
       expect(response1.ok).toBe(true);
       expect(response2.ok).toBe(true);
-      
+
       vi.useRealTimers();
     });
   });
@@ -549,13 +552,15 @@ describe('Rate Limit Middleware', () => {
       // This should be skipped due to regex pattern
       await rateLimitedClient.get('https://api.example.com/skip-this');
       await rateLimitedClient.get('https://api.example.com/skip-that');
-      
+
       expect(mockFetch).toHaveBeenCalledTimes(2); // Both should go through
 
       // This should be rate limited
       await rateLimitedClient.get('https://api.example.com/normal');
-      const blockedResponse = await rateLimitedClient.get('https://api.example.com/blocked');
-      
+      const blockedResponse = await rateLimitedClient.get(
+        'https://api.example.com/blocked',
+      );
+
       expect(blockedResponse.status).toBe(429);
     });
 
@@ -571,13 +576,17 @@ describe('Rate Limit Middleware', () => {
 
       // Use up the token
       await rateLimitedClient.get('https://api.example.com/test1');
-      
+
       // This should trigger the custom handler but fall back to default response
-      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test2');
+      const rateLimitedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test2',
+      );
 
       expect(onRateLimitExceeded).toHaveBeenCalled();
       expect(rateLimitedResponse.status).toBe(429); // Should use default 429 response
-      expect(rateLimitedResponse.error?.message).toContain('Rate limit exceeded');
+      expect(rateLimitedResponse.error?.message).toContain(
+        'Rate limit exceeded',
+      );
     });
 
     it('should handle custom error handler returning custom response', async () => {
@@ -590,7 +599,7 @@ describe('Rate Limit Middleware', () => {
         url: 'https://api.example.com/test2',
         ok: false,
       };
-      
+
       const onRateLimitExceeded = vi.fn().mockResolvedValue(customResponse);
 
       const rateLimitedClient = useRateLimit(client, {
@@ -601,9 +610,11 @@ describe('Rate Limit Middleware', () => {
 
       // Use up the token
       await rateLimitedClient.get('https://api.example.com/test1');
-      
+
       // This should return the custom response
-      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test2');
+      const rateLimitedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test2',
+      );
 
       expect(onRateLimitExceeded).toHaveBeenCalled();
       expect(rateLimitedResponse).toEqual(customResponse);
@@ -619,14 +630,18 @@ describe('Rate Limit Middleware', () => {
 
       // Use up the token
       await rateLimitedClient.get('https://api.example.com/test1');
-      
+
       // Mock the bucket to return null retryAfter
-      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test2');
+      const rateLimitedResponse = await rateLimitedClient.get(
+        'https://api.example.com/test2',
+      );
 
       expect(rateLimitedResponse.status).toBe(429);
       expect(rateLimitedResponse.headers.get('Retry-After')).toBeTruthy();
       // Should handle Math.ceil(retryAfter || 0) case
-      expect(parseInt(rateLimitedResponse.headers.get('Retry-After')!)).toBeGreaterThanOrEqual(0);
+      expect(
+        parseInt(rateLimitedResponse.headers.get('Retry-After')!),
+      ).toBeGreaterThanOrEqual(0);
     });
 
     it('should handle empty URL in requests', async () => {
@@ -639,9 +654,11 @@ describe('Rate Limit Middleware', () => {
       // Test with empty URL
       await rateLimitedClient.request('', { method: 'GET' });
       await rateLimitedClient.request('', { method: 'GET' });
-      
+
       // Third request should be rate limited
-      const rateLimitedResponse = await rateLimitedClient.request('', { method: 'GET' });
+      const rateLimitedResponse = await rateLimitedClient.request('', {
+        method: 'GET',
+      });
 
       expect(rateLimitedResponse.status).toBe(429);
       expect(rateLimitedResponse.url).toBe('');

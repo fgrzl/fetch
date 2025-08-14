@@ -14,7 +14,7 @@ const retryClient = useRetry(client);
 
 // Custom retry count
 const retryClient = useRetry(client, {
-  maxRetries: 5
+  maxRetries: 5,
 });
 ```
 
@@ -26,19 +26,19 @@ import { useRetry, createRetryMiddleware } from "@fgrzl/fetch";
 // Custom retry configuration
 const retryClient = useRetry(client, {
   maxRetries: 5,
-  delay: 1000,                    // Base delay in ms
-  strategy: "exponential",        // 'fixed', 'linear', or 'exponential'
+  delay: 1000, // Base delay in ms
+  strategy: "exponential", // 'fixed', 'linear', or 'exponential'
   shouldRetry: (response) => response.status >= 500 || response.status === 429,
   onRetry: (response, attempt) => {
     console.log(`Retry attempt ${attempt} for ${response.status}`);
   },
-  maxDelay: 30000                 // Maximum delay cap
+  maxDelay: 30000, // Maximum delay cap
 });
 
 // Factory approach
 const retryMiddleware = createRetryMiddleware({
   maxRetries: 3,
-  strategy: "exponential"
+  strategy: "exponential",
 });
 client.use(retryMiddleware);
 ```
@@ -49,23 +49,23 @@ client.use(retryMiddleware);
 // Fixed delay between retries
 const fixedRetryClient = useRetry(client, {
   strategy: "fixed",
-  delay: 2000,        // Always wait 2 seconds
-  maxRetries: 3
+  delay: 2000, // Always wait 2 seconds
+  maxRetries: 3,
 });
 
-// Linear backoff (delay increases linearly)  
+// Linear backoff (delay increases linearly)
 const linearRetryClient = useRetry(client, {
   strategy: "linear",
-  delay: 1000,        // 1s, 2s, 3s, 4s, ...
-  maxRetries: 5
+  delay: 1000, // 1s, 2s, 3s, 4s, ...
+  maxRetries: 5,
 });
 
 // Exponential backoff (default)
 const exponentialRetryClient = useRetry(client, {
   strategy: "exponential",
-  delay: 1000,        // 1s, 2s, 4s, 8s, 16s, ...
+  delay: 1000, // 1s, 2s, 4s, 8s, 16s, ...
   maxRetries: 5,
-  maxDelay: 30000     // Cap at 30 seconds
+  maxDelay: 30000, // Cap at 30 seconds
 });
 ```
 
@@ -73,19 +73,20 @@ const exponentialRetryClient = useRetry(client, {
 
 ```ts
 interface RetryOptions {
-  maxRetries?: number;                    // Maximum retry attempts (default: 3)
-  delay?: number;                         // Base delay in ms (default: 1000)
-  strategy?: 'fixed' | 'linear' | 'exponential'; // Backoff strategy (default: 'exponential')
-  maxDelay?: number;                      // Maximum delay cap in ms (default: 30000)
+  maxRetries?: number; // Maximum retry attempts (default: 3)
+  delay?: number; // Base delay in ms (default: 1000)
+  strategy?: "fixed" | "linear" | "exponential"; // Backoff strategy (default: 'exponential')
+  maxDelay?: number; // Maximum delay cap in ms (default: 30000)
   shouldRetry?: (response: FetchResponse) => boolean; // Retry predicate
   onRetry?: (response: FetchResponse, attempt: number) => void; // Retry callback
-  jitter?: boolean;                       // Add randomization (default: true)
+  jitter?: boolean; // Add randomization (default: true)
 }
 ```
 
 ### Default Retry Conditions
 
 By default, requests are retried for:
+
 - **5xx** server errors (500, 501, 502, 503, 504, etc.)
 - **429** rate limiting
 - **408** request timeout
@@ -101,16 +102,20 @@ const apiClient = useRetry(new FetchClient(), {
   maxRetries: 3,
   shouldRetry: (response) => {
     // Retry on server errors, rate limits, and timeouts
-    return response.status >= 500 || 
-           response.status === 429 || 
-           response.status === 408;
+    return (
+      response.status >= 500 ||
+      response.status === 429 ||
+      response.status === 408
+    );
   },
   onRetry: (response, attempt) => {
-    console.log(`API request failed (${response.status}), retrying... (${attempt}/3)`);
-  }
+    console.log(
+      `API request failed (${response.status}), retrying... (${attempt}/3)`,
+    );
+  },
 });
 
-const userData = await apiClient.get('/api/users/123');
+const userData = await apiClient.get("/api/users/123");
 ```
 
 ### Custom Retry Logic
@@ -120,12 +125,14 @@ const userData = await apiClient.get('/api/users/123');
 const selectiveRetryClient = useRetry(client, {
   shouldRetry: (response, request) => {
     // Only retry GET requests and certain endpoints
-    return request.method === 'GET' &&
-           response.status >= 500 &&
-           request.url?.includes('/api/critical/');
+    return (
+      request.method === "GET" &&
+      response.status >= 500 &&
+      request.url?.includes("/api/critical/")
+    );
   },
   maxRetries: 5,
-  strategy: 'exponential'
+  strategy: "exponential",
 });
 ```
 
@@ -134,10 +141,10 @@ const selectiveRetryClient = useRetry(client, {
 ```ts
 // Add randomization to prevent thundering herd
 const jitteredRetryClient = useRetry(client, {
-  strategy: 'exponential',
+  strategy: "exponential",
   delay: 1000,
-  jitter: true,  // Adds ±25% randomization
-  maxRetries: 4
+  jitter: true, // Adds ±25% randomization
+  maxRetries: 4,
 });
 
 // Delays will be roughly: 1s±25%, 2s±25%, 4s±25%, 8s±25%
@@ -146,18 +153,18 @@ const jitteredRetryClient = useRetry(client, {
 ## Helper Functions
 
 ```ts
-import { 
-  createExponentialRetry, 
+import {
+  createExponentialRetry,
   createServerErrorRetry,
   createLinearRetry,
-  createFixedRetry
+  createFixedRetry,
 } from "@fgrzl/fetch";
 
 // Pre-configured retry strategies
-client.use(createExponentialRetry(3, 1000));  // 3 retries, 1s base
-client.use(createServerErrorRetry(5));        // 5 retries, server errors only
-client.use(createLinearRetry(4, 500));        // Linear backoff
-client.use(createFixedRetry(3, 2000));        // Fixed 2s delays
+client.use(createExponentialRetry(3, 1000)); // 3 retries, 1s base
+client.use(createServerErrorRetry(5)); // 5 retries, server errors only
+client.use(createLinearRetry(4, 500)); // Linear backoff
+client.use(createFixedRetry(3, 2000)); // Fixed 2s delays
 ```
 
 ## Error Handling
@@ -169,14 +176,14 @@ const retryClient = useRetry(client, {
   maxRetries: 3,
   onRetry: (response, attempt) => {
     console.log(`Attempt ${attempt} failed with status ${response.status}`);
-  }
+  },
 });
 
 try {
-  const response = await retryClient.get('/api/unreliable-endpoint');
-  console.log('Success after retries:', response.data);
+  const response = await retryClient.get("/api/unreliable-endpoint");
+  console.log("Success after retries:", response.data);
 } catch (error) {
-  console.error('All retry attempts failed:', error);
+  console.error("All retry attempts failed:", error);
   // Handle final failure
 }
 ```
@@ -187,14 +194,19 @@ try {
 const retryClient = useRetry(client, {
   maxRetries: 3,
   onRetryExhausted: (lastResponse, totalAttempts) => {
-    console.error(`All ${totalAttempts} attempts failed. Last response:`, lastResponse.status);
+    console.error(
+      `All ${totalAttempts} attempts failed. Last response:`,
+      lastResponse.status,
+    );
     // Log to error tracking service
-    errorTracker.captureException(new Error(`API retry exhausted: ${lastResponse.status}`));
-  }
+    errorTracker.captureException(
+      new Error(`API retry exhausted: ${lastResponse.status}`),
+    );
+  },
 });
 ```
 
-## Integration Examples  
+## Integration Examples
 
 ### Combined with Circuit Breaker Pattern
 
@@ -231,19 +243,19 @@ const circuitBreaker = new CircuitBreaker();
 const resilientClient = useRetry(client, {
   shouldRetry: (response) => {
     if (!circuitBreaker.shouldRetry()) {
-      console.log('Circuit breaker open, not retrying');
+      console.log("Circuit breaker open, not retrying");
       return false;
     }
-    
+
     const shouldRetry = response.status >= 500;
     if (shouldRetry) {
       circuitBreaker.recordFailure();
     } else {
       circuitBreaker.recordSuccess();
     }
-    
+
     return shouldRetry;
-  }
+  },
 });
 ```
 
@@ -254,7 +266,7 @@ const smartRetryClient = useRetry(client, {
   shouldRetry: (response) => {
     if (response.status === 429) {
       // Extract retry-after header
-      const retryAfter = response.headers.get('Retry-After');
+      const retryAfter = response.headers.get("Retry-After");
       if (retryAfter) {
         const delay = parseInt(retryAfter) * 1000;
         console.log(`Rate limited, waiting ${delay}ms before retry`);
@@ -266,14 +278,14 @@ const smartRetryClient = useRetry(client, {
   delay: (attempt, response) => {
     // Use Retry-After header if available for 429s
     if (response?.status === 429) {
-      const retryAfter = response.headers.get('Retry-After');
+      const retryAfter = response.headers.get("Retry-After");
       if (retryAfter) {
         return parseInt(retryAfter) * 1000;
       }
     }
     // Otherwise use exponential backoff
     return Math.min(1000 * Math.pow(2, attempt - 1), 30000);
-  }
+  },
 });
 ```
 
@@ -289,7 +301,7 @@ const smartRetryClient = useRetry(client, {
 
 ## Limitations
 
-⚠️ **Important**: The retry middleware has architectural limitations due to the response middleware pattern. 
+⚠️ **Important**: The retry middleware has architectural limitations due to the response middleware pattern.
 
 - **Request consumption**: Request bodies may be consumed and not available for retries
 - **Stream handling**: Streaming responses cannot be retried

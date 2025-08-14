@@ -215,7 +215,7 @@ export class FetchClient {
 
   /**
    * HEAD request with query parameter support.
-   * 
+   *
    * HEAD requests are used to retrieve metadata about a resource without downloading
    * the response body. Useful for checking if a resource exists, getting content length,
    * last modified date, etc.
@@ -234,7 +234,7 @@ export class FetchClient {
    *   console.log(`File size: ${contentLength} bytes`);
    * }
    * ```
-   * 
+   *
    * @example Check with query parameters:
    * ```typescript
    * const exists = await client.head('/api/users', { id: 123 });
@@ -253,7 +253,7 @@ export class FetchClient {
 
   /**
    * HEAD request that returns useful metadata about a resource.
-   * 
+   *
    * This is a convenience method that extracts common metadata from HEAD responses
    * for easier consumption.
    *
@@ -286,16 +286,20 @@ export class FetchClient {
     }
   > {
     const response = await this.head(url, params);
-    
+
     const contentLengthHeader = response.headers.get('content-length');
     const lastModifiedHeader = response.headers.get('last-modified');
-    
+
     return {
       ...response,
       exists: response.ok,
       contentType: response.headers.get('content-type') || undefined,
-      contentLength: contentLengthHeader ? parseInt(contentLengthHeader, 10) : undefined,
-      lastModified: lastModifiedHeader ? new Date(lastModifiedHeader) : undefined,
+      contentLength: contentLengthHeader
+        ? parseInt(contentLengthHeader, 10)
+        : undefined,
+      lastModified: lastModifiedHeader
+        ? new Date(lastModifiedHeader)
+        : undefined,
       etag: response.headers.get('etag') || undefined,
       cacheControl: response.headers.get('cache-control') || undefined,
     };

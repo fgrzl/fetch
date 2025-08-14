@@ -27,7 +27,7 @@ import { FetchClient, useAuthentication } from "@fgrzl/fetch";
 
 const client = new FetchClient();
 const authClient = useAuthentication(client, {
-  tokenProvider: () => localStorage.getItem("auth-token") || ""
+  tokenProvider: () => localStorage.getItem("auth-token") || "",
 });
 
 // All requests now include Authorization header
@@ -40,15 +40,15 @@ const profile = await authClient.get("/api/profile");
 const authClient = useAuthentication(client, {
   tokenProvider: async () => {
     let token = localStorage.getItem("jwt-token");
-    
+
     // Check if token is expired and refresh if needed
     if (isTokenExpired(token)) {
       token = await refreshToken();
       localStorage.setItem("jwt-token", token);
     }
-    
+
     return token;
-  }
+  },
 });
 ```
 
@@ -58,7 +58,7 @@ const authClient = useAuthentication(client, {
 const authClient = useAuthentication(client, {
   tokenProvider: () => getApiKey(),
   authScheme: "ApiKey", // Default: "Bearer"
-  headerName: "X-API-Key" // Default: "Authorization"
+  headerName: "X-API-Key", // Default: "Authorization"
 });
 ```
 
@@ -73,27 +73,27 @@ import { useProductionStack } from "@fgrzl/fetch";
 
 const prodClient = useProductionStack(new FetchClient(), {
   auth: {
-    tokenProvider: () => getAuthToken()
+    tokenProvider: () => getAuthToken(),
   },
   retry: {
     maxRetries: 3,
-    delay: 1000
+    delay: 1000,
   },
   cache: {
     ttl: 5 * 60 * 1000, // 5 minutes
-    methods: ["GET"]
+    methods: ["GET"],
   },
   logging: {
-    level: "info"
+    level: "info",
   },
   rateLimit: {
     maxRequests: 100,
-    windowMs: 60 * 1000 // 100 requests per minute
-  }
+    windowMs: 60 * 1000, // 100 requests per minute
+  },
 });
 ```
 
-### Development Stack  
+### Development Stack
 
 Optimized for local development with verbose logging:
 
@@ -102,8 +102,8 @@ import { useDevelopmentStack } from "@fgrzl/fetch";
 
 const devClient = useDevelopmentStack(new FetchClient(), {
   auth: {
-    tokenProvider: () => "dev-token"
-  }
+    tokenProvider: () => "dev-token",
+  },
 });
 ```
 
@@ -116,8 +116,8 @@ import { useBasicStack } from "@fgrzl/fetch";
 
 const basicClient = useBasicStack(new FetchClient(), {
   auth: {
-    tokenProvider: () => getToken()
-  }
+    tokenProvider: () => getToken(),
+  },
 });
 ```
 
@@ -135,7 +135,7 @@ const csrfClient = useCSRF(client);
 const customCsrfClient = useCSRF(client, {
   cookieName: "csrf-token",
   headerName: "X-CSRF-Token",
-  skipPatterns: ["/api/public/*"]
+  skipPatterns: ["/api/public/*"],
 });
 ```
 
@@ -155,7 +155,7 @@ const authzClient = useAuthorization(client, {
     // Show access denied message
     showNotification("Access denied", "error");
   },
-  statusCodes: [401, 403] // Handle both 401 and 403
+  statusCodes: [401, 403], // Handle both 401 and 403
 });
 ```
 
@@ -168,7 +168,7 @@ const cachedClient = useCache(client, {
   ttl: 10 * 60 * 1000, // 10 minutes
   methods: ["GET", "HEAD"],
   keyGenerator: (method, url) => `${method}:${url}`,
-  storage: new Map() // Default: in-memory Map
+  storage: new Map(), // Default: in-memory Map
 });
 ```
 
@@ -184,7 +184,7 @@ const retryClient = useRetry(client, {
   retryOn: [429, 502, 503, 504], // Which status codes to retry
   onRetry: (attempt, response) => {
     console.log(`Retry attempt ${attempt} for ${response.status}`);
-  }
+  },
 });
 ```
 
@@ -199,7 +199,7 @@ const loggedClient = useLogging(client, {
   includeResponseHeaders: false,
   includeRequestBody: false,
   includeResponseBody: false,
-  logger: console // Custom logger implementation
+  logger: console, // Custom logger implementation
 });
 ```
 
@@ -214,7 +214,7 @@ const limitedClient = useRateLimit(client, {
   algorithm: "token-bucket", // "fixed-window" | "sliding-window" | "token-bucket"
   onLimitReached: (retryAfter) => {
     console.log(`Rate limit reached, retry after ${retryAfter}ms`);
-  }
+  },
 });
 ```
 
@@ -245,12 +245,12 @@ const devConfig = {
 };
 
 const devClient = useDevelopmentStack(new FetchClient(devConfig), {
-  auth: { tokenProvider: () => "dev-token" }
+  auth: { tokenProvider: () => "dev-token" },
 });
 ```
 
 ## Next Steps
 
 - [Middleware Guide](./middleware.md) - Deep dive into middleware system
-- [Error Handling](./error-handling.md) - Robust error management strategies  
+- [Error Handling](./error-handling.md) - Robust error management strategies
 - [TypeScript Guide](./typescript.md) - Advanced type-safe patterns

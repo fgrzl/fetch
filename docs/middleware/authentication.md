@@ -11,18 +11,18 @@ import { useAuthentication } from "@fgrzl/fetch";
 
 // Static token
 const authClient = useAuthentication(client, {
-  tokenProvider: () => "your-bearer-token"
+  tokenProvider: () => "your-bearer-token",
 });
 
 // Dynamic token from localStorage
 const authClient = useAuthentication(client, {
-  tokenProvider: () => localStorage.getItem('auth-token') || ''
+  tokenProvider: () => localStorage.getItem("auth-token") || "",
 });
 
 // With custom header name
 const authClient = useAuthentication(client, {
   tokenProvider: () => getApiKey(),
-  headerName: 'X-API-Key'
+  headerName: "X-API-Key",
 });
 ```
 
@@ -32,13 +32,13 @@ const authClient = useAuthentication(client, {
 // Custom authorization header
 const authClient = useAuthentication(client, {
   tokenProvider: () => `Bearer ${getToken()}`,
-  headerName: 'Authorization' // Default
+  headerName: "Authorization", // Default
 });
 
 // API Key authentication
 const authClient = useAuthentication(client, {
   tokenProvider: () => process.env.API_KEY,
-  headerName: 'X-API-Key'
+  headerName: "X-API-Key",
 });
 ```
 
@@ -50,7 +50,7 @@ import { createAuthenticationMiddleware } from "@fgrzl/fetch";
 // Skip authentication for certain endpoints
 const authClient = useAuthentication(client, {
   tokenProvider: () => getToken(),
-  skipPatterns: ['/public', /^\/health/]
+  skipPatterns: ["/public", /^\/health/],
 });
 
 // Advanced factory usage
@@ -59,7 +59,7 @@ const authMiddleware = createAuthenticationMiddleware({
     const token = await refreshTokenIfNeeded();
     return token;
   },
-  headerName: 'Authorization'
+  headerName: "Authorization",
 });
 
 client.use(authMiddleware);
@@ -92,13 +92,13 @@ import { useAuthentication } from "@fgrzl/fetch";
 
 function createAuthenticatedClient(getToken: () => string) {
   return useAuthentication(new FetchClient(), {
-    tokenProvider: getToken
+    tokenProvider: getToken,
   });
 }
 
 // In your React app
-const apiClient = createAuthenticatedClient(() => 
-  localStorage.getItem('authToken') || ''
+const apiClient = createAuthenticatedClient(
+  () => localStorage.getItem("authToken") || "",
 );
 ```
 
@@ -110,7 +110,7 @@ import { useAuthentication } from "@fgrzl/fetch";
 
 const authenticatedClient = useAuthentication(new FetchClient(), {
   tokenProvider: () => process.env.SERVICE_API_KEY!,
-  headerName: 'X-Service-Key'
+  headerName: "X-Service-Key",
 });
 ```
 

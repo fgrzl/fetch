@@ -11,12 +11,12 @@ client.use(async (request, next) => {
   // 1. Modify request before sending
   request.headers = {
     ...request.headers,
-    'X-Custom-Header': 'value'
+    "X-Custom-Header": "value",
   };
 
-  // 2. Call next middleware/make request  
+  // 2. Call next middleware/make request
   const response = await next(request);
-  
+
   // 3. Process response after receiving
   if (response.status >= 400) {
     console.error(`Request failed: ${response.status}`);
@@ -31,7 +31,7 @@ client.use(async (request, next) => {
 Middleware executes in an onion-like pattern:
 
 1. Middleware 1 (request processing)
-2. Middleware 2 (request processing)  
+2. Middleware 2 (request processing)
 3. HTTP request
 4. Middleware 2 (response processing, reverse order)
 5. Middleware 1 (response processing, reverse order)
@@ -43,7 +43,7 @@ Middleware executes in an onion-like pattern:
 ```ts
 client.use(async (request, next) => {
   const response = await next(request);
-  
+
   if (response.status >= 400) {
     // Only process error responses
     logError(response);

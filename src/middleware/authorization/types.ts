@@ -20,12 +20,12 @@ export interface RedirectAuthorizationConfig {
    * Path to redirect to on unauthorized response (default: '/login')
    */
   redirectPath?: string;
-  
+
   /**
    * Query parameter name for the return URL (default: 'return_url')
    */
   returnUrlParam?: string;
-  
+
   /**
    * Whether to include the current URL as a return URL (default: true)
    * Set to false if you don't want the return URL functionality
@@ -70,12 +70,12 @@ export interface AuthorizationOptions {
    * Smart default configuration for redirect-based authorization.
    * When provided, creates a default onUnauthorized handler that redirects
    * to the login page with a return URL.
-   * 
+   *
    * @example Use defaults (redirects to '/login?return_url=current-page'):
    * ```typescript
    * redirectConfig: {}
    * ```
-   * 
+   *
    * @example Custom redirect path:
    * ```typescript
    * redirectConfig: { redirectPath: '/signin' }

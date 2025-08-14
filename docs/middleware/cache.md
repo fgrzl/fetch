@@ -11,7 +11,7 @@ import { useCache } from "@fgrzl/fetch";
 
 // Cache responses for 5 minutes
 const cachedClient = useCache(client, {
-  ttl: 5 * 60 * 1000 // 5 minutes in milliseconds
+  ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
 });
 
 // Default caching (1 minute TTL)
@@ -28,7 +28,8 @@ const cachedClient = useCache(client, {
   ttl: 10 * 60 * 1000, // 10 minutes
   maxSize: 1000, // Maximum 1000 cached responses
   keyGenerator: (request) => `${request.method}-${request.url}`,
-  shouldCache: (response) => response.status === 200 && response.method === 'GET'
+  shouldCache: (response) =>
+    response.status === 200 && response.method === "GET",
 });
 
 // Factory approach for advanced control
@@ -50,15 +51,15 @@ class RedisCache implements CacheStorage {
     const value = await redis.get(key);
     return value ? JSON.parse(value) : undefined;
   }
-  
+
   async set(key: string, entry: CacheEntry): Promise<void> {
     await redis.setex(key, entry.ttl / 1000, JSON.stringify(entry));
   }
-  
+
   async delete(key: string): Promise<void> {
     await redis.del(key);
   }
-  
+
   async clear(): Promise<void> {
     await redis.flushall();
   }
@@ -66,7 +67,7 @@ class RedisCache implements CacheStorage {
 
 const cachedClient = useCache(client, {
   storage: new RedisCache(),
-  ttl: 15 * 60 * 1000 // 15 minutes
+  ttl: 15 * 60 * 1000, // 15 minutes
 });
 ```
 
@@ -74,9 +75,9 @@ const cachedClient = useCache(client, {
 
 ```ts
 interface CacheOptions {
-  ttl?: number;                    // Time to live in milliseconds (default: 60000)
-  maxSize?: number;                // Maximum cache entries (default: 1000)
-  storage?: CacheStorage;          // Custom storage implementation
+  ttl?: number; // Time to live in milliseconds (default: 60000)
+  maxSize?: number; // Maximum cache entries (default: 1000)
+  storage?: CacheStorage; // Custom storage implementation
   keyGenerator?: CacheKeyGenerator; // Custom cache key generation
   shouldCache?: (response: FetchResponse) => boolean; // Cache predicate
 }
@@ -108,13 +109,13 @@ type CacheKeyGenerator = (request: RequestInit & { url: string }) => string;
 // Cache GET requests for user data
 const userClient = useCache(new FetchClient(), {
   ttl: 2 * 60 * 1000, // 2 minutes
-  shouldCache: (response) => 
-    response.method === 'GET' && 
-    response.url?.includes('/api/users') &&
-    response.status === 200
+  shouldCache: (response) =>
+    response.method === "GET" &&
+    response.url?.includes("/api/users") &&
+    response.status === 200,
 });
 
-const userData = await userClient.get('/api/users/123');
+const userData = await userClient.get("/api/users/123");
 // Subsequent calls within 2 minutes will be served from cache
 ```
 
@@ -128,24 +129,24 @@ const client = useCache(new FetchClient());
 await client.cache.clear();
 
 // Clear specific entry (if you have access to the cache instance)
-await client.cache.delete('GET-/api/users/123');
+await client.cache.delete("GET-/api/users/123");
 ```
 
 ### Per-Request Cache Control
 
 ```ts
 // Skip cache for specific requests
-const response = await cachedClient.get('/api/fresh-data', {
+const response = await cachedClient.get("/api/fresh-data", {
   headers: {
-    'Cache-Control': 'no-cache' // Will bypass cache
-  }
+    "Cache-Control": "no-cache", // Will bypass cache
+  },
 });
 
 // Force cache refresh
-const response = await cachedClient.get('/api/data', {
+const response = await cachedClient.get("/api/data", {
   headers: {
-    'Cache-Control': 'max-age=0' // Will refresh cache
-  }
+    "Cache-Control": "max-age=0", // Will refresh cache
+  },
 });
 ```
 
@@ -159,10 +160,10 @@ const smartClient = useCache(client, {
   keyGenerator: (req) => `${req.method}-${req.url}`,
   shouldCache: (response) => response.status < 400,
   ttl: (request) => {
-    if (request.url?.includes('/api/config')) return 30 * 60 * 1000; // 30 min
-    if (request.url?.includes('/api/users')) return 5 * 60 * 1000;   // 5 min
+    if (request.url?.includes("/api/config")) return 30 * 60 * 1000; // 30 min
+    if (request.url?.includes("/api/users")) return 5 * 60 * 1000; // 5 min
     return 60 * 1000; // 1 min default
-  }
+  },
 });
 ```
 
@@ -171,11 +172,11 @@ const smartClient = useCache(client, {
 ```ts
 // Only cache successful GET requests
 const conditionalClient = useCache(client, {
-  shouldCache: (response) => 
-    response.method === 'GET' && 
-    response.status >= 200 && 
+  shouldCache: (response) =>
+    response.method === "GET" &&
+    response.status >= 200 &&
     response.status < 300 &&
-    !response.url?.includes('?nocache=true')
+    !response.url?.includes("?nocache=true"),
 });
 ```
 
@@ -184,7 +185,7 @@ const conditionalClient = useCache(client, {
 1. **Cache GET requests only**: POST/PUT/DELETE should not be cached
 2. **Set appropriate TTLs**: Balance freshness vs performance
 3. **Use custom storage**: For shared caches or persistence
-4. **Handle cache misses**: Always be prepared for network requests  
+4. **Handle cache misses**: Always be prepared for network requests
 5. **Cache invalidation**: Clear cache after mutations
 6. **Memory management**: Set `maxSize` to prevent memory leaks
 7. **Error handling**: Don't cache error responses unless intentional

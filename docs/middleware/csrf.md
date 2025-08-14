@@ -22,5 +22,6 @@ client.use(CSRFMiddleware);
 ```
 
 ## Options
+
 - `cookieName`: Name of the CSRF token cookie (default: `XSRF-TOKEN`)
 - `headerName`: Name of the HTTP header to send the token (default: `X-XSRF-TOKEN`)
