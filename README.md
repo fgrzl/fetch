@@ -5,7 +5,6 @@
 
 A production-ready HTTP client for TypeScript that **just works** out of the box.
 
-<<<<<<< HEAD
 ## ✨ Features
 
 - **Pit of Success Design**: Simple defaults that just work, customizable when needed
@@ -17,9 +16,6 @@ A production-ready HTTP client for TypeScript that **just works** out of the box
 - TypeScript-first, small and dependency-free
 
 ## 📦 Installation
-=======
-## 🚀 Get Started in 60 Seconds
->>>>>>> origin/develop
 
 **Install**
 ```bash
@@ -50,7 +46,6 @@ const authClient = useAuthentication(new FetchClient(), {
   tokenProvider: () => localStorage.getItem("token") || ""
 });
 
-<<<<<<< HEAD
 // Smart defaults - just works
 useCSRF(client);
 useAuthorization(client); // Redirects to /login with return URL
@@ -67,9 +62,6 @@ if (userResponse.ok) {
 } else {
   console.error(`Failed with status ${userResponse.status}`);
 }
-=======
-const profile = await authClient.get<UserProfile>("/api/profile");
->>>>>>> origin/develop
 ```
 
 ## ✨ What You Get Out of the Box
