@@ -30,7 +30,9 @@ import api from "@fgrzl/fetch";
 
 // It just works! 🎉
 const users = await api.get("https://api.example.com/api/users");
-const newUser = await api.post("https://api.example.com/api/users", { name: "John" });
+const newUser = await api.post("https://api.example.com/api/users", {
+  name: "John",
+});
 
 // Built-in error handling
 if (users.ok) {

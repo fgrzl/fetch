@@ -56,11 +56,10 @@ const clientConfig: FetchClientOptions = {
   },
 };
 
-// Environment-specific base URL configuration  
+// Environment-specific base URL configuration
 const getClientConfig = (env: string): FetchClientOptions => ({
-  baseUrl: env === "production" 
-    ? "https://api.myapp.com" 
-    : "http://localhost:3001",
+  baseUrl:
+    env === "production" ? "https://api.myapp.com" : "http://localhost:3001",
   credentials: env === "development" ? "include" : "same-origin",
 });
 

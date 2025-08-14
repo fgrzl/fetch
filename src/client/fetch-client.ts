@@ -70,22 +70,22 @@ export class FetchClient {
 
   /**
    * Set or update the base URL for this client instance.
-   * 
+   *
    * When a base URL is set, relative URLs will be resolved against it.
    * Absolute URLs will continue to work unchanged.
-   * 
+   *
    * @param baseUrl - The base URL to set, or undefined to clear it
    * @returns The client instance for method chaining
-   * 
+   *
    * @example Set base URL:
    * ```typescript
    * const client = new FetchClient();
    * client.setBaseUrl('https://api.example.com');
-   * 
+   *
    * // Now relative URLs work
    * await client.get('/users'); // → GET https://api.example.com/users
    * ```
-   * 
+   *
    * @example Chain with middleware:
    * ```typescript
    * const client = useProductionStack(new FetchClient())
@@ -228,10 +228,14 @@ export class FetchClient {
 
     // Resolve the URL first (handles baseUrl if needed)
     const resolvedUrl = this.resolveUrl(url);
-    
+
     // If the resolved URL is still relative (no base URL configured),
     // manually build query parameters
-    if (!resolvedUrl.startsWith('http://') && !resolvedUrl.startsWith('https://') && !resolvedUrl.startsWith('//')) {
+    if (
+      !resolvedUrl.startsWith('http://') &&
+      !resolvedUrl.startsWith('https://') &&
+      !resolvedUrl.startsWith('//')
+    ) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
@@ -261,7 +265,11 @@ export class FetchClient {
    */
   private resolveUrl(url: string): string {
     // If URL is already absolute, return as-is
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+    if (
+      url.startsWith('http://') ||
+      url.startsWith('https://') ||
+      url.startsWith('//')
+    ) {
       return url;
     }
 
@@ -276,9 +284,11 @@ export class FetchClient {
       const resolvedUrl = new URL(url, baseUrl);
       return resolvedUrl.toString();
     } catch {
-      throw new Error(`Invalid URL: Unable to resolve "${url}" with baseUrl "${this.baseUrl}"`);
+      throw new Error(
+        `Invalid URL: Unable to resolve "${url}" with baseUrl "${this.baseUrl}"`,
+      );
     }
-  }  // 🎯 PIT OF SUCCESS: Convenience methods with smart defaults
+  } // 🎯 PIT OF SUCCESS: Convenience methods with smart defaults
 
   /**
    * HEAD request with query parameter support.

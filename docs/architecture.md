@@ -170,24 +170,24 @@ Each microservice gets its own configured client:
 // services/api.ts
 export const authService = useAuthentication(
   new FetchClient({ baseUrl: config.AUTH_SERVICE_URL }),
-  { tokenProvider: getAuthToken }
+  { tokenProvider: getAuthToken },
 );
 
 export const userService = useProductionStack(
   new FetchClient({ baseUrl: config.USER_SERVICE_URL }),
-  productionConfig
+  productionConfig,
 );
 
 export const notificationService = useRetry(
   new FetchClient({ baseUrl: config.NOTIFICATION_SERVICE_URL }),
-  { maxRetries: 5, delay: 1000 }
+  { maxRetries: 5, delay: 1000 },
 );
 
 // Usage throughout the application
-import { userService, notificationService } from './services/api';
+import { userService, notificationService } from "./services/api";
 
 const user = await userService.get(`/users/${userId}`);
-await notificationService.post('/send', { userId, message });
+await notificationService.post("/send", { userId, message });
 ```
 
 ## Error Handling Strategy

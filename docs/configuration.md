@@ -31,9 +31,9 @@ const apiClient = new FetchClient({
 });
 
 // All relative URLs are automatically prefixed
-await apiClient.get("/users");           // → GET https://api.example.com/users
+await apiClient.get("/users"); // → GET https://api.example.com/users
 await apiClient.post("/users", userData); // → POST https://api.example.com/users
-await apiClient.get("/posts?page=1");    // → GET https://api.example.com/posts?page=1
+await apiClient.get("/posts?page=1"); // → GET https://api.example.com/posts?page=1
 
 // Absolute URLs are used as-is (baseUrl is ignored)
 await apiClient.get("https://cdn.example.com/images/avatar.png");
@@ -78,8 +78,8 @@ const v2Client = new FetchClient({
 });
 
 // Easy to maintain different API versions
-const legacyUsers = await v1Client.get("/users");  // → /v1/users
-const modernUsers = await v2Client.get("/users");  // → /v2/users
+const legacyUsers = await v1Client.get("/users"); // → /v1/users
+const modernUsers = await v2Client.get("/users"); // → /v2/users
 ```
 
 ### Microservices Architecture
@@ -112,13 +112,13 @@ Base URL is optional - existing code continues to work unchanged:
 ```typescript
 // Without base URL (existing behavior)
 const client = new FetchClient();
-await client.get("/api/users");              // → GET /api/users
-await client.get("https://api.com/users");   // → GET https://api.com/users
+await client.get("/api/users"); // → GET /api/users
+await client.get("https://api.com/users"); // → GET https://api.com/users
 
 // With base URL (new behavior)
 const apiClient = new FetchClient({ baseUrl: "https://api.example.com" });
-await apiClient.get("/users");              // → GET https://api.example.com/users
-await apiClient.get("https://other.com");   // → GET https://other.com (absolute URL)
+await apiClient.get("/users"); // → GET https://api.example.com/users
+await apiClient.get("https://other.com"); // → GET https://other.com (absolute URL)
 ```
 
 ## Authentication Setup

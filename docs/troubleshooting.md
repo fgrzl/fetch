@@ -295,6 +295,7 @@ export default defineConfig({
 **Problem:** Requests going to wrong URLs or base URL not working
 
 **Symptoms:**
+
 - 404 errors when base URL is configured
 - Relative URLs not being resolved correctly
 - Absolute URLs being modified unexpectedly
@@ -318,8 +319,8 @@ const badClient = new FetchClient({ baseUrl: "api.example.com" }); // Missing pr
 const client = new FetchClient({ baseUrl: "https://api.example.com" });
 
 // These should work:
-await client.get("/users");                    // → https://api.example.com/users
-await client.get("users");                     // → https://api.example.com/users
+await client.get("/users"); // → https://api.example.com/users
+await client.get("users"); // → https://api.example.com/users
 await client.get("https://other-api.com/data"); // → https://other-api.com/data (absolute)
 
 // Debug URL resolution
@@ -346,7 +347,7 @@ const client = new FetchClient({ baseUrl: getBaseUrl() });
 // ❌ This will NOT use base URL (absolute URL)
 await client.get("http://localhost:3000/api/users");
 
-// ✅ This WILL use base URL (relative URL)  
+// ✅ This WILL use base URL (relative URL)
 await client.get("/api/users");
 ```
 
