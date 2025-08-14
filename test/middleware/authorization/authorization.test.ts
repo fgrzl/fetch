@@ -279,5 +279,66 @@ describe('Authorization Middleware', () => {
 
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('auth-token');
     });
+
+    it('should handle invalid URL in skip patterns (fallback case)', async () => {
+      const onUnauthorized = vi.fn();
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const client = new FetchClient();
+      const authzClient = useAuthorization(client, {
+        onUnauthorized,
+        skipPatterns: ['public'], // String pattern that should match
+      });
+
+      // Test with a malformed URL that will cause URL parsing to fail
+      // This should trigger the fallback case where pathname = url
+      await authzClient.request('not-a-valid-url-public', { method: 'GET' });
+
+      // Should skip the handler because 'public' is in the URL string
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    });
+
+    it('should handle regex patterns for invalid URLs', async () => {
+      const onUnauthorized = vi.fn();
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const client = new FetchClient();
+      const authzClient = useAuthorization(client, {
+        onUnauthorized,
+        skipPatterns: [/api\/public/], // Regex pattern
+      });
+
+      // Test with a malformed URL containing the pattern
+      await authzClient.request('malformed-url-api/public-endpoint', { method: 'GET' });
+
+      // Should skip the handler because the regex matches
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    });
+
+    it('should handle requests with undefined URL', async () => {
+      const onUnauthorized = vi.fn();
+      const client = new FetchClient();
+      const authzClient = useAuthorization(client, {
+        onUnauthorized,
+      });
+
+      mockFetch.mockResolvedValueOnce(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      // Make a request with empty URL to test URL fallback
+      await authzClient.post('', {
+        data: 'test',
+      });
+
+      expect(onUnauthorized).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 401, url: '' }),
+        expect.objectContaining({ url: '' }),
+      );
+    });
   });
 });

@@ -396,4 +396,92 @@ describe('CSRF Middleware', () => {
       );
     });
   });
+
+  describe('Edge cases and branch coverage', () => {
+    it('should handle regex skip patterns', async () => {
+      const client = new FetchClient();
+      const csrfClient = useCSRF(client, {
+        skipPatterns: [/\/api\/public.*/, /.*\/webhook$/],
+        tokenProvider: () => 'test-csrf-token',
+      });
+
+      // These should be skipped due to regex patterns
+      await csrfClient.post('https://api.example.com/api/public/data', {
+        data: 'test',
+      });
+      
+      await csrfClient.post('https://api.example.com/github/webhook', {
+        payload: 'test',
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+      
+      // Verify no CSRF headers were added
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.example.com/api/public/data',
+        expect.not.objectContaining({
+          headers: expect.objectContaining({
+            'x-xsrf-token': expect.any(String),
+          }),
+        }),
+      );
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.example.com/github/webhook',
+        expect.not.objectContaining({
+          headers: expect.objectContaining({
+            'x-xsrf-token': expect.any(String),
+          }),
+        }),
+      );
+    });
+
+    it('should handle requests with undefined or empty URL', async () => {
+      const client = new FetchClient();
+      const csrfClient = useCSRF(client, {
+        tokenProvider: () => 'test-csrf-token',
+      });
+
+      // Mock fetch to capture the actual request being made
+      mockFetch.mockResolvedValueOnce(new Response('{}'));
+      
+      // Make a request with empty URL to test URL fallback
+      await csrfClient.post('', {
+        data: 'test',
+      });
+      
+      expect(mockFetch).toHaveBeenCalledWith(
+        '',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'x-xsrf-token': 'test-csrf-token',
+          }),
+        }),
+      );
+    });
+
+    it('should handle requests with undefined method (fallback to GET)', async () => {
+      const client = new FetchClient();
+      const csrfClient = useCSRF(client, {
+        tokenProvider: () => 'test-csrf-token',
+      });
+
+      // Mock fetch to capture the actual request being made  
+      mockFetch.mockResolvedValueOnce(new Response('{}'));
+
+      // Make a request without specifying method (should default to GET and skip CSRF)
+      await csrfClient.request('https://api.example.com/test', {
+        // No method specified, should default to GET
+      });
+      
+      expect(mockFetch).toHaveBeenCalledWith(
+        'https://api.example.com/test',
+        expect.not.objectContaining({
+          headers: expect.objectContaining({
+            'x-xsrf-token': expect.any(String),
+          }),
+        }),
+      );
+    });
+  });
 });

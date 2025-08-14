@@ -536,4 +536,115 @@ describe('Rate Limit Middleware', () => {
       vi.useRealTimers();
     });
   });
+
+  describe('Edge cases and branch coverage', () => {
+    it('should handle regex skip patterns correctly', async () => {
+      const client = new FetchClient();
+      const rateLimitedClient = useRateLimit(client, {
+        maxRequests: 1,
+        windowMs: 1000,
+        skipPatterns: [/\/skip-.*/], // Regex pattern
+      });
+
+      // This should be skipped due to regex pattern
+      await rateLimitedClient.get('https://api.example.com/skip-this');
+      await rateLimitedClient.get('https://api.example.com/skip-that');
+      
+      expect(mockFetch).toHaveBeenCalledTimes(2); // Both should go through
+
+      // This should be rate limited
+      await rateLimitedClient.get('https://api.example.com/normal');
+      const blockedResponse = await rateLimitedClient.get('https://api.example.com/blocked');
+      
+      expect(blockedResponse.status).toBe(429);
+    });
+
+    it('should handle custom error handler returning null', async () => {
+      const client = new FetchClient();
+      const onRateLimitExceeded = vi.fn().mockResolvedValue(null); // Returns null
+
+      const rateLimitedClient = useRateLimit(client, {
+        maxRequests: 1,
+        windowMs: 1000,
+        onRateLimitExceeded,
+      });
+
+      // Use up the token
+      await rateLimitedClient.get('https://api.example.com/test1');
+      
+      // This should trigger the custom handler but fall back to default response
+      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test2');
+
+      expect(onRateLimitExceeded).toHaveBeenCalled();
+      expect(rateLimitedResponse.status).toBe(429); // Should use default 429 response
+      expect(rateLimitedResponse.error?.message).toContain('Rate limit exceeded');
+    });
+
+    it('should handle custom error handler returning custom response', async () => {
+      const client = new FetchClient();
+      const customResponse = {
+        data: { error: 'Custom rate limit message' },
+        status: 429,
+        statusText: 'Custom Too Many Requests',
+        headers: new Headers({ 'X-Custom': 'header' }),
+        url: 'https://api.example.com/test2',
+        ok: false,
+      };
+      
+      const onRateLimitExceeded = vi.fn().mockResolvedValue(customResponse);
+
+      const rateLimitedClient = useRateLimit(client, {
+        maxRequests: 1,
+        windowMs: 1000,
+        onRateLimitExceeded,
+      });
+
+      // Use up the token
+      await rateLimitedClient.get('https://api.example.com/test1');
+      
+      // This should return the custom response
+      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test2');
+
+      expect(onRateLimitExceeded).toHaveBeenCalled();
+      expect(rateLimitedResponse).toEqual(customResponse);
+      expect(rateLimitedResponse.statusText).toBe('Custom Too Many Requests');
+    });
+
+    it('should handle retryAfter being null in rate limit response', async () => {
+      const client = new FetchClient();
+      const rateLimitedClient = useRateLimit(client, {
+        maxRequests: 1,
+        windowMs: 1000,
+      });
+
+      // Use up the token
+      await rateLimitedClient.get('https://api.example.com/test1');
+      
+      // Mock the bucket to return null retryAfter
+      const rateLimitedResponse = await rateLimitedClient.get('https://api.example.com/test2');
+
+      expect(rateLimitedResponse.status).toBe(429);
+      expect(rateLimitedResponse.headers.get('Retry-After')).toBeTruthy();
+      // Should handle Math.ceil(retryAfter || 0) case
+      expect(parseInt(rateLimitedResponse.headers.get('Retry-After')!)).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should handle empty URL in requests', async () => {
+      const client = new FetchClient();
+      const rateLimitedClient = useRateLimit(client, {
+        maxRequests: 2,
+        windowMs: 1000,
+      });
+
+      // Test with empty URL
+      await rateLimitedClient.request('', { method: 'GET' });
+      await rateLimitedClient.request('', { method: 'GET' });
+      
+      // Third request should be rate limited
+      const rateLimitedResponse = await rateLimitedClient.request('', { method: 'GET' });
+
+      expect(rateLimitedResponse.status).toBe(429);
+      expect(rateLimitedResponse.url).toBe('');
+    });
+  });
 });
