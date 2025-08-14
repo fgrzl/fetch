@@ -13,25 +13,25 @@ describe('Query Parameter Utilities', () => {
     });
 
     it('should handle arrays correctly', () => {
-      const result = buildQueryParams({ 
-        tags: ['typescript', 'javascript'], 
-        active: true 
+      const result = buildQueryParams({
+        tags: ['typescript', 'javascript'],
+        active: true,
       });
       expect(result).toBe('tags=typescript&tags=javascript&active=true');
     });
 
     it('should filter out undefined values', () => {
-      const result = buildQueryParams({ 
-        name: 'John', 
-        email: undefined, 
-        age: null 
+      const result = buildQueryParams({
+        name: 'John',
+        email: undefined,
+        age: null,
       });
       expect(result).toBe('name=John&age=null');
     });
 
     it('should handle nested arrays with undefined values', () => {
-      const result = buildQueryParams({ 
-        items: ['a', undefined, 'b'] 
+      const result = buildQueryParams({
+        items: ['a', undefined, 'b'],
       });
       expect(result).toBe('items=a&items=b');
     });
@@ -42,9 +42,9 @@ describe('Query Parameter Utilities', () => {
     });
 
     it('should properly encode special characters', () => {
-      const result = buildQueryParams({ 
-        query: 'hello world', 
-        special: 'a&b=c' 
+      const result = buildQueryParams({
+        query: 'hello world',
+        special: 'a&b=c',
       });
       expect(result).toBe('query=hello+world&special=a%26b%3Dc');
     });
@@ -53,7 +53,7 @@ describe('Query Parameter Utilities', () => {
       const result = buildQueryParams({
         count: 42,
         active: true,
-        disabled: false
+        disabled: false,
       });
       expect(result).toBe('count=42&active=true&disabled=false');
     });
@@ -61,7 +61,10 @@ describe('Query Parameter Utilities', () => {
 
   describe('appendQueryParams', () => {
     it('should append query params to basic URL', () => {
-      const result = appendQueryParams('/api/users', { limit: 10, active: true });
+      const result = appendQueryParams('/api/users', {
+        limit: 10,
+        active: true,
+      });
       expect(result).toBe('/api/users?limit=10&active=true');
     });
 
@@ -76,23 +79,23 @@ describe('Query Parameter Utilities', () => {
     });
 
     it('should handle undefined values in query params', () => {
-      const result = appendQueryParams('/api/users', { 
-        limit: 10, 
-        search: undefined 
+      const result = appendQueryParams('/api/users', {
+        limit: 10,
+        search: undefined,
       });
       expect(result).toBe('/api/users?limit=10');
     });
 
     it('should work with absolute URLs', () => {
-      const result = appendQueryParams('https://api.example.com/users', { 
-        page: 1 
+      const result = appendQueryParams('https://api.example.com/users', {
+        page: 1,
       });
       expect(result).toBe('https://api.example.com/users?page=1');
     });
 
     it('should work with URLs that have fragments', () => {
-      const result = appendQueryParams('/api/users#section', { 
-        limit: 5 
+      const result = appendQueryParams('/api/users#section', {
+        limit: 5,
       });
       expect(result).toBe('/api/users?limit=5#section');
     });

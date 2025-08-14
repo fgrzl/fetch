@@ -41,7 +41,7 @@ import { useProductionStack } from './middleware';
  *
  * // Configure base URL dynamically
  * api.setBaseUrl('https://api.example.com');
- * 
+ *
  * // Now all relative URLs are prefixed automatically
  * const users = await api.get('/users');        // → GET https://api.example.com/users
  * const posts = await api.get('/posts');        // → GET https://api.example.com/posts
