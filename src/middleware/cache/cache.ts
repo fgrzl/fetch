@@ -14,7 +14,7 @@ import type {
 /**
  * Default in-memory cache storage implementation.
  */
-class MemoryStorage implements CacheStorage {
+export class MemoryStorage implements CacheStorage {
   private cache = new Map<string, CacheEntry>();
 
   async get(key: string): Promise<CacheEntry | null> {

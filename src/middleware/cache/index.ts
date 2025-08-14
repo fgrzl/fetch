@@ -13,7 +13,7 @@ export type {
   CacheEntry,
   CacheKeyGenerator,
 } from './types';
-export { createCacheMiddleware } from './cache';
+export { createCacheMiddleware, MemoryStorage } from './cache';
 
 /**
  * "Pit of success" API for adding response caching to a FetchClient.

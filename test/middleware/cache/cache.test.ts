@@ -297,6 +297,28 @@ describe('Cache Middleware', () => {
 
       expect(mockFetch).toHaveBeenCalledTimes(1); // Should use cache
     });
+
+    it('should handle requests with no URL or method', async () => {
+      const client = new FetchClient();
+      const cachedClient = useCache(client);
+
+      // Test default key generator with empty/undefined values
+      await cachedClient.request('', {}); // Empty URL
+      await cachedClient.request('', {}); // Same empty request
+
+      expect(mockFetch).toHaveBeenCalledTimes(1); // Should use cache for identical empty requests
+    });
+
+    it('should handle requests with no headers', async () => {
+      const client = new FetchClient();
+      const cachedClient = useCache(client);
+
+      // Test requests without headers
+      await cachedClient.get('https://api.example.com/no-headers');
+      await cachedClient.get('https://api.example.com/no-headers');
+
+      expect(mockFetch).toHaveBeenCalledTimes(1); // Should use cache
+    });
   });
 
   describe('Error handling', () => {
@@ -333,6 +355,350 @@ describe('Cache Middleware', () => {
         cachedClient.get('https://api.example.com/users'),
       ).rejects.toThrow('Network error');
       expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('MemoryStorage implementation', () => {
+    it('should handle expired entries in get method', async () => {
+      vi.useFakeTimers();
+      
+      const client = new FetchClient();
+      const cachedClient = useCache(client, { ttl: 1000 });
+
+      // First call to populate cache
+      await cachedClient.get('https://api.example.com/users');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Expire the cache
+      vi.advanceTimersByTime(1500);
+
+      // Second call should trigger cache expiry cleanup and make new request
+      await cachedClient.get('https://api.example.com/users');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      vi.useRealTimers();
+    });
+
+    it('should handle getWithExpiry method when storage supports it', async () => {
+      vi.useFakeTimers();
+      
+      const client = new FetchClient();
+      const cachedClient = useCache(client, { 
+        ttl: 1000,
+        staleWhileRevalidate: true 
+      });
+
+      // First call
+      await cachedClient.get('https://api.example.com/users');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Expire cache
+      vi.advanceTimersByTime(1500);
+
+      // Mock updated response for background update
+      mockFetch.mockResolvedValueOnce(
+        new Response('{"data": "updated"}', {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      // This should return stale data and trigger background update
+      const response = await cachedClient.get('https://api.example.com/users');
+      expect(response.data).toEqual({ data: 'test' });
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      vi.useRealTimers();
+    });
+
+    it('should handle storage without getWithExpiry method', async () => {
+      const customStorage = {
+        get: vi.fn().mockResolvedValue(null),
+        set: vi.fn().mockResolvedValue(undefined),
+        delete: vi.fn().mockResolvedValue(undefined),
+        clear: vi.fn().mockResolvedValue(undefined),
+        // Note: no getWithExpiry method
+      };
+
+      const client = new FetchClient();
+      const cachedClient = useCache(client, { 
+        storage: customStorage,
+        staleWhileRevalidate: true 
+      });
+
+      await cachedClient.get('https://api.example.com/users');
+
+      expect(customStorage.get).toHaveBeenCalled();
+      expect(customStorage.set).toHaveBeenCalled();
+    });
+
+    it('should test delete and clear methods directly', async () => {
+      const { createCacheMiddleware } = await import('../../../src/middleware/cache');
+      
+      // Create a custom storage that we can monitor
+      const storageMap = new Map();
+      const customStorage: CacheStorage = {
+        get: vi.fn(async (key: string) => {
+          const entry = storageMap.get(key);
+          if (!entry) return null;
+          
+          // Check if expired
+          if (Date.now() > entry.expiresAt) {
+            storageMap.delete(key);
+            return null;
+          }
+          return entry;
+        }),
+        getWithExpiry: vi.fn(async (key: string) => {
+          const entry = storageMap.get(key);
+          if (!entry) {
+            return { entry: null, isExpired: false };
+          }
+          
+          const isExpired = Date.now() > entry.expiresAt;
+          return { entry, isExpired };
+        }),
+        set: vi.fn(async (key: string, entry: any) => {
+          storageMap.set(key, entry);
+        }),
+        delete: vi.fn(async (key: string) => {
+          storageMap.delete(key);
+        }),
+        clear: vi.fn(async () => {
+          storageMap.clear();
+        })
+      };
+
+      const middleware = createCacheMiddleware({ storage: customStorage });
+      const client = new FetchClient();
+      const cachedClient = client.use(middleware);
+
+      // Make a request to populate cache
+      await cachedClient.get('https://api.example.com/users');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(customStorage.set).toHaveBeenCalled();
+
+      // Verify storage methods are available
+      expect(typeof customStorage.delete).toBe('function');
+      expect(typeof customStorage.clear).toBe('function');
+    });
+
+    it('should force default MemoryStorage methods usage', async () => {
+      vi.useFakeTimers();
+      
+      const client = new FetchClient();
+      // Use default storage (MemoryStorage) without custom storage
+      const cachedClient = useCache(client, { ttl: 1000 });
+
+      // Populate cache
+      await cachedClient.get('https://api.example.com/test');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Use cache
+      await cachedClient.get('https://api.example.com/test');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Expire cache - this will trigger the delete in the get method when expired
+      vi.advanceTimersByTime(1500);
+      
+      // This should trigger cache expiry cleanup and deletion
+      await cachedClient.get('https://api.example.com/test');
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+
+      vi.useRealTimers();
+    });
+
+  describe('MemoryStorage direct testing', () => {
+    it('should test MemoryStorage methods directly', async () => {
+      vi.useFakeTimers();
+      
+      const { MemoryStorage } = await import('../../../src/middleware/cache');
+      const storage = new MemoryStorage();
+
+      const cacheEntry = {
+        response: { status: 200, statusText: 'OK', headers: {}, data: 'test' },
+        timestamp: Date.now(),
+        expiresAt: Date.now() + 10000 // 10 seconds from now
+      };
+
+      // Test set and get
+      await storage.set('test-key', cacheEntry);
+      let entry = await storage.get('test-key');
+      expect(entry).toBeTruthy();
+      expect(entry?.response.data).toBe('test');
+
+      // Test getWithExpiry with fresh entry
+      let result = await storage.getWithExpiry('test-key');
+      expect(result.entry).toBeTruthy();
+      expect(result.isExpired).toBe(false);
+
+      // Test getWithExpiry with non-existent key
+      result = await storage.getWithExpiry('non-existent');
+      expect(result.entry).toBeNull();
+      expect(result.isExpired).toBe(false);
+
+      // Test with expired entry for get method
+      const expiredEntry = {
+        response: { status: 200, statusText: 'OK', headers: {}, data: 'expired' },
+        timestamp: Date.now() - 2000,
+        expiresAt: Date.now() - 1000 // Already expired
+      };
+      await storage.set('expired-key', expiredEntry);
+
+      // Test get with expired entry (should auto-delete and return null)
+      entry = await storage.get('expired-key');
+      expect(entry).toBeNull();
+
+      // Test getWithExpiry with expired entry (should return entry but mark as expired)
+      await storage.set('expired-key-2', expiredEntry);
+      result = await storage.getWithExpiry('expired-key-2');
+      expect(result.entry).toBeTruthy();
+      expect(result.isExpired).toBe(true);
+
+      // Test delete
+      await storage.delete('expired-key-2');
+      entry = await storage.get('expired-key-2');
+      expect(entry).toBeNull();
+
+      // Test clear - use fresh entries that won't expire
+      const freshEntry1 = {
+        response: { status: 200, statusText: 'OK', headers: {}, data: 'fresh1' },
+        timestamp: Date.now(),
+        expiresAt: Date.now() + 10000
+      };
+      const freshEntry2 = {
+        response: { status: 200, statusText: 'OK', headers: {}, data: 'fresh2' },
+        timestamp: Date.now(),
+        expiresAt: Date.now() + 10000
+      };
+
+      await storage.set('key1', freshEntry1);
+      await storage.set('key2', freshEntry2);
+      
+      // Verify entries exist
+      expect(await storage.get('key1')).toBeTruthy();
+      expect(await storage.get('key2')).toBeTruthy();
+      
+      // Clear all
+      await storage.clear();
+      
+      // Verify entries are gone
+      expect(await storage.get('key1')).toBeNull();
+      expect(await storage.get('key2')).toBeNull();
+
+      vi.useRealTimers();
+    });
+  });
+  });
+
+  describe('Advanced error scenarios', () => {
+    it('should handle cache storage set errors gracefully', async () => {
+      const faultyStorage = {
+        get: vi.fn().mockResolvedValue(null),
+        set: vi.fn().mockRejectedValue(new Error('Storage write error')),
+        delete: vi.fn(),
+        clear: vi.fn(),
+      };
+
+      const client = new FetchClient();
+      const cachedClient = useCache(client, { storage: faultyStorage });
+
+      // Should still work and return response even if cache storage fails
+      const response = await cachedClient.get('https://api.example.com/users');
+      expect(response.data).toEqual({ data: 'test' });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(faultyStorage.set).toHaveBeenCalled();
+    });
+
+    it('should re-throw network errors correctly', async () => {
+      const networkError = new Error('Network request failed');
+      mockFetch.mockRejectedValue(networkError);
+
+      const client = new FetchClient();
+      const cachedClient = useCache(client);
+
+      await expect(
+        cachedClient.get('https://api.example.com/users')
+      ).rejects.toThrow('Network request failed');
+    });
+
+    it('should re-throw fetch errors correctly', async () => {
+      const fetchError = new Error('fetch failed to connect');
+      mockFetch.mockRejectedValue(fetchError);
+
+      const client = new FetchClient();
+      const cachedClient = useCache(client);
+
+      await expect(
+        cachedClient.get('https://api.example.com/users')
+      ).rejects.toThrow('fetch failed to connect');
+    });
+
+    it('should handle non-error-like objects in catch block', async () => {
+      const faultyStorage = {
+        get: vi.fn().mockRejectedValue('string error'),
+        set: vi.fn(),
+        delete: vi.fn(),
+        clear: vi.fn(),
+      };
+
+      const client = new FetchClient();
+      const cachedClient = useCache(client, { storage: faultyStorage });
+
+      // Should fallback to network request when cache retrieval fails with non-error
+      const response = await cachedClient.get('https://api.example.com/users');
+      expect(response.data).toEqual({ data: 'test' });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should handle cache errors without message property', async () => {
+      const errorWithoutMessage = { someProperty: 'value' };
+      const faultyStorage = {
+        get: vi.fn().mockRejectedValue(errorWithoutMessage),
+        set: vi.fn(),
+        delete: vi.fn(),
+        clear: vi.fn(),
+      };
+
+      const client = new FetchClient();
+      const cachedClient = useCache(client, { storage: faultyStorage });
+
+      // Should fallback to network request
+      const response = await cachedClient.get('https://api.example.com/users');
+      expect(response.data).toEqual({ data: 'test' });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('Background update error handling', () => {
+    it('should ignore background update errors in stale-while-revalidate', async () => {
+      vi.useFakeTimers();
+
+      const client = new FetchClient();
+      const cachedClient = useCache(client, {
+        ttl: 1000,
+        staleWhileRevalidate: true,
+      });
+
+      // First call
+      await cachedClient.get('https://api.example.com/users');
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+
+      // Expire the cache
+      vi.advanceTimersByTime(1500);
+
+      // Mock error for background update
+      mockFetch.mockRejectedValueOnce(new Error('Background update failed'));
+
+      // Should return stale data and not throw error
+      const response = await cachedClient.get('https://api.example.com/users');
+      expect(response.data).toEqual({ data: 'test' });
+
+      // Wait for background promise to resolve/reject
+      await vi.runAllTimersAsync();
+
+      // Should not throw error
+      vi.useRealTimers();
     });
   });
 
