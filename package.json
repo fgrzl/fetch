@@ -44,9 +44,9 @@
     "@typescript-eslint/utils": "^8.39.1"
   },
   "scripts": {
-    "build": "npm run build:esm && npm run build:cjs",
-    "build:esm": "tsc",
-    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "build": "tsup",
+    "build:esm": "tsup --format esm",
+    "build:cjs": "tsup --format cjs",
     "clean": "rimraf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "format": "prettier --write .",
@@ -71,6 +71,7 @@
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
     "rimraf": "^6.0.1",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.39.1",
     "vitest": "^3.2.4"
