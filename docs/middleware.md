@@ -1,146 +1,87 @@
-# Middleware
+
+# Middleware Overview
 
 This document explains how to use and compose request/response middleware in the fetch client.
 
 ## Built-in Middleware
 
-### CSRF Protection
+- [Authentication](./middleware/authentication.md) - Add bearer tokens and API keys to requests
+- [Authorization](./middleware/authorization.md) - Handle 401/403 responses with smart redirects
+- [Cache](./middleware/cache.md) - Response caching with TTL support
+- [CSRF Protection](./middleware/csrf.md) - Automatic CSRF token handling
+- [Logging](./middleware/logging.md) - Request/response logging for debugging and monitoring
+- [Rate Limiting](./middleware/rate-limit.md) - Client-side rate limiting with token bucket
+- [Retry](./middleware/retry.md) - Automatic retry with exponential backoff
+- [Custom Middleware](./middleware/custom.md) - Create your own middleware
 
-Automatically includes CSRF tokens in requests:
+## Pre-built Stacks
+
+The middleware module also provides pre-configured stacks for common use cases:
 
 ```ts
-import { useCSRF, createCSRFMiddleware } from "@fgrzl/fetch";
+import { useProductionStack, useDevelopmentStack, useBasicStack } from "@fgrzl/fetch";
 
-// Simple usage
-useCSRF(client, {
-  cookieName: "XSRF-TOKEN", // Industry standard
-  headerName: "X-XSRF-TOKEN", // HTTP header convention
+// Production: auth + cache + retry + rate limiting + logging  
+const prodClient = useProductionStack(client, {
+  auth: { tokenProvider: () => getToken() },
+  cache: { ttl: 5 * 60 * 1000 },
+  logging: { level: 'info' }
 });
 
-// Advanced usage with factory
-const CSRFMiddleware = createCSRFMiddleware({
-  cookieName: "XSRF-TOKEN",
-  headerName: "X-XSRF-TOKEN",
+// Development: auth + retry + comprehensive logging
+const devClient = useDevelopmentStack(client, {
+  auth: { tokenProvider: () => 'dev-token' }
 });
-client.useRequestMiddleware(CSRFMiddleware);
+
+// Basic: just auth + retry
+const basicClient = useBasicStack(client, {
+  auth: { tokenProvider: () => getToken() }
+});
 ```
 
-### Authorization Redirect
-
-Automatically redirects on 401 responses:
+## Quick Start
 
 ```ts
-import { useAuthorization, createAuthorizationMiddleware } from "@fgrzl/fetch";
+import { FetchClient } from "@fgrzl/fetch";
+import { 
+  useAuthentication, 
+  useAuthorization, 
+  useRetry, 
+  useLogging 
+} from "@fgrzl/fetch";
 
-// Simple usage
-useAuthorization(client, {
-  url: "/login",
-  param: "redirect_uri",
-});
+const client = new FetchClient();
 
-// Advanced usage with factory
-const authMiddleware = createAuthorizationMiddleware({
-  url: "/login",
-  param: "redirect_uri",
-});
-client.useResponseMiddleware(authMiddleware);
-```
-
-### Retry Middleware
-
-Retries failed requests with configurable strategies:
-
-```ts
-import { createRetryMiddleware } from "@fgrzl/fetch";
-
-// Basic retry for server errors (5xx) and rate limiting (429)
-client.useResponseMiddleware(createRetryMiddleware());
-
-// Custom retry configuration
-client.useResponseMiddleware(
-  createRetryMiddleware({
-    maxRetries: 5,
-    delay: 500,
-    strategy: "linear", // 'fixed', 'linear', or 'exponential'
-    shouldRetry: (response) => response.status >= 400,
-    onRetry: (response, attempt) => {
-      console.log(`Retry attempt ${attempt} for ${response.status}`);
-    },
-  }),
+// Compose nested middleware for a complete API client
+const apiClient = useLogging(
+  useRetry(
+    useAuthorization(
+      useAuthentication(client, {
+        tokenProvider: () => localStorage.getItem('token') || ''
+      })
+    )
+  ),
+  { level: 'info' }
 );
 
-// Helper functions
-client.useResponseMiddleware(createExponentialRetry(3, 1000));
-client.useResponseMiddleware(createServerErrorRetry(5));
+// Now use the enhanced client
+const users = await apiClient.get('/api/users');
 ```
 
-**Important**: The retry middleware has architectural limitations due to the response middleware pattern. See `docs/retry-limitations.md` for details and production considerations.
+### Alternative: Step-by-Step Composition
 
-## Custom Middleware
-
-### Request Middleware
-
-Request middleware runs before the HTTP request is sent. You can modify request options and URLs.
+You can also apply middleware step by step for better readability:
 
 ```ts
-client.useRequestMiddleware(async (req, url) => {
-  // Add authentication header
-  req.headers = {
-    ...req.headers,
-    Authorization: `Bearer ${getToken()}`,
-  };
-
-  return [req, url];
+// Step-by-step composition (client is mutated in place)
+const client = new FetchClient();
+useAuthentication(client, {
+  tokenProvider: () => localStorage.getItem('token') || ''
 });
+useAuthorization(client);
+useRetry(client);
+useLogging(client, { level: 'info' });
+
+// Use the enhanced client
+const users = await client.get('/api/users');
 ```
-
-### Response Middleware
-
-Response middleware runs after the HTTP response is received. You can process or modify responses.
-
-```ts
-client.useResponseMiddleware(async (response) => {
-  // Log all responses
-  console.log(`${response.status} ${response.url}`);
-
-  // Return modified response
-  return response;
-});
-```
-
-## Execution Order
-
-Middlewares execute in the order they are registered:
-
-1. Request middlewares (in registration order)
-2. HTTP request
-3. Response middlewares (in registration order)
-
-## Advanced Patterns
-
-### Conditional Middleware
-
-```ts
-client.useResponseMiddleware(async (response) => {
-  if (response.status >= 400) {
-    // Only process error responses
-    logError(response);
-  }
-  return response;
-});
-```
-
-### Middleware Composition
-
-```ts
-function createAuthMiddleware(token: string) {
-  return async (req: RequestInit, url: string) => {
-    req.headers = { ...req.headers, Authorization: `Bearer ${token}` };
-    return [req, url];
-  };
-}
-
-client.useRequestMiddleware(createAuthMiddleware(userToken));
-```
-
-See also: [Error Handling](./errors.md)

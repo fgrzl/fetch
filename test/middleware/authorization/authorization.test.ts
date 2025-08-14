@@ -341,4 +341,180 @@ describe('Authorization Middleware', () => {
       );
     });
   });
+
+  describe('Smart Defaults (redirectConfig)', () => {
+    beforeEach(() => {
+      // Mock window.location
+      Object.defineProperty(window, 'location', {
+        value: {
+          href: 'https://example.com/protected-page',
+        },
+        writable: true,
+      });
+    });
+
+    it('should use smart default redirect to /login with return_url', async () => {
+      const client = new FetchClient();
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const authzClient = useAuthorization(client, {
+        redirectConfig: {},
+      });
+
+      await authzClient.get('https://api.example.com/secure');
+
+      expect(window.location.href).toBe(
+        '/login?return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+      );
+    });
+
+    it('should use custom redirect path', async () => {
+      const client = new FetchClient();
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const authzClient = useAuthorization(client, {
+        redirectConfig: { redirectPath: '/signin' },
+      });
+
+      await authzClient.get('https://api.example.com/secure');
+
+      expect(window.location.href).toBe(
+        '/signin?return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+      );
+    });
+
+    it('should use custom return URL parameter name', async () => {
+      const client = new FetchClient();
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const authzClient = useAuthorization(client, {
+        redirectConfig: { 
+          redirectPath: '/signin',
+          returnUrlParam: 'redirect_to' 
+        },
+      });
+
+      await authzClient.get('https://api.example.com/secure');
+
+      expect(window.location.href).toBe(
+        '/signin?redirect_to=https%3A%2F%2Fexample.com%2Fprotected-page'
+      );
+    });
+
+    it('should not include return URL when includeReturnUrl is false', async () => {
+      const client = new FetchClient();
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const authzClient = useAuthorization(client, {
+        redirectConfig: { 
+          redirectPath: '/login',
+          includeReturnUrl: false 
+        },
+      });
+
+      await authzClient.get('https://api.example.com/secure');
+
+      expect(window.location.href).toBe('/login');
+    });
+
+    it('should handle redirect path with existing query parameters', async () => {
+      const client = new FetchClient();
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const authzClient = useAuthorization(client, {
+        redirectConfig: { 
+          redirectPath: '/login?theme=dark' 
+        },
+      });
+
+      await authzClient.get('https://api.example.com/secure');
+
+      expect(window.location.href).toBe(
+        '/login?theme=dark&return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+      );
+    });
+
+    it('should work with no options (smart defaults)', async () => {
+      const client = new FetchClient();
+      
+      // Mock window.location
+      Object.defineProperty(window, 'location', {
+        value: {
+          href: 'https://example.com/protected-page',
+        },
+        writable: true,
+      });
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      // Should work with no options at all
+      const authzClient = useAuthorization(client);
+
+      await authzClient.get('https://api.example.com/secure');
+
+      expect(window.location.href).toBe(
+        '/login?return_url=https%3A%2F%2Fexample.com%2Fprotected-page'
+      );
+    });
+
+    it('should prioritize explicit onUnauthorized over redirectConfig', async () => {
+      const onUnauthorized = vi.fn();
+      const client = new FetchClient();
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const authzClient = useAuthorization(client, {
+        onUnauthorized,
+        redirectConfig: { redirectPath: '/signin' },
+      });
+
+      await authzClient.get('https://api.example.com/secure');
+
+      expect(onUnauthorized).toHaveBeenCalled();
+      // Should not redirect since explicit handler was provided
+      expect(window.location.href).toBe('https://example.com/protected-page');
+    });
+
+    it('should work in server environments (no window)', async () => {
+      const client = new FetchClient();
+      
+      // Mock server environment (no window)
+      const originalWindow = global.window;
+      // @ts-expect-error - Intentionally removing window for testing
+      global.window = undefined;
+      
+      mockFetch.mockResolvedValue(
+        new Response('Unauthorized', { status: 401 }),
+      );
+
+      const authzClient = useAuthorization(client, {
+        redirectConfig: {},
+      });
+
+      // Should not throw error in server environment
+      await expect(authzClient.get('https://api.example.com/secure')).resolves.toBeDefined();
+      
+      // Restore window
+      global.window = originalWindow;
+    });
+  });
 });

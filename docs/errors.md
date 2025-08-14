@@ -28,7 +28,8 @@ try {
 You can use response middleware to map backend errors to user-friendly messages or to handle retries, logging, etc.
 
 ```ts
-client.useResponseMiddleware(async (response) => {
+client.use(async (request, next) => {
+  const response = await next(request);
   if (!response.ok) {
     // Map error or notify user
   }
@@ -36,4 +37,4 @@ client.useResponseMiddleware(async (response) => {
 });
 ```
 
-See also: [TypeScript Best Practices](./overview.md)
+See also: [Middleware Documentation](./middleware.md)

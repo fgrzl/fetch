@@ -13,12 +13,34 @@ export type UnauthorizedHandler = (
 ) => void | Promise<void>;
 
 /**
+ * Smart default configuration for redirect-based authorization handling.
+ */
+export interface RedirectAuthorizationConfig {
+  /**
+   * Path to redirect to on unauthorized response (default: '/login')
+   */
+  redirectPath?: string;
+  
+  /**
+   * Query parameter name for the return URL (default: 'return_url')
+   */
+  returnUrlParam?: string;
+  
+  /**
+   * Whether to include the current URL as a return URL (default: true)
+   * Set to false if you don't want the return URL functionality
+   */
+  includeReturnUrl?: boolean;
+}
+
+/**
  * Authorization configuration options - optimized for "pit of success".
  *
  * Smart defaults:
  * - Handles 401 Unauthorized responses
  * - Optionally handles 403 Forbidden responses
  * - Graceful error handling
+ * - When no options provided, defaults to redirecting to /login with return URL
  */
 export interface AuthorizationOptions {
   /**
@@ -42,7 +64,24 @@ export interface AuthorizationOptions {
    * }
    * ```
    */
-  onUnauthorized: UnauthorizedHandler;
+  onUnauthorized?: UnauthorizedHandler;
+
+  /**
+   * Smart default configuration for redirect-based authorization.
+   * When provided, creates a default onUnauthorized handler that redirects
+   * to the login page with a return URL.
+   * 
+   * @example Use defaults (redirects to '/login?return_url=current-page'):
+   * ```typescript
+   * redirectConfig: {}
+   * ```
+   * 
+   * @example Custom redirect path:
+   * ```typescript
+   * redirectConfig: { redirectPath: '/signin' }
+   * ```
+   */
+  redirectConfig?: RedirectAuthorizationConfig;
 
   /**
    * Handler called when 403 Forbidden response is received.
