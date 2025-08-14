@@ -5,14 +5,26 @@
 
 A production-ready HTTP client for TypeScript that **just works** out of the box.
 
-## 🚀 Get Started in 60 Seconds
+## ✨ Features
+
+- **Pit of Success Design**: Simple defaults that just work, customizable when needed
+- Simple API: `api.get('/api/user')`
+- Built-in CSRF token support (XSRF-TOKEN standard)
+- Smart 401 redirect handling with return URL preservation
+- Retry middleware with configurable strategies
+- Custom middleware support (request/response)
+- TypeScript-first, small and dependency-free
+
+## 📦 Installation
 
 **Install**
+
 ```bash
 npm install @fgrzl/fetch
 ```
 
 **Use immediately** - no configuration required:
+
 ```ts
 import api from "@fgrzl/fetch";
 
@@ -29,21 +41,37 @@ if (users.ok) {
 ```
 
 **Need custom config?** Add it when you need it:
+
 ```ts
 import { FetchClient, useAuthentication } from "@fgrzl/fetch";
 
 const authClient = useAuthentication(new FetchClient(), {
-  tokenProvider: () => localStorage.getItem("token") || ""
+  tokenProvider: () => localStorage.getItem("token") || "",
 });
 
-const profile = await authClient.get<UserProfile>("/api/profile");
+// Smart defaults - just works
+useCSRF(client);
+useAuthorization(client); // Redirects to /login with return URL
+useRetry(client);
+
+// All requests now return FetchResponse<T>
+interface User {
+  id: number;
+  name: string;
+}
+const userResponse = await client.get<User>("/api/user");
+if (userResponse.ok) {
+  console.log(userResponse.data.name); // Typed access to data
+} else {
+  console.error(`Failed with status ${userResponse.status}`);
+}
 ```
 
 ## ✨ What You Get Out of the Box
 
 - **Zero Configuration** - Works immediately with smart defaults
 - **CSRF Protection** - Automatic XSRF-TOKEN handling
-- **Retry Logic** - Exponential backoff for failed requests  
+- **Retry Logic** - Exponential backoff for failed requests
 - **Request Logging** - Built-in observability
 - **TypeScript First** - Full type safety and IntelliSense
 - **Middleware System** - Composable and extensible
@@ -62,6 +90,7 @@ Ready to go deeper? Check out our comprehensive guides:
 ## 🏗️ Architecture
 
 Built on a **"pit of success"** philosophy where:
+
 - Simple things are simple (`api.get("/path")`)
 - Complex things are possible (custom middleware stacks)
 - TypeScript guides you to correct usage

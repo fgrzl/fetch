@@ -20,8 +20,9 @@ console.log(response.data);
 ```
 
 That's it! The default client includes:
+
 - ✅ CSRF protection
-- ✅ Automatic retries 
+- ✅ Automatic retries
 - ✅ Request logging
 - ✅ Error handling
 - ✅ TypeScript support
@@ -31,9 +32,9 @@ That's it! The default client includes:
 ### GET with Query Parameters
 
 ```typescript
-const users = await api.get("/api/users", { 
-  status: "active", 
-  limit: 10 
+const users = await api.get("/api/users", {
+  status: "active",
+  limit: 10,
 });
 // → GET /api/users?status=active&limit=10
 ```
@@ -43,7 +44,7 @@ const users = await api.get("/api/users", {
 ```typescript
 const newUser = await api.post("/api/users", {
   name: "John Doe",
-  email: "john@example.com"
+  email: "john@example.com",
 });
 ```
 
@@ -71,7 +72,7 @@ interface User {
 const response = await api.get<User[]>("/api/users");
 if (response.ok) {
   // response.data is now typed as User[]
-  response.data.forEach(user => console.log(user.name));
+  response.data.forEach((user) => console.log(user.name));
 }
 ```
 

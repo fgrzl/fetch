@@ -78,23 +78,27 @@ export interface RateLimitOptions {
   onRateLimitExceeded?: (
     retryAfter: number,
     request: RequestInit & { url?: string },
-  ) => void | Promise<void> | { 
-    data: unknown;
-    status: number;
-    statusText: string;
-    headers: Headers;
-    url: string;
-    ok: boolean;
-    error?: { message: string; body?: unknown };
-  } | Promise<{ 
-    data: unknown;
-    status: number;
-    statusText: string;
-    headers: Headers;
-    url: string;
-    ok: boolean;
-    error?: { message: string; body?: unknown };
-  }>;
+  ) =>
+    | void
+    | Promise<void>
+    | {
+        data: unknown;
+        status: number;
+        statusText: string;
+        headers: Headers;
+        url: string;
+        ok: boolean;
+        error?: { message: string; body?: unknown };
+      }
+    | Promise<{
+        data: unknown;
+        status: number;
+        statusText: string;
+        headers: Headers;
+        url: string;
+        ok: boolean;
+        error?: { message: string; body?: unknown };
+      }>;
 }
 
 // Ensure this file is treated as a module

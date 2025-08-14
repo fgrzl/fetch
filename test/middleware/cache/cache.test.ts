@@ -4,7 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
-import { useCache, createCacheMiddleware } from '../../../src/middleware/cache/index';
+import {
+  useCache,
+  createCacheMiddleware,
+} from '../../../src/middleware/cache/index';
 import type { CacheStorage } from '../../../src/middleware/cache/types';
 
 const mockFetch = vi.fn();
@@ -361,7 +364,7 @@ describe('Cache Middleware', () => {
   describe('MemoryStorage implementation', () => {
     it('should handle expired entries in get method', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
       const cachedClient = useCache(client, { ttl: 1000 });
 
@@ -381,11 +384,11 @@ describe('Cache Middleware', () => {
 
     it('should handle getWithExpiry method when storage supports it', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
-      const cachedClient = useCache(client, { 
+      const cachedClient = useCache(client, {
         ttl: 1000,
-        staleWhileRevalidate: true 
+        staleWhileRevalidate: true,
       });
 
       // First call
@@ -421,9 +424,9 @@ describe('Cache Middleware', () => {
       };
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, { 
+      const cachedClient = useCache(client, {
         storage: customStorage,
-        staleWhileRevalidate: true 
+        staleWhileRevalidate: true,
       });
 
       await cachedClient.get('https://api.example.com/users');
@@ -433,15 +436,17 @@ describe('Cache Middleware', () => {
     });
 
     it('should test delete and clear methods directly', async () => {
-      const { createCacheMiddleware } = await import('../../../src/middleware/cache');
-      
+      const { createCacheMiddleware } = await import(
+        '../../../src/middleware/cache'
+      );
+
       // Create a custom storage that we can monitor
       const storageMap = new Map();
       const customStorage: CacheStorage = {
         get: vi.fn(async (key: string) => {
           const entry = storageMap.get(key);
           if (!entry) return null;
-          
+
           // Check if expired
           if (Date.now() > entry.expiresAt) {
             storageMap.delete(key);
@@ -454,7 +459,7 @@ describe('Cache Middleware', () => {
           if (!entry) {
             return { entry: null, isExpired: false };
           }
-          
+
           const isExpired = Date.now() > entry.expiresAt;
           return { entry, isExpired };
         }),
@@ -466,7 +471,7 @@ describe('Cache Middleware', () => {
         }),
         clear: vi.fn(async () => {
           storageMap.clear();
-        })
+        }),
       };
 
       const middleware = createCacheMiddleware({ storage: customStorage });
@@ -485,7 +490,7 @@ describe('Cache Middleware', () => {
 
     it('should force default MemoryStorage methods usage', async () => {
       vi.useFakeTimers();
-      
+
       const client = new FetchClient();
       // Use default storage (MemoryStorage) without custom storage
       const cachedClient = useCache(client, { ttl: 1000 });
@@ -500,7 +505,7 @@ describe('Cache Middleware', () => {
 
       // Expire cache - this will trigger the delete in the get method when expired
       vi.advanceTimersByTime(1500);
-      
+
       // This should trigger cache expiry cleanup and deletion
       await cachedClient.get('https://api.example.com/test');
       expect(mockFetch).toHaveBeenCalledTimes(2);
@@ -508,87 +513,107 @@ describe('Cache Middleware', () => {
       vi.useRealTimers();
     });
 
-  describe('MemoryStorage direct testing', () => {
-    it('should test MemoryStorage methods directly', async () => {
-      vi.useFakeTimers();
-      
-      const { MemoryStorage } = await import('../../../src/middleware/cache');
-      const storage = new MemoryStorage();
+    describe('MemoryStorage direct testing', () => {
+      it('should test MemoryStorage methods directly', async () => {
+        vi.useFakeTimers();
 
-      const cacheEntry = {
-        response: { status: 200, statusText: 'OK', headers: {}, data: 'test' },
-        timestamp: Date.now(),
-        expiresAt: Date.now() + 10000 // 10 seconds from now
-      };
+        const { MemoryStorage } = await import('../../../src/middleware/cache');
+        const storage = new MemoryStorage();
 
-      // Test set and get
-      await storage.set('test-key', cacheEntry);
-      let entry = await storage.get('test-key');
-      expect(entry).toBeTruthy();
-      expect(entry?.response.data).toBe('test');
+        const cacheEntry = {
+          response: {
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            data: 'test',
+          },
+          timestamp: Date.now(),
+          expiresAt: Date.now() + 10000, // 10 seconds from now
+        };
 
-      // Test getWithExpiry with fresh entry
-      let result = await storage.getWithExpiry('test-key');
-      expect(result.entry).toBeTruthy();
-      expect(result.isExpired).toBe(false);
+        // Test set and get
+        await storage.set('test-key', cacheEntry);
+        let entry = await storage.get('test-key');
+        expect(entry).toBeTruthy();
+        expect(entry?.response.data).toBe('test');
 
-      // Test getWithExpiry with non-existent key
-      result = await storage.getWithExpiry('non-existent');
-      expect(result.entry).toBeNull();
-      expect(result.isExpired).toBe(false);
+        // Test getWithExpiry with fresh entry
+        let result = await storage.getWithExpiry('test-key');
+        expect(result.entry).toBeTruthy();
+        expect(result.isExpired).toBe(false);
 
-      // Test with expired entry for get method
-      const expiredEntry = {
-        response: { status: 200, statusText: 'OK', headers: {}, data: 'expired' },
-        timestamp: Date.now() - 2000,
-        expiresAt: Date.now() - 1000 // Already expired
-      };
-      await storage.set('expired-key', expiredEntry);
+        // Test getWithExpiry with non-existent key
+        result = await storage.getWithExpiry('non-existent');
+        expect(result.entry).toBeNull();
+        expect(result.isExpired).toBe(false);
 
-      // Test get with expired entry (should auto-delete and return null)
-      entry = await storage.get('expired-key');
-      expect(entry).toBeNull();
+        // Test with expired entry for get method
+        const expiredEntry = {
+          response: {
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            data: 'expired',
+          },
+          timestamp: Date.now() - 2000,
+          expiresAt: Date.now() - 1000, // Already expired
+        };
+        await storage.set('expired-key', expiredEntry);
 
-      // Test getWithExpiry with expired entry (should return entry but mark as expired)
-      await storage.set('expired-key-2', expiredEntry);
-      result = await storage.getWithExpiry('expired-key-2');
-      expect(result.entry).toBeTruthy();
-      expect(result.isExpired).toBe(true);
+        // Test get with expired entry (should auto-delete and return null)
+        entry = await storage.get('expired-key');
+        expect(entry).toBeNull();
 
-      // Test delete
-      await storage.delete('expired-key-2');
-      entry = await storage.get('expired-key-2');
-      expect(entry).toBeNull();
+        // Test getWithExpiry with expired entry (should return entry but mark as expired)
+        await storage.set('expired-key-2', expiredEntry);
+        result = await storage.getWithExpiry('expired-key-2');
+        expect(result.entry).toBeTruthy();
+        expect(result.isExpired).toBe(true);
 
-      // Test clear - use fresh entries that won't expire
-      const freshEntry1 = {
-        response: { status: 200, statusText: 'OK', headers: {}, data: 'fresh1' },
-        timestamp: Date.now(),
-        expiresAt: Date.now() + 10000
-      };
-      const freshEntry2 = {
-        response: { status: 200, statusText: 'OK', headers: {}, data: 'fresh2' },
-        timestamp: Date.now(),
-        expiresAt: Date.now() + 10000
-      };
+        // Test delete
+        await storage.delete('expired-key-2');
+        entry = await storage.get('expired-key-2');
+        expect(entry).toBeNull();
 
-      await storage.set('key1', freshEntry1);
-      await storage.set('key2', freshEntry2);
-      
-      // Verify entries exist
-      expect(await storage.get('key1')).toBeTruthy();
-      expect(await storage.get('key2')).toBeTruthy();
-      
-      // Clear all
-      await storage.clear();
-      
-      // Verify entries are gone
-      expect(await storage.get('key1')).toBeNull();
-      expect(await storage.get('key2')).toBeNull();
+        // Test clear - use fresh entries that won't expire
+        const freshEntry1 = {
+          response: {
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            data: 'fresh1',
+          },
+          timestamp: Date.now(),
+          expiresAt: Date.now() + 10000,
+        };
+        const freshEntry2 = {
+          response: {
+            status: 200,
+            statusText: 'OK',
+            headers: {},
+            data: 'fresh2',
+          },
+          timestamp: Date.now(),
+          expiresAt: Date.now() + 10000,
+        };
 
-      vi.useRealTimers();
+        await storage.set('key1', freshEntry1);
+        await storage.set('key2', freshEntry2);
+
+        // Verify entries exist
+        expect(await storage.get('key1')).toBeTruthy();
+        expect(await storage.get('key2')).toBeTruthy();
+
+        // Clear all
+        await storage.clear();
+
+        // Verify entries are gone
+        expect(await storage.get('key1')).toBeNull();
+        expect(await storage.get('key2')).toBeNull();
+
+        vi.useRealTimers();
+      });
     });
-  });
   });
 
   describe('Advanced error scenarios', () => {
@@ -618,7 +643,7 @@ describe('Cache Middleware', () => {
       const cachedClient = useCache(client);
 
       await expect(
-        cachedClient.get('https://api.example.com/users')
+        cachedClient.get('https://api.example.com/users'),
       ).rejects.toThrow('Network request failed');
     });
 
@@ -630,7 +655,7 @@ describe('Cache Middleware', () => {
       const cachedClient = useCache(client);
 
       await expect(
-        cachedClient.get('https://api.example.com/users')
+        cachedClient.get('https://api.example.com/users'),
       ).rejects.toThrow('fetch failed to connect');
     });
 
@@ -706,7 +731,9 @@ describe('Cache Middleware', () => {
     it('should work with authentication middleware', async () => {
       const client = new FetchClient();
 
-      const { useAuthentication } = await import('../../../src/middleware/authentication');
+      const { useAuthentication } = await import(
+        '../../../src/middleware/authentication'
+      );
 
       const authCachedClient = useAuthentication(client, {
         tokenProvider: () => 'test-token',

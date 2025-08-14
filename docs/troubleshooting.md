@@ -9,6 +9,7 @@ Common issues and solutions when using @fgrzl/fetch.
 **Problem:** `npm install @fgrzl/fetch` fails with "package not found"
 
 **Solution:**
+
 ```bash
 # Try clearing npm cache
 npm cache clean --force
@@ -23,6 +24,7 @@ yarn add @fgrzl/fetch
 **Problem:** TypeScript can't find module declarations
 
 **Solution:**
+
 ```bash
 # Ensure TypeScript is installed
 npm install -D typescript
@@ -41,11 +43,13 @@ npm install -D typescript
 ### Cannot Import Default Export
 
 **Problem:**
+
 ```typescript
 import api from "@fgrzl/fetch"; // ❌ Error: Module has no default export
 ```
 
 **Solution:** Check your module system configuration:
+
 ```json
 // tsconfig.json
 {
@@ -57,6 +61,7 @@ import api from "@fgrzl/fetch"; // ❌ Error: Module has no default export
 ```
 
 Or use named imports:
+
 ```typescript
 import { FetchClient } from "@fgrzl/fetch";
 const api = new FetchClient();
@@ -65,11 +70,13 @@ const api = new FetchClient();
 ### Middleware Import Errors
 
 **Problem:**
+
 ```typescript
 import { useAuthentication } from "@fgrzl/fetch/middleware"; // ❌ Not found
 ```
 
 **Solution:** Import from main module:
+
 ```typescript
 import { useAuthentication } from "@fgrzl/fetch"; // ✅ Correct
 ```
@@ -81,6 +88,7 @@ import { useAuthentication } from "@fgrzl/fetch"; // ✅ Correct
 **Problem:** Requests failing with CSRF errors despite using `useCSRF`
 
 **Symptoms:**
+
 - 403 Forbidden responses
 - "CSRF token mismatch" errors
 - Missing X-XSRF-TOKEN header
@@ -88,9 +96,10 @@ import { useAuthentication } from "@fgrzl/fetch"; // ✅ Correct
 **Solutions:**
 
 1. **Check cookie availability:**
+
 ```typescript
 // Debug: Check if cookie exists
-document.cookie.split(';').forEach(cookie => {
+document.cookie.split(";").forEach((cookie) => {
   console.log(cookie.trim());
 });
 
@@ -98,22 +107,24 @@ document.cookie.split(';').forEach(cookie => {
 ```
 
 2. **Custom token provider:**
+
 ```typescript
 const csrfClient = useCSRF(client, {
   tokenProvider: () => {
     // Get token from meta tag
     const metaTag = document.querySelector('meta[name="csrf-token"]');
-    return metaTag?.getAttribute('content') || '';
-  }
+    return metaTag?.getAttribute("content") || "";
+  },
 });
 ```
 
 3. **Check cookie domain/path:**
+
 ```typescript
 // Ensure cookies are accessible to your domain
 const csrfClient = useCSRF(client, {
   cookieName: "XSRF-TOKEN", // Verify exact name
-  skipPatterns: ["/api/auth/*"] // Skip for login endpoints
+  skipPatterns: ["/api/auth/*"], // Skip for login endpoints
 });
 ```
 
@@ -122,23 +133,26 @@ const csrfClient = useCSRF(client, {
 **Problem:** Requests missing Authorization header
 
 **Symptoms:**
+
 - 401 Unauthorized responses
 - Missing Authorization header in requests
 
 **Solutions:**
 
 1. **Debug token provider:**
+
 ```typescript
 const authClient = useAuthentication(client, {
   tokenProvider: () => {
     const token = localStorage.getItem("auth-token");
     console.log("Token:", token); // Debug log
     return token || "";
-  }
+  },
 });
 ```
 
 2. **Check token storage:**
+
 ```typescript
 // Verify token is stored correctly
 console.log("Stored token:", localStorage.getItem("auth-token"));
@@ -151,17 +165,18 @@ const authClient = useAuthentication(client, {
       throw new Error("No authentication token available");
     }
     return token;
-  }
+  },
 });
 ```
 
 3. **Custom header configuration:**
+
 ```typescript
 // If API uses different auth header
 const authClient = useAuthentication(client, {
   tokenProvider: () => getApiKey(),
   headerName: "X-API-Key",
-  authScheme: "ApiKey"
+  authScheme: "ApiKey",
 });
 ```
 
@@ -170,29 +185,36 @@ const authClient = useAuthentication(client, {
 **Problem:** Requests never resolve or take too long
 
 **Symptoms:**
+
 - Requests hang indefinitely
 - No response or error thrown
 
 **Solutions:**
 
 1. **Add request timeout:**
+
 ```typescript
 const controller = new AbortController();
 const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 try {
-  const response = await api.get("/api/data", {}, {
-    signal: controller.signal
-  });
+  const response = await api.get(
+    "/api/data",
+    {},
+    {
+      signal: controller.signal,
+    },
+  );
   clearTimeout(timeoutId);
 } catch (error) {
-  if (error.name === 'AbortError') {
+  if (error.name === "AbortError") {
     console.log("Request timed out");
   }
 }
 ```
 
 2. **Check network connectivity:**
+
 ```typescript
 // Debug network issues
 const response = await api.get("/api/health");
@@ -202,11 +224,12 @@ if (!response.ok) {
 ```
 
 3. **Enable debug logging:**
+
 ```typescript
 import { useDevelopmentStack } from "@fgrzl/fetch";
 
 const debugClient = useDevelopmentStack(client, {
-  auth: { tokenProvider: () => getToken() }
+  auth: { tokenProvider: () => getToken() },
 });
 // Will log all requests and responses
 ```
@@ -218,12 +241,14 @@ const debugClient = useDevelopmentStack(client, {
 **Problem:** Browser blocks requests to different domain
 
 **Symptoms:**
+
 - CORS errors in browser console
 - Network errors for cross-origin requests
 
 **Solutions:**
 
 1. **Check CORS headers on server:**
+
 ```javascript
 // Server should include:
 Access-Control-Allow-Origin: https://yourdomain.com
@@ -233,19 +258,21 @@ Access-Control-Allow-Credentials: true
 ```
 
 2. **Configure client credentials:**
+
 ```typescript
 // For cookie-based auth
 const client = new FetchClient({
-  credentials: "include" // Send cookies cross-origin
+  credentials: "include", // Send cookies cross-origin
 });
 
 // For token-only auth
 const client = new FetchClient({
-  credentials: "omit" // Don't send cookies
+  credentials: "omit", // Don't send cookies
 });
 ```
 
 3. **Use proxy in development:**
+
 ```json
 // package.json (Create React App)
 {
@@ -270,21 +297,15 @@ export default defineConfig({
 **Problem:** Middleware not working as expected
 
 **Solution:** Check middleware order:
+
 ```typescript
 // ✅ Correct order: Auth → Cache → Retry → Logging
 const client = useLogging(
-  useRetry(
-    useCache(
-      useAuthentication(baseClient, authConfig)
-    )
-  )
+  useRetry(useCache(useAuthentication(baseClient, authConfig))),
 );
 
 // ❌ Wrong order: Auth after retry won't work for retried requests
-const badClient = useAuthentication(
-  useRetry(baseClient),
-  authConfig
-);
+const badClient = useAuthentication(useRetry(baseClient), authConfig);
 ```
 
 ### Rate Limiting Triggered
@@ -294,17 +315,19 @@ const badClient = useAuthentication(
 **Solutions:**
 
 1. **Check rate limits:**
+
 ```typescript
 const limitedClient = useRateLimit(client, {
   maxRequests: 50, // Reduce if hitting limits
   windowMs: 60 * 1000,
   onLimitReached: (retryAfter) => {
     console.log(`Rate limited, wait ${retryAfter}ms`);
-  }
+  },
 });
 ```
 
 2. **Implement backoff:**
+
 ```typescript
 const retryClient = useRetry(client, {
   maxRetries: 3,
@@ -323,25 +346,28 @@ const retryClient = useRetry(client, {
 **Solutions:**
 
 1. **Check cache configuration:**
+
 ```typescript
 // Enable caching for GET requests
 const cachedClient = useCache(client, {
   ttl: 5 * 60 * 1000, // 5 minutes
-  methods: ["GET", "HEAD"]
+  methods: ["GET", "HEAD"],
 });
 ```
 
 2. **Optimize logging:**
+
 ```typescript
 // Reduce logging in production
 const prodClient = useLogging(client, {
   level: "error", // Only log errors
   includeRequestBody: false,
-  includeResponseBody: false
+  includeResponseBody: false,
 });
 ```
 
 3. **Monitor request metrics:**
+
 ```typescript
 // Add timing logs
 const response = await api.get("/api/data");
@@ -355,31 +381,32 @@ console.log("Request duration:", response.timing?.duration);
 **Solutions:**
 
 1. **Check cache size:**
+
 ```typescript
 // Limit cache size
 const cachedClient = useCache(client, {
   maxSize: 100, // Limit cached responses
-  ttl: 5 * 60 * 1000
+  ttl: 5 * 60 * 1000,
 });
 ```
 
 2. **Clean up AbortControllers:**
+
 ```typescript
 const controllers = new Set<AbortController>();
 
 function makeRequest(url: string) {
   const controller = new AbortController();
   controllers.add(controller);
-  
-  return api.get(url, {}, { signal: controller.signal })
-    .finally(() => {
-      controllers.delete(controller);
-    });
+
+  return api.get(url, {}, { signal: controller.signal }).finally(() => {
+    controllers.delete(controller);
+  });
 }
 
 // Clean up on component unmount
 function cleanup() {
-  controllers.forEach(controller => controller.abort());
+  controllers.forEach((controller) => controller.abort());
   controllers.clear();
 }
 ```
@@ -393,20 +420,22 @@ function cleanup() {
 **Solutions:**
 
 1. **Environment-specific configuration:**
+
 ```typescript
 const isProd = process.env.NODE_ENV === "production";
 
-const client = isProd 
+const client = isProd
   ? useProductionStack(new FetchClient(), {
       auth: { tokenProvider: () => getSecureToken() },
-      logging: { level: "error" }
+      logging: { level: "error" },
     })
   : useDevelopmentStack(new FetchClient(), {
-      auth: { tokenProvider: () => "dev-token" }
+      auth: { tokenProvider: () => "dev-token" },
     });
 ```
 
 2. **Check build configuration:**
+
 ```json
 // Ensure types are included in build
 {
@@ -423,7 +452,7 @@ const client = isProd
 import { useDevelopmentStack } from "@fgrzl/fetch";
 
 const debugClient = useDevelopmentStack(new FetchClient(), {
-  auth: { tokenProvider: () => getToken() }
+  auth: { tokenProvider: () => getToken() },
 });
 
 // This will log:
@@ -465,6 +494,7 @@ NODE_ENV=development
 ```
 
 If you're still experiencing issues, please create an issue on GitHub with:
+
 - Minimal reproduction code
 - Expected vs actual behavior
 - Browser/Node.js version

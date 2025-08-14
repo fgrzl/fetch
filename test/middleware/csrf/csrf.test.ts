@@ -4,7 +4,10 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
-import { useCSRF, createCSRFMiddleware } from '../../../src/middleware/csrf/index';
+import {
+  useCSRF,
+  createCSRFMiddleware,
+} from '../../../src/middleware/csrf/index';
 
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -371,7 +374,9 @@ describe('CSRF Middleware', () => {
       const client = new FetchClient();
 
       // Import authentication here to avoid circular dependencies in real scenarios
-      const { useAuthentication } = await import('../../../src/middleware/authentication');
+      const { useAuthentication } = await import(
+        '../../../src/middleware/authentication'
+      );
 
       const protectedClient = useAuthentication(client, {
         tokenProvider: () => 'bearer-token',
@@ -409,13 +414,13 @@ describe('CSRF Middleware', () => {
       await csrfClient.post('https://api.example.com/api/public/data', {
         data: 'test',
       });
-      
+
       await csrfClient.post('https://api.example.com/github/webhook', {
         payload: 'test',
       });
 
       expect(mockFetch).toHaveBeenCalledTimes(2);
-      
+
       // Verify no CSRF headers were added
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.example.com/api/public/data',
@@ -444,12 +449,12 @@ describe('CSRF Middleware', () => {
 
       // Mock fetch to capture the actual request being made
       mockFetch.mockResolvedValueOnce(new Response('{}'));
-      
+
       // Make a request with empty URL to test URL fallback
       await csrfClient.post('', {
         data: 'test',
       });
-      
+
       expect(mockFetch).toHaveBeenCalledWith(
         '',
         expect.objectContaining({
@@ -466,14 +471,14 @@ describe('CSRF Middleware', () => {
         tokenProvider: () => 'test-csrf-token',
       });
 
-      // Mock fetch to capture the actual request being made  
+      // Mock fetch to capture the actual request being made
       mockFetch.mockResolvedValueOnce(new Response('{}'));
 
       // Make a request without specifying method (should default to GET and skip CSRF)
       await csrfClient.request('https://api.example.com/test', {
         // No method specified, should default to GET
       });
-      
+
       expect(mockFetch).toHaveBeenCalledWith(
         'https://api.example.com/test',
         expect.not.objectContaining({

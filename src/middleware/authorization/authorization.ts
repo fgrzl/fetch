@@ -3,7 +3,52 @@
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
-import type { AuthorizationOptions } from './types';
+import type {
+  AuthorizationOptions,
+  RedirectAuthorizationConfig,
+  UnauthorizedHandler,
+} from './types';
+
+/**
+ * Creates a smart default redirect handler for unauthorized responses.
+ * Redirects to login with a return URL parameter.
+ */
+function createRedirectHandler(config: RedirectAuthorizationConfig = {}) {
+  const {
+    redirectPath = '/login',
+    returnUrlParam = 'return_url',
+    includeReturnUrl = true,
+  } = config;
+
+  return () => {
+    let redirectUrl = redirectPath;
+
+    if (includeReturnUrl && typeof window !== 'undefined') {
+      const currentUrl = encodeURIComponent(window.location.href);
+      const separator = redirectPath.includes('?') ? '&' : '?';
+      redirectUrl = `${redirectPath}${separator}${returnUrlParam}=${currentUrl}`;
+    }
+
+    if (typeof window !== 'undefined') {
+      window.location.href = redirectUrl;
+    }
+  };
+}
+
+/**
+ * Selects the appropriate unauthorized handler based on provided options.
+ * Priority: explicit onUnauthorized > redirectConfig > smart default
+ */
+function selectUnauthorizedHandler(
+  providedHandler?: UnauthorizedHandler,
+  redirectConfig?: RedirectAuthorizationConfig,
+): UnauthorizedHandler {
+  if (providedHandler) {
+    return providedHandler;
+  }
+
+  return createRedirectHandler(redirectConfig);
+}
 
 /**
  * Checks if a URL should skip authorization handling based on configured patterns.
@@ -32,10 +77,26 @@ function shouldSkipAuth(
  * Creates authorization middleware with smart defaults.
  * Handles 401/403 responses by calling configured handlers.
  *
- * @param options - Authorization configuration options
+ * @param options - Authorization configuration options (optional)
  * @returns Authorization middleware for use with FetchClient
  *
- * @example Basic redirect on 401:
+ * @example Smart defaults (no configuration needed):
+ * ```typescript
+ * const authzClient = useAuthorization(client);
+ * // Redirects to '/login?return_url=current-page' on 401
+ * ```
+ *
+ * @example Custom redirect configuration:
+ * ```typescript
+ * const authzClient = useAuthorization(client, {
+ *   redirectConfig: {
+ *     redirectPath: '/signin',
+ *     returnUrlParam: 'redirect_to'
+ *   }
+ * });
+ * ```
+ *
+ * @example Manual handler (full control):
  * ```typescript
  * const authzClient = useAuthorization(client, {
  *   onUnauthorized: () => window.location.href = '/login'
@@ -45,21 +106,26 @@ function shouldSkipAuth(
  * @example Handle both 401 and 403:
  * ```typescript
  * const authzClient = useAuthorization(client, {
- *   onUnauthorized: () => redirectToLogin(),
  *   onForbidden: () => showAccessDeniedMessage(),
  *   statusCodes: [401, 403]
  * });
  * ```
  */
 export function createAuthorizationMiddleware(
-  options: AuthorizationOptions,
+  options: AuthorizationOptions = {},
 ): FetchMiddleware {
   const {
-    onUnauthorized,
+    onUnauthorized: providedOnUnauthorized,
+    redirectConfig,
     onForbidden,
     skipPatterns = [],
     statusCodes = [401],
   } = options;
+
+  const onUnauthorized = selectUnauthorizedHandler(
+    providedOnUnauthorized,
+    redirectConfig,
+  );
 
   return async (request, next) => {
     const url = request.url || '';

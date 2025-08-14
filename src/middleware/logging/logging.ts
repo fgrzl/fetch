@@ -114,7 +114,9 @@ export function createLoggingMiddleware(
     // Log request start (debug level)
     if (LOG_LEVELS.debug >= minLevel) {
       const requestHeaders = includeRequestHeaders
-        ? getHeadersObject(request.headers as Headers | Record<string, string> | undefined)
+        ? getHeadersObject(
+            request.headers as Headers | Record<string, string> | undefined,
+          )
         : undefined;
       const requestBody = includeRequestBody ? request.body : undefined;
 
@@ -198,7 +200,7 @@ function getHeadersObject(
   }
 
   const obj: Record<string, string> = {};
-  
+
   if (headers instanceof Headers) {
     headers.forEach((value, key) => {
       obj[key] = value;

@@ -111,7 +111,12 @@ export function createRetryMiddleware(
         }
 
         // Check if we should retry this response with current attempt count
-        if (!shouldRetry({ status: response.status, ok: response.ok }, attempt + 1)) {
+        if (
+          !shouldRetry(
+            { status: response.status, ok: response.ok },
+            attempt + 1,
+          )
+        ) {
           return response;
         }
 

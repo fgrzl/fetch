@@ -7,7 +7,11 @@ import type { AuthorizationOptions } from './types';
 import { createAuthorizationMiddleware } from './authorization';
 
 // Re-export types for convenience
-export type { AuthorizationOptions, UnauthorizedHandler } from './types';
+export type {
+  AuthorizationOptions,
+  UnauthorizedHandler,
+  RedirectAuthorizationConfig,
+} from './types';
 export { createAuthorizationMiddleware } from './authorization';
 
 /**
@@ -15,10 +19,23 @@ export { createAuthorizationMiddleware } from './authorization';
  * Automatically handles 401 Unauthorized responses.
  *
  * @param client - The FetchClient to add authorization handling to
- * @param options - Authorization configuration
+ * @param options - Authorization configuration (optional)
  * @returns A new FetchClient with authorization middleware
  *
- * @example Basic redirect on 401:
+ * @example Smart defaults - no configuration needed:
+ * ```typescript
+ * const authzClient = useAuthorization(client);
+ * // Redirects to '/login?return_url=current-page' on 401
+ * ```
+ *
+ * @example Custom redirect path:
+ * ```typescript
+ * const authzClient = useAuthorization(client, {
+ *   redirectConfig: { redirectPath: '/signin', returnUrlParam: 'redirect_to' }
+ * });
+ * ```
+ *
+ * @example Manual handler (full control):
  * ```typescript
  * const authzClient = useAuthorization(client, {
  *   onUnauthorized: () => {
@@ -31,7 +48,6 @@ export { createAuthorizationMiddleware } from './authorization';
  * @example Handle multiple status codes:
  * ```typescript
  * const authzClient = useAuthorization(client, {
- *   onUnauthorized: () => redirectToLogin(),
  *   onForbidden: () => showAccessDenied(),
  *   statusCodes: [401, 403]
  * });
@@ -39,7 +55,7 @@ export { createAuthorizationMiddleware } from './authorization';
  */
 export function useAuthorization(
   client: FetchClient,
-  options: AuthorizationOptions,
+  options: AuthorizationOptions = {},
 ): FetchClient {
   return client.use(createAuthorizationMiddleware(options));
 }

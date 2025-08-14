@@ -1,6 +1,6 @@
 /**
  * @fileoverview Tests for middleware module exports.
- * 
+ *
  * This test ensures that the middleware module properly exports:
  * 1. All middleware functions and creators
  * 2. Pre-built middleware stacks
@@ -21,7 +21,7 @@ describe('Middleware Module Exports', () => {
       new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { 'content-type': 'application/json' },
-      })
+      }),
     );
   });
 
@@ -40,7 +40,7 @@ describe('Middleware Module Exports', () => {
     it('should create functional authentication middleware', async () => {
       const client = new FetchClient();
       const authClient = middleware.useAuthentication(client, {
-        tokenProvider: () => 'test-token'
+        tokenProvider: () => 'test-token',
       });
 
       await authClient.get('http://example.com/test');
@@ -61,7 +61,7 @@ describe('Middleware Module Exports', () => {
     it('should create functional authorization middleware', () => {
       const client = new FetchClient();
       const authzClient = middleware.useAuthorization(client, {
-        onUnauthorized: () => console.log('Unauthorized')
+        onUnauthorized: () => console.log('Unauthorized'),
       });
 
       expect(authzClient).toBeDefined();
@@ -80,7 +80,7 @@ describe('Middleware Module Exports', () => {
       const client = new FetchClient();
       const cacheClient = middleware.useCache(client, {
         ttl: 1000,
-        methods: ['GET']
+        methods: ['GET'],
       });
 
       expect(cacheClient).toBeDefined();
@@ -103,7 +103,7 @@ describe('Middleware Module Exports', () => {
       const client = new FetchClient();
       const csrfClient = middleware.useCSRF(client, {
         tokenProvider: () => 'test-csrf-token',
-        headerName: 'X-CSRFToken'
+        headerName: 'X-CSRFToken',
       });
 
       expect(csrfClient).toBeDefined();
@@ -124,12 +124,12 @@ describe('Middleware Module Exports', () => {
         debug: vi.fn(),
         info: vi.fn(),
         warn: vi.fn(),
-        error: vi.fn()
+        error: vi.fn(),
       };
 
       const loggingClient = middleware.useLogging(client, {
         level: 'info',
-        logger
+        logger,
       });
 
       expect(loggingClient).toBeDefined();
@@ -148,7 +148,7 @@ describe('Middleware Module Exports', () => {
       const client = new FetchClient();
       const rateLimitClient = middleware.useRateLimit(client, {
         maxRequests: 10,
-        windowMs: 1000
+        windowMs: 1000,
       });
 
       expect(rateLimitClient).toBeDefined();
@@ -167,7 +167,7 @@ describe('Middleware Module Exports', () => {
       const client = new FetchClient();
       const retryClient = middleware.useRetry(client, {
         maxRetries: 3,
-        delay: 1000
+        delay: 1000,
       });
 
       expect(retryClient).toBeDefined();
@@ -179,7 +179,7 @@ describe('Middleware Module Exports', () => {
       expect(middleware.useProductionStack).toBeDefined();
       expect(middleware.useDevelopmentStack).toBeDefined();
       expect(middleware.useBasicStack).toBeDefined();
-      
+
       expect(typeof middleware.useProductionStack).toBe('function');
       expect(typeof middleware.useDevelopmentStack).toBe('function');
       expect(typeof middleware.useBasicStack).toBeDefined();
@@ -191,7 +191,7 @@ describe('Middleware Module Exports', () => {
         retry: { maxRetries: 1 },
         cache: { ttl: 1000, methods: ['GET'] },
         logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 }
+        rateLimit: { maxRequests: 10, windowMs: 1000 },
       });
 
       await prodClient.get('/test');
@@ -201,7 +201,7 @@ describe('Middleware Module Exports', () => {
     it('should create functional development stack', async () => {
       const client = new FetchClient();
       const devClient = middleware.useDevelopmentStack(client, {
-        auth: { tokenProvider: () => 'dev-token' }
+        auth: { tokenProvider: () => 'dev-token' },
       });
 
       await devClient.get('http://example.com/test');
@@ -211,7 +211,7 @@ describe('Middleware Module Exports', () => {
     it('should create functional basic stack', async () => {
       const client = new FetchClient();
       const basicClient = middleware.useBasicStack(client, {
-        auth: { tokenProvider: () => 'basic-token' }
+        auth: { tokenProvider: () => 'basic-token' },
       });
 
       await basicClient.get('http://example.com/test');
@@ -222,10 +222,10 @@ describe('Middleware Module Exports', () => {
   describe('Middleware Composition', () => {
     it('should support chaining multiple middleware from exports', async () => {
       const client = new FetchClient();
-      
+
       const enhancedClient = middleware.useAuthentication(
         middleware.useRetry(client, { maxRetries: 1 }),
-        { tokenProvider: () => 'test-token' }
+        { tokenProvider: () => 'test-token' },
       );
 
       await enhancedClient.get('http://example.com/test');
@@ -237,9 +237,9 @@ describe('Middleware Module Exports', () => {
 
     it('should support creating custom middleware with exported creators', async () => {
       const client = new FetchClient();
-      
+
       const authMiddleware = middleware.createAuthenticationMiddleware({
-        tokenProvider: () => 'custom-token'
+        tokenProvider: () => 'custom-token',
       });
 
       client.use(authMiddleware);
@@ -254,20 +254,20 @@ describe('Middleware Module Exports', () => {
     it('should make all middleware types available', () => {
       // This test ensures types are properly exported
       // If there were type export issues, this would fail at compile time
-      
+
       const authOptions: middleware.AuthenticationOptions = {
-        tokenProvider: () => 'token'
+        tokenProvider: () => 'token',
       };
       expect(authOptions.tokenProvider()).toBe('token');
 
       const cacheOptions: middleware.CacheOptions = {
         ttl: 1000,
-        methods: ['GET']
+        methods: ['GET'],
       };
       expect(cacheOptions.ttl).toBe(1000);
 
       const retryOptions: middleware.RetryOptions = {
-        maxRetries: 3
+        maxRetries: 3,
       };
       expect(retryOptions.maxRetries).toBe(3);
 
