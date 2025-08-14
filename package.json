@@ -1,11 +1,17 @@
 {
   "name": "@fgrzl/fetch",
   "version": "0.0.0",
-  "description": "A simple fetch client with some extra goodies",
+  "description": "A modern, type-safe HTTP client with middleware support for CSRF protection and authentication",
   "keywords": [
     "fetch",
     "typescript",
-    "api"
+    "api",
+    "http",
+    "client",
+    "middleware",
+    "CSRF",
+    "auth",
+    "type-safe"
   ],
   "homepage": "https://github.com/fgrzl/fetch#readme",
   "bugs": {
@@ -17,9 +23,20 @@
   },
   "license": "MIT",
   "author": "smiggleworth",
-  "type": "commonjs",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/cjs/index.js"
+    }
+  },
   "files": [
     "dist"
   ],
@@ -27,8 +44,11 @@
     "@typescript-eslint/utils": "^8.39.1"
   },
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build",
+    "build": "npm run build:esm && npm run build:cjs",
+    "build:esm": "tsc",
+    "build:cjs": "tsc -p tsconfig.cjs.json",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint src --ext .ts",
@@ -50,6 +70,7 @@
     "jiti": "^2.5.1",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.39.1",
     "vitest": "^3.2.4"

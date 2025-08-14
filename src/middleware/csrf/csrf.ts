@@ -1,66 +1,119 @@
-import { FetchClient, RequestMiddleware } from '../../client';
-import type { CsrfOptions } from './types';
+/**
+ * @fileoverview CSRF protection middleware implementation.
+ */
+
+import type { FetchMiddleware } from '../../client/fetch-client';
+import type { CSRFOptions } from './types';
 
 /**
- * Creates a request middleware that adds CSRF token to requests.
- * Reads the token from a cookie and adds it as a header.
- *
- * @param config - CSRF configuration options
- * @returns Request middleware function
+ * Default CSRF token provider that extracts token from XSRF-TOKEN cookie.
+ * This follows the standard convention used by Rails, Laravel, and many other frameworks.
  */
-function csrfMiddleware(config: CsrfOptions): RequestMiddleware {
-  return async (req, url) => {
-    const cookieName = config.cookieName || 'XSRF-TOKEN';
-    const headerName = config.headerName || 'X-XSRF-TOKEN';
+function getTokenFromCookie(cookieName: string = 'XSRF-TOKEN'): string {
+  if (typeof document === 'undefined') {
+    return ''; // Server-side, no cookies available
+  }
 
-    const cookie = document.cookie.match(new RegExp(`${cookieName}=([^;]+)`));
-    const token = cookie?.[1];
-    const headers = {
-      ...req.headers,
-      'Content-Type': 'application/json',
-      ...(token && { [headerName]: token }),
-    };
-    return [{ ...req, headers }, url];
-  };
+  const name = `${cookieName}=`;
+  const decodedCookie = decodeURIComponent(document.cookie);
+  const cookies = decodedCookie.split(';');
+
+  for (const cookie of cookies) {
+    const c = cookie.trim();
+    if (c.indexOf(name) === 0) {
+      return c.substring(name.length);
+    }
+  }
+
+  return '';
 }
 
 /**
- * Configures CSRF protection for a FetchClient.
+ * Checks if a URL should skip CSRF protection based on configured patterns.
+ */
+function shouldSkipCSRF(
+  url: string,
+  skipPatterns: (RegExp | string)[] = [],
+): boolean {
+  return skipPatterns.some((pattern) => {
+    if (typeof pattern === 'string') {
+      return url.includes(pattern);
+    }
+    return pattern.test(url);
+  });
+}
+
+/**
+ * Creates CSRF protection middleware with smart defaults.
+ * Automatically adds CSRF tokens to state-changing requests.
  *
- * This function adds middleware that:
- * - Reads CSRF tokens from cookies and includes them in request headers
- * - Updates CSRF tokens from response headers back to cookies
- * - Automatically sets Content-Type to application/json for requests
+ * @param options - CSRF configuration options (all optional for "pit of success")
+ * @returns CSRF middleware for use with FetchClient
  *
- * @param client - The FetchClient instance to configure
- * @param config - CSRF configuration options
- *
- * @example
+ * @example Basic usage (uses cookies automatically):
  * ```typescript
- * // Use defaults (XSRF-TOKEN cookie, X-XSRF-TOKEN header)
  * const client = new FetchClient();
- * useCSRF(client, {});
+ * const csrfClient = useCSRF(client);
+ * ```
  *
- * // Or with no config at all
- * useCSRF(client);
+ * @example Custom token provider:
+ * ```typescript
+ * const csrfClient = useCSRF(client, {
+ *   tokenProvider: () => localStorage.getItem('csrf-token') || ''
+ * });
+ * ```
  *
- * // Custom cookie and header names
- * useCSRF(client, {
- *   cookieName: 'csrf_token',
- *   headerName: 'X-CSRF-Token'
+ * @example Skip external APIs:
+ * ```typescript
+ * const csrfClient = useCSRF(client, {
+ *   skipPatterns: [/^https:\/\/api\.external\.com\//, '/webhook/']
  * });
  * ```
  */
-export function useCSRF(client: FetchClient, config: CsrfOptions = {}) {
-  client.useRequestMiddleware(csrfMiddleware(config));
-  client.useResponseMiddleware(async (res) => {
-    const cookieName = config.cookieName || 'XSRF-TOKEN';
-    const headerName = config.headerName || 'X-XSRF-TOKEN';
+export function createCSRFMiddleware(
+  options: CSRFOptions = {},
+): FetchMiddleware {
+  // Smart defaults for "pit of success"
+  const {
+    headerName = 'X-XSRF-TOKEN',
+    cookieName = 'XSRF-TOKEN',
+    protectedMethods = ['POST', 'PUT', 'PATCH', 'DELETE'],
+    skipPatterns = [],
+    tokenProvider = () => getTokenFromCookie(cookieName),
+  } = options;
 
-    const csrfToken = res.headers.get(headerName);
-    if (csrfToken) {
-      document.cookie = `${cookieName}=${csrfToken}; path=/;`;
+  return async (request, next) => {
+    const method = (request.method || 'GET').toUpperCase();
+    const url = request.url || '';
+
+    // Skip CSRF protection if:
+    // 1. Method is not in protected methods list
+    // 2. URL matches a skip pattern
+    if (
+      !protectedMethods.includes(method) ||
+      shouldSkipCSRF(url, skipPatterns)
+    ) {
+      return next(request);
     }
-    return res;
-  });
+
+    // Get CSRF token
+    const token = tokenProvider();
+
+    // Skip if no token available (let the server handle the error)
+    if (!token) {
+      return next(request);
+    }
+
+    // Add CSRF token to request headers
+    const headers = new Headers(request.headers);
+    headers.set(headerName, token);
+
+    // Create modified request with CSRF header
+    const modifiedRequest = {
+      ...request,
+      headers,
+    };
+
+    return next(modifiedRequest);
+  };
 }

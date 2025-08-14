@@ -14,7 +14,7 @@ permissions:
   contents: read
 
 jobs:
-  build-and-publish:
+  ci:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -31,11 +31,14 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test:coverage
+
       - name: Build
         run: npm run build
 
-      - name: Test
-        run: npm run test -- --coverage
-
       - name: Workflow Cleanup
-        uses: fgrzl/actions/workflow-cleanup@v0.0.3
+        uses: fgrzl/actions/workflow-cleanup@v0.0.4
