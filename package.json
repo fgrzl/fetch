@@ -35,6 +35,11 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/cjs/index.js"
+    },
+    "./min": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.min.js",
+      "require": "./dist/cjs/index.min.js"
     }
   },
   "files": [
