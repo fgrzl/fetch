@@ -56,9 +56,11 @@ export type FetchMiddleware = (
 export class FetchClient {
   private middlewares: FetchMiddleware[] = [];
   private credentials: RequestCredentials;
+  private baseUrl: string | undefined;
 
   constructor(config: FetchClientOptions = {}) {
     this.credentials = config.credentials ?? 'same-origin';
+    this.baseUrl = config.baseUrl;
   }
 
   use(middleware: FetchMiddleware): this {
@@ -66,10 +68,42 @@ export class FetchClient {
     return this;
   }
 
+  /**
+   * Set or update the base URL for this client instance.
+   * 
+   * When a base URL is set, relative URLs will be resolved against it.
+   * Absolute URLs will continue to work unchanged.
+   * 
+   * @param baseUrl - The base URL to set, or undefined to clear it
+   * @returns The client instance for method chaining
+   * 
+   * @example Set base URL:
+   * ```typescript
+   * const client = new FetchClient();
+   * client.setBaseUrl('https://api.example.com');
+   * 
+   * // Now relative URLs work
+   * await client.get('/users'); // → GET https://api.example.com/users
+   * ```
+   * 
+   * @example Chain with middleware:
+   * ```typescript
+   * const client = useProductionStack(new FetchClient())
+   *   .setBaseUrl(process.env.API_BASE_URL);
+   * ```
+   */
+  setBaseUrl(baseUrl?: string): this {
+    this.baseUrl = baseUrl;
+    return this;
+  }
+
   async request<T = unknown>(
     url: string,
     init: RequestInit = {},
   ): Promise<FetchResponse<T>> {
+    // Resolve URL against baseUrl if relative
+    const resolvedUrl = this.resolveUrl(url);
+
     // Create the execution chain
     let index = 0;
 
@@ -77,8 +111,8 @@ export class FetchClient {
       request?: RequestInit & { url?: string },
     ): Promise<FetchResponse<unknown>> => {
       // Use provided request or fall back to original
-      const currentRequest = request || { ...init, url };
-      const currentUrl = currentRequest.url || url;
+      const currentRequest = request || { ...init, url: resolvedUrl };
+      const currentUrl = currentRequest.url || resolvedUrl;
 
       if (index >= this.middlewares.length) {
         // Core fetch - end of middleware chain
@@ -192,26 +226,59 @@ export class FetchClient {
       return url;
     }
 
-    const urlObj = new URL(
-      url,
-      url.startsWith('http') ? undefined : 'http://localhost',
-    );
+    // Resolve the URL first (handles baseUrl if needed)
+    const resolvedUrl = this.resolveUrl(url);
+    
+    // If the resolved URL is still relative (no base URL configured),
+    // manually build query parameters
+    if (!resolvedUrl.startsWith('http://') && !resolvedUrl.startsWith('https://') && !resolvedUrl.startsWith('//')) {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.set(key, String(value));
+        }
+      });
+      const queryString = searchParams.toString();
+      return queryString ? `${resolvedUrl}?${queryString}` : resolvedUrl;
+    }
 
+    // For absolute URLs, use URL constructor
+    const urlObj = new URL(resolvedUrl);
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         urlObj.searchParams.set(key, String(value));
       }
     });
 
-    // If the original URL was relative, return just the pathname + search
-    if (!url.startsWith('http')) {
-      return urlObj.pathname + urlObj.search;
-    }
-
     return urlObj.toString();
   }
 
-  // 🎯 PIT OF SUCCESS: Convenience methods with smart defaults
+  /**
+   * Resolves a URL with the base URL if it's relative and base URL is configured
+   * @param url - The URL to resolve
+   * @returns The resolved URL
+   * @private
+   */
+  private resolveUrl(url: string): string {
+    // If URL is already absolute, return as-is
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('//')) {
+      return url;
+    }
+
+    // If no base URL is configured, return the relative URL as-is (backward compatibility)
+    if (!this.baseUrl) {
+      return url;
+    }
+
+    // Resolve relative URL with base URL
+    try {
+      const baseUrl = new URL(this.baseUrl);
+      const resolvedUrl = new URL(url, baseUrl);
+      return resolvedUrl.toString();
+    } catch {
+      throw new Error(`Invalid URL: Unable to resolve "${url}" with baseUrl "${this.baseUrl}"`);
+    }
+  }  // 🎯 PIT OF SUCCESS: Convenience methods with smart defaults
 
   /**
    * HEAD request with query parameter support.

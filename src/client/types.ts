@@ -61,4 +61,19 @@ export interface FetchClientOptions {
    * - 'omit': Never send cookies
    */
   credentials?: RequestCredentials;
+
+  /**
+   * Base URL for relative requests.
+   *
+   * When set, all relative URLs (not starting with http:// or https://) will be
+   * prefixed with this base URL. Absolute URLs are used as-is.
+   *
+   * @example
+   * ```typescript
+   * const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+   * await client.get('/users'); // → GET https://api.example.com/users
+   * await client.get('https://other-api.com/data'); // → GET https://other-api.com/data
+   * ```
+   */
+  baseUrl?: string;
 }

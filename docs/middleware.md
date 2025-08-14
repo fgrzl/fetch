@@ -40,6 +40,13 @@ const devClient = useDevelopmentStack(client, {
 const basicClient = useBasicStack(client, {
   auth: { tokenProvider: () => getToken() },
 });
+
+// 💡 Combine with dynamic base URL
+const apiClient = useProductionStack(new FetchClient(), {
+  auth: { tokenProvider: () => getToken() },
+  retry: { maxRetries: 3 },
+  logging: { level: "info" },
+}).setBaseUrl(process.env.API_BASE_URL!);
 ```
 
 ## Quick Start

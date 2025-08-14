@@ -29,6 +29,24 @@ npm install @fgrzl/fetch
 import api from "@fgrzl/fetch";
 
 // It just works! 🎉
+const users = await api.get("https://api.example.com/api/users");
+const newUser = await api.post("https://api.example.com/api/users", { name: "John" });
+
+// Built-in error handling
+if (users.ok) {
+  console.log("Users:", users.data);
+} else {
+  console.error("Error:", users.error?.message);
+}
+```
+
+```ts
+import api from "@fgrzl/fetch";
+
+// Set the base url to keep things simple
+api.setBaseUrl("https://api.example.com");
+
+// It just works! 🎉
 const users = await api.get("/api/users");
 const newUser = await api.post("/api/users", { name: "John" });
 
@@ -48,7 +66,28 @@ import { FetchClient, useAuthentication } from "@fgrzl/fetch";
 const authClient = useAuthentication(new FetchClient(), {
   tokenProvider: () => localStorage.getItem("token") || "",
 });
+```
 
+**Working with APIs?** Use a base URL:
+
+```ts
+import { FetchClient } from "@fgrzl/fetch";
+
+const apiClient = new FetchClient({
+  baseUrl: "https://api.example.com",
+});
+
+// All relative URLs are prefixed with the base URL
+await apiClient.get("/users"); // → GET https://api.example.com/users
+await apiClient.post("/users", data); // → POST https://api.example.com/users
+
+// Absolute URLs work as expected
+await apiClient.get("https://other-api.com/data"); // → GET https://other-api.com/data
+```
+
+**Advanced usage** with middleware stacks:
+
+```ts
 // Smart defaults - just works
 useCSRF(client);
 useAuthorization(client); // Redirects to /login with return URL

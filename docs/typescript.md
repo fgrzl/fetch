@@ -49,11 +49,20 @@ import type {
 } from "@fgrzl/fetch";
 
 const clientConfig: FetchClientOptions = {
+  baseUrl: "https://api.example.com", // ✅ Typed as string | undefined
   credentials: "same-origin", // ✅ Only valid values allowed
   headers: {
     "Content-Type": "application/json",
   },
 };
+
+// Environment-specific base URL configuration  
+const getClientConfig = (env: string): FetchClientOptions => ({
+  baseUrl: env === "production" 
+    ? "https://api.myapp.com" 
+    : "http://localhost:3001",
+  credentials: env === "development" ? "include" : "same-origin",
+});
 
 const authConfig: AuthenticationOptions = {
   tokenProvider: () => getToken(), // ✅ Must return string | Promise<string>

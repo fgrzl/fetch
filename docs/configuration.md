@@ -18,6 +18,109 @@ const client = new FetchClient({
 });
 ```
 
+## Base URL Configuration
+
+Set a base URL to simplify API calls and avoid repeating the full domain in every request:
+
+```typescript
+import { FetchClient } from "@fgrzl/fetch";
+
+// Configure a base URL for your API
+const apiClient = new FetchClient({
+  baseUrl: "https://api.example.com",
+});
+
+// All relative URLs are automatically prefixed
+await apiClient.get("/users");           // → GET https://api.example.com/users
+await apiClient.post("/users", userData); // → POST https://api.example.com/users
+await apiClient.get("/posts?page=1");    // → GET https://api.example.com/posts?page=1
+
+// Absolute URLs are used as-is (baseUrl is ignored)
+await apiClient.get("https://cdn.example.com/images/avatar.png");
+// → GET https://cdn.example.com/images/avatar.png
+```
+
+### Environment-Specific Configuration
+
+Perfect for handling different environments:
+
+```typescript
+const getApiUrl = () => {
+  switch (process.env.NODE_ENV) {
+    case "production":
+      return "https://api.myapp.com";
+    case "staging":
+      return "https://api-staging.myapp.com";
+    default:
+      return "http://localhost:3001";
+  }
+};
+
+const client = new FetchClient({
+  baseUrl: getApiUrl(),
+});
+
+// Same code works across all environments
+const users = await client.get("/api/users");
+```
+
+### API Versioning
+
+Use base URLs for API version management:
+
+```typescript
+const v1Client = new FetchClient({
+  baseUrl: "https://api.example.com/v1",
+});
+
+const v2Client = new FetchClient({
+  baseUrl: "https://api.example.com/v2",
+});
+
+// Easy to maintain different API versions
+const legacyUsers = await v1Client.get("/users");  // → /v1/users
+const modernUsers = await v2Client.get("/users");  // → /v2/users
+```
+
+### Microservices Architecture
+
+Create dedicated clients for different services:
+
+```typescript
+const userService = new FetchClient({
+  baseUrl: "https://users.api.example.com",
+});
+
+const orderService = new FetchClient({
+  baseUrl: "https://orders.api.example.com",
+});
+
+const notificationService = new FetchClient({
+  baseUrl: "https://notifications.api.example.com",
+});
+
+// Clean service boundaries
+const user = await userService.get(`/users/${userId}`);
+const orders = await orderService.get(`/orders?userId=${userId}`);
+await notificationService.post("/send", { userId, message });
+```
+
+### Backward Compatibility
+
+Base URL is optional - existing code continues to work unchanged:
+
+```typescript
+// Without base URL (existing behavior)
+const client = new FetchClient();
+await client.get("/api/users");              // → GET /api/users
+await client.get("https://api.com/users");   // → GET https://api.com/users
+
+// With base URL (new behavior)
+const apiClient = new FetchClient({ baseUrl: "https://api.example.com" });
+await apiClient.get("/users");              // → GET https://api.example.com/users
+await apiClient.get("https://other.com");   // → GET https://other.com (absolute URL)
+```
+
 ## Authentication Setup
 
 ### Token-Based Authentication
