@@ -5,8 +5,10 @@ This document explains how to create releases for the `@fgrzl/fetch` library.
 ## 🚀 Standard Release Process
 
 ### Overview
+
 Our release process uses **GitVersion** for automatic semantic versioning based on commit history:
-1. **Develop** branch for active development  
+
+1. **Develop** branch for active development
 2. **Main** branch for production releases
 3. **GitVersion** automatically calculates version numbers from commit messages and git history
 4. **Direct git flow** - no intermediate release branches
@@ -14,17 +16,20 @@ Our release process uses **GitVersion** for automatic semantic versioning based 
 ### Automated Release Workflow
 
 #### Simple One-Click Release
+
 The `Release` workflow automatically determines the next version using GitVersion:
 
 1. Go to **Actions** → **Release** → **Run workflow**
 2. Click **Run workflow** (no inputs required)
 
 **GitVersion will automatically:**
+
 - Analyze commit messages since last release
 - Determine if it's a major, minor, or patch release
 - Calculate the appropriate semantic version number
 
 #### Hotfix Release
+
 Use the `Hotfix Release` workflow for critical fixes:
 
 1. Go to **Actions** → **Hotfix Release** → **Run workflow**
@@ -51,11 +56,13 @@ GitVersion analyzes your commit messages using conventional commits:
 ### What the Release Workflow Does
 
 #### ✅ **Quality Checks**
+
 - Runs full test suite with coverage
 - Runs linting and formatting checks
 - Builds the project successfully
 
 #### 🔄 **Simplified Git Flow**
+
 1. Updates version in `package.json` on develop branch
 2. Updates `CHANGELOG.md` with new version
 3. Commits version bump to develop
@@ -64,6 +71,7 @@ GitVersion analyzes your commit messages using conventional commits:
 6. Merges `main` back to `develop`
 
 #### 📦 **GitHub Release**
+
 - Creates GitHub release with auto-generated notes
 - Includes bundle size information in release notes
 - Attaches build artifacts (dist folder)
@@ -155,6 +163,7 @@ Before creating a release:
 To ensure GitVersion calculates versions correctly, follow [Conventional Commits](https://conventionalcommits.org/):
 
 ### Format
+
 ```
 <type>[optional scope]: <description>
 
@@ -166,18 +175,21 @@ To ensure GitVersion calculates versions correctly, follow [Conventional Commits
 ### Examples
 
 **Features (Minor version bump):**
+
 ```bash
 feat: add CSRF middleware support
 feat(auth): implement OAuth2 flow
 ```
 
 **Bug Fixes (Patch version bump):**
+
 ```bash
 fix: handle network timeout correctly
 fix(retry): exponential backoff calculation
 ```
 
 **Breaking Changes (Major version bump):**
+
 ```bash
 feat!: remove deprecated authentication method
 
@@ -185,6 +197,7 @@ BREAKING CHANGE: The `auth()` method has been removed. Use `useAuthentication()`
 ```
 
 **Other (Patch version bump):**
+
 ```bash
 docs: update middleware examples
 style: format code with prettier
@@ -196,16 +209,15 @@ chore: update dependencies
 ### Version Guidelines
 
 GitVersion will automatically determine:
+
 - **MAJOR** (1.0.0 → 2.0.0): Breaking changes
   - API changes that break existing code
   - Removing features
   - Changing default behavior
-  
 - **MINOR** (1.0.0 → 1.1.0): New features
   - Adding new middleware
   - New configuration options
   - Enhanced functionality (backward compatible)
-  
 - **PATCH** (1.0.0 → 1.0.1): Bug fixes & maintenance
   - Security fixes
   - Bug fixes
@@ -229,6 +241,7 @@ Make sure these are configured in GitHub repository secrets:
 ## 📊 Release Metrics
 
 Each release automatically includes:
+
 - Bundle size information
 - Test coverage stats
 - Commit history since last release

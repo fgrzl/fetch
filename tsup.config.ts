@@ -24,7 +24,7 @@ export default defineConfig([
     minify: true,
     outExtension() {
       return {
-        js: '.min.js'
+        js: '.min.js',
       };
     },
   },
@@ -41,7 +41,7 @@ export default defineConfig([
     minify: false,
     outExtension() {
       return {
-        js: '.js' // Force .js extension for CJS files
+        js: '.js', // Force .js extension for CJS files
       };
     },
   },
@@ -58,8 +58,8 @@ export default defineConfig([
     minify: true,
     outExtension() {
       return {
-        js: '.min.js'
+        js: '.min.js',
       };
     },
-  }
+  },
 ]);

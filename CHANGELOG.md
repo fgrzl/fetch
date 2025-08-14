@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - Initial release of @fgrzl/fetch
 - TypeScript-first HTTP client with middleware support
 - Built-in CSRF protection middleware
@@ -15,7 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Authentication middleware with bearer token support
 - Retry middleware with configurable strategies
 - Response caching middleware
-- Rate limiting middleware  
+- Rate limiting middleware
 - Comprehensive logging middleware
 - Pre-built middleware stacks for common use cases
 - Excellent TypeScript support with full type safety
