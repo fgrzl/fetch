@@ -87,6 +87,11 @@ Ready to go deeper? Check out our comprehensive guides:
 - **[TypeScript Guide](docs/typescript.md)** - Type-safe API calls
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
 
+### 🔧 For Maintainers
+
+- **[Release Guide](docs/releases.md)** - How to create releases
+- **[Contributing](CONTRIBUTING.md)** - Development setup and guidelines
+
 ## 🏗️ Architecture
 
 Built on a **"pit of success"** philosophy where:

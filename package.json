@@ -43,7 +43,10 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md",
+    "README.md",
+    "CONTRIBUTING.md"
   ],
   "overrides": {
     "@typescript-eslint/utils": "^8.39.1"
