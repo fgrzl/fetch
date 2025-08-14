@@ -155,6 +155,14 @@ describe('Main Library Exports', () => {
       expect(typeof fetchLib.useDevelopmentStack).toBe('function');
       expect(typeof fetchLib.useBasicStack).toBeDefined();
     });
+
+    it('should export query utilities', () => {
+      expect(fetchLib.buildQueryParams).toBeDefined();
+      expect(fetchLib.appendQueryParams).toBeDefined();
+
+      expect(typeof fetchLib.buildQueryParams).toBe('function');
+      expect(typeof fetchLib.appendQueryParams).toBe('function');
+    });
   });
 
   describe('Middleware Functions Integration', () => {

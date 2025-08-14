@@ -35,6 +35,18 @@ import { useProductionStack } from './middleware';
  * const activeUsers = await api.get('/api/users', { status: 'active', limit: 10 });
  * ```
  *
+ * @example Set base URL for API-specific clients:
+ * ```typescript
+ * import api from '@fgrzl/fetch';
+ *
+ * // Configure base URL dynamically
+ * api.setBaseUrl('https://api.example.com');
+ * 
+ * // Now all relative URLs are prefixed automatically
+ * const users = await api.get('/users');        // → GET https://api.example.com/users
+ * const posts = await api.get('/posts');        // → GET https://api.example.com/posts
+ * ```
+ *
  * @example Configure authentication:
  * ```typescript
  * import api from '@fgrzl/fetch';
@@ -54,6 +66,21 @@ import { useProductionStack } from './middleware';
  * }), {
  *   tokenProvider: () => getJWTToken()
  * });
+ * ```
+ *
+ * @example Production-ready API client with base URL:
+ * ```typescript
+ * import { FetchClient, useProductionStack } from '@fgrzl/fetch';
+ *
+ * // One-liner production setup with base URL
+ * const apiClient = useProductionStack(new FetchClient(), {
+ *   auth: { tokenProvider: () => getAuthToken() },
+ *   retry: { maxRetries: 3 },
+ *   logging: { level: 'info' }
+ * }).setBaseUrl(process.env.API_BASE_URL || 'https://api.example.com');
+ *
+ * // Ready to use with full production features
+ * const users = await apiClient.get('/users');
  * ```
  */
 const api = useProductionStack(
@@ -89,6 +116,9 @@ export default api;
 export { FetchClient } from './client/fetch-client';
 export { FetchError, HttpError, NetworkError } from './errors';
 
+// 🎯 LEVEL 2.5: Query utilities for advanced URL building
+export { buildQueryParams, appendQueryParams } from './client/query';
+
 // 🎯 LEVEL 3: Individual middleware functions (import from our comprehensive middleware index)
 export {
   // Authentication
@@ -123,6 +153,9 @@ export {
 // 🎯 LEVEL 5: Types for TypeScript users
 export type { FetchMiddleware as InterceptMiddleware } from './client/fetch-client';
 export type { FetchResponse, FetchClientOptions } from './client/types';
+
+// Query utility types
+export type { QueryParams, QueryValue } from './client/query';
 
 // Middleware types (re-exported from middleware index)
 export type {
