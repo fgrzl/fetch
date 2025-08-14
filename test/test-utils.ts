@@ -32,7 +32,7 @@ export function setupMockFetch() {
  * @returns Mock Response object
  */
 export function createMockResponse(
-  data: any,
+  data: unknown,
   status: number = 200,
   headers: Record<string, string> = {},
 ): Response {

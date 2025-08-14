@@ -1,11 +1,17 @@
 {
   "name": "@fgrzl/fetch",
-  "version": "0.0.0",
-  "description": "A simple fetch client with some extra goodies",
+  "version": "1.1.0-alpha.12",
+  "description": "A modern, type-safe HTTP client with middleware support for CSRF protection and authentication",
   "keywords": [
     "fetch",
     "typescript",
-    "api"
+    "api",
+    "http",
+    "client",
+    "middleware",
+    "CSRF",
+    "auth",
+    "type-safe"
   ],
   "homepage": "https://github.com/fgrzl/fetch#readme",
   "bugs": {
@@ -17,28 +23,65 @@
   },
   "license": "MIT",
   "author": "smiggleworth",
-  "type": "commonjs",
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/cjs/index.js"
+    },
+    "./min": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.min.js",
+      "require": "./dist/cjs/index.min.js"
+    }
+  },
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md",
+    "README.md",
+    "CONTRIBUTING.md"
   ],
+  "overrides": {
+    "@typescript-eslint/utils": "^8.39.1"
+  },
   "scripts": {
-    "build": "tsc",
-    "prepublishOnly": "npm run build",
+    "build": "tsup",
+    "build:esm": "tsup --format esm",
+    "build:cjs": "tsup --format cjs",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "lint:check": "npm run lint && npm run format:check",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "test:coverage": "vitest run --coverage",
-    "lint": "npm run format:check"
+    "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
+    "@eslint/js": "^9.33.0",
     "@types/node": "^24.2.1",
+    "@typescript-eslint/eslint-plugin": "^8.39.1",
+    "@typescript-eslint/parser": "^8.39.1",
     "@vitest/coverage-v8": "^3.2.4",
+    "eslint": "^9.33.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vitest": "^0.5.4",
+    "jiti": "^2.5.1",
     "jsdom": "^26.1.0",
     "prettier": "^3.6.2",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.39.1",
     "vitest": "^3.2.4"
   }
 }

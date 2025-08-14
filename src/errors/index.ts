@@ -1,6 +1,24 @@
 /**
- * @fileoverview Custom error classes for the fetch client.
+ * @fileoverview Custom error classes - "Pit of Success" pattern.
+ *
+ * 🎯 LEVEL 1: HttpError, NetworkError - Most common error types you'll catch
+ * 🎯 LEVEL 2: FetchError - Base error class for advanced error handling
+ *
+ * @example
+ * ```typescript
+ * try {
+ *   await client.get('/api/data');
+ * } catch (error) {
+ *   if (error instanceof HttpError) {
+ *     console.log(`HTTP ${error.status}: ${error.statusText}`);
+ *   } else if (error instanceof NetworkError) {
+ *     console.log('Network connection failed');
+ *   }
+ * }
+ * ```
  */
+
+// 🎯 LEVEL 2: Base error class (for advanced use cases)
 
 /**
  * Base error class for all fetch client errors.
@@ -17,9 +35,13 @@ export class FetchError extends Error {
   constructor(message: string, cause?: Error) {
     super(message);
     this.name = 'FetchError';
-    this.cause = cause;
+    if (cause !== undefined) {
+      this.cause = cause;
+    }
   }
 }
+
+// 🎯 LEVEL 1: Most commonly used error types
 
 /**
  * Error thrown when an HTTP request fails with a non-2xx status code.
@@ -30,7 +52,7 @@ export class HttpError extends FetchError {
   /** The HTTP status text */
   public readonly statusText: string;
   /** The response body (if available) */
-  public readonly body: any;
+  public readonly body: unknown;
 
   /**
    * Creates a new HttpError.
@@ -39,7 +61,7 @@ export class HttpError extends FetchError {
    * @param body - Response body
    * @param url - The request URL
    */
-  constructor(status: number, statusText: string, body: any, url: string) {
+  constructor(status: number, statusText: string, body: unknown, url: string) {
     super(`HTTP ${status} ${statusText} at ${url}`);
     this.name = 'HttpError';
     this.status = status;
