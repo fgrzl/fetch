@@ -43,16 +43,16 @@ jobs:
 
       - name: Tag Commit
         if: ${{!startsWith(github.ref, 'refs/tags/') }}
-        uses: fgrzl/actions/tag-commit@v0.0.4
+        uses: fgrzl/actions/tag-commit@v0.0.5
         with:
           tag: ${{ steps.version.outputs.semVer }}
 
       - name: Publish NPM
-        uses: fgrzl/actions/publish-npm@v0.0.4
+        uses: fgrzl/actions/publish-npm@v0.0.5
         with:
           npm-token: ${{ secrets.NPM_TOKEN }}
           label: ${{ steps.version.outputs.PreReleaseLabel }}
           version: ${{ steps.version.outputs.semVer }}
 
       - name: Prune Pre-release Tags
-        uses: fgrzl/actions/prune-tags@v0.0.4
+        uses: fgrzl/actions/prune-tags@v0.0.5
