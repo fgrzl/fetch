@@ -42,6 +42,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Workflow Cleanup
-        uses: fgrzl/actions/workflow-cleanup@v0.0.5
