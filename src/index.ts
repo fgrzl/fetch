@@ -10,7 +10,7 @@
  */
 
 import { FetchClient } from './client/fetch-client';
-import { useProductionStack } from './middleware';
+import { addProductionStack } from './middleware';
 
 /**
  * 🎯 PIT OF SUCCESS: Pre-configured fetch client (Level 1 - 80% of users)
@@ -50,18 +50,18 @@ import { useProductionStack } from './middleware';
  * @example Configure authentication:
  * ```typescript
  * import api from '@fgrzl/fetch';
- * import { useAuthentication } from '@fgrzl/fetch/middleware';
+ * import { addAuthentication } from '@fgrzl/fetch/middleware';
  *
- * const authClient = useAuthentication(api, {
+ * const authClient = addAuthentication(api, {
  *   tokenProvider: () => localStorage.getItem('auth-token') || ''
  * });
  * ```
  *
  * @example For token-only auth (no cookies):
  * ```typescript
- * import { FetchClient, useAuthentication } from '@fgrzl/fetch';
+ * import { FetchClient, addAuthentication } from '@fgrzl/fetch';
  *
- * const tokenClient = useAuthentication(new FetchClient({
+ * const tokenClient = addAuthentication(new FetchClient({
  *   credentials: 'omit' // Don't send cookies
  * }), {
  *   tokenProvider: () => getJWTToken()
@@ -70,10 +70,10 @@ import { useProductionStack } from './middleware';
  *
  * @example Production-ready API client with base URL:
  * ```typescript
- * import { FetchClient, useProductionStack } from '@fgrzl/fetch';
+ * import { FetchClient, addProductionStack } from '@fgrzl/fetch';
  *
  * // One-liner production setup with base URL
- * const apiClient = useProductionStack(new FetchClient(), {
+ * const apiClient = addProductionStack(new FetchClient(), {
  *   auth: { tokenProvider: () => getAuthToken() },
  *   retry: { maxRetries: 3 },
  *   logging: { level: 'info' }
@@ -83,7 +83,7 @@ import { useProductionStack } from './middleware';
  * const users = await apiClient.get('/users');
  * ```
  */
-const api = useProductionStack(
+const api = addProductionStack(
   new FetchClient({
     // Smart default: include cookies for session-based auth
     // Can be overridden by creating a custom FetchClient
@@ -122,32 +122,32 @@ export { buildQueryParams, appendQueryParams } from './client/query';
 // 🎯 LEVEL 3: Individual middleware functions (import from our comprehensive middleware index)
 export {
   // Authentication
-  useAuthentication,
+  addAuthentication,
   createAuthenticationMiddleware,
   // Authorization
-  useAuthorization,
+  addAuthorization,
   createAuthorizationMiddleware,
   // Cache
-  useCache,
+  addCache,
   createCacheMiddleware,
   // CSRF
-  useCSRF,
+  addCSRF,
   // Logging
-  useLogging,
+  addLogging,
   createLoggingMiddleware,
   // Rate Limiting
-  useRateLimit,
+  addRateLimit,
   createRateLimitMiddleware,
   // Retry
-  useRetry,
+  addRetry,
   createRetryMiddleware,
 } from './middleware';
 
 // 🎯 LEVEL 4: Pre-built middleware stacks for common scenarios
 export {
-  useProductionStack,
-  useDevelopmentStack,
-  useBasicStack,
+  addProductionStack,
+  addDevelopmentStack,
+  addBasicStack,
 } from './middleware';
 
 // 🎯 LEVEL 5: Types for TypeScript users

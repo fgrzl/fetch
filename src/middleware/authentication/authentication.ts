@@ -48,14 +48,14 @@ function shouldIncludeAuth(
  *
  * @example Basic usage:
  * ```typescript
- * const authClient = useAuthentication(client, {
+ * const authClient = addAuthentication(client, {
  *   tokenProvider: () => localStorage.getItem('token') || ''
  * });
  * ```
  *
  * @example Async token provider:
  * ```typescript
- * const authClient = useAuthentication(client, {
+ * const authClient = addAuthentication(client, {
  *   tokenProvider: async () => {
  *     const token = await getAuthToken();
  *     return token || '';

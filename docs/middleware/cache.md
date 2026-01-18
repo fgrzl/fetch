@@ -7,24 +7,24 @@ Provides intelligent response caching with TTL (Time To Live) support for improv
 ### Simple Caching
 
 ```ts
-import { useCache } from "@fgrzl/fetch";
+import { addCache } from "@fgrzl/fetch";
 
 // Cache responses for 5 minutes
-const cachedClient = useCache(client, {
+const cachedClient = addCache(client, {
   ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
 });
 
 // Default caching (1 minute TTL)
-const cachedClient = useCache(client);
+const cachedClient = addCache(client);
 ```
 
 ### Advanced Configuration
 
 ```ts
-import { useCache, createCacheMiddleware } from "@fgrzl/fetch";
+import { addCache, createCacheMiddleware } from "@fgrzl/fetch";
 
 // Custom cache configuration
-const cachedClient = useCache(client, {
+const cachedClient = addCache(client, {
   ttl: 10 * 60 * 1000, // 10 minutes
   maxSize: 1000, // Maximum 1000 cached responses
   keyGenerator: (request) => `${request.method}-${request.url}`,
@@ -44,7 +44,7 @@ client.use(cacheMiddleware);
 
 ```ts
 // Using custom storage backend
-import { useCache } from "@fgrzl/fetch";
+import { addCache } from "@fgrzl/fetch";
 
 class RedisCache implements CacheStorage {
   async get(key: string): Promise<CacheEntry | undefined> {
@@ -65,7 +65,7 @@ class RedisCache implements CacheStorage {
   }
 }
 
-const cachedClient = useCache(client, {
+const cachedClient = addCache(client, {
   storage: new RedisCache(),
   ttl: 15 * 60 * 1000, // 15 minutes
 });
@@ -107,7 +107,7 @@ type CacheKeyGenerator = (request: RequestInit & { url: string }) => string;
 
 ```ts
 // Cache GET requests for user data
-const userClient = useCache(new FetchClient(), {
+const userClient = addCache(new FetchClient(), {
   ttl: 2 * 60 * 1000, // 2 minutes
   shouldCache: (response) =>
     response.method === "GET" &&
@@ -123,7 +123,7 @@ const userData = await userClient.get("/api/users/123");
 
 ```ts
 // Manual cache clearing
-const client = useCache(new FetchClient());
+const client = addCache(new FetchClient());
 
 // Clear entire cache
 await client.cache.clear();
@@ -156,7 +156,7 @@ const response = await cachedClient.get("/api/data", {
 
 ```ts
 // Different TTLs for different endpoints
-const smartClient = useCache(client, {
+const smartClient = addCache(client, {
   keyGenerator: (req) => `${req.method}-${req.url}`,
   shouldCache: (response) => response.status < 400,
   ttl: (request) => {
@@ -171,7 +171,7 @@ const smartClient = useCache(client, {
 
 ```ts
 // Only cache successful GET requests
-const conditionalClient = useCache(client, {
+const conditionalClient = addCache(client, {
   shouldCache: (response) =>
     response.method === "GET" &&
     response.status >= 200 &&

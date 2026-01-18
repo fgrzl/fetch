@@ -7,13 +7,13 @@ Automatically retries failed requests with configurable strategies and backoff a
 ### Simple Retry
 
 ```ts
-import { useRetry } from "@fgrzl/fetch";
+import { addRetry } from "@fgrzl/fetch";
 
 // Default retry (3 retries with exponential backoff)
-const retryClient = useRetry(client);
+const retryClient = addRetry(client);
 
 // Custom retry count
-const retryClient = useRetry(client, {
+const retryClient = addRetry(client, {
   maxRetries: 5,
 });
 ```
@@ -21,10 +21,10 @@ const retryClient = useRetry(client, {
 ### Advanced Configuration
 
 ```ts
-import { useRetry, createRetryMiddleware } from "@fgrzl/fetch";
+import { addRetry, createRetryMiddleware } from "@fgrzl/fetch";
 
 // Custom retry configuration
-const retryClient = useRetry(client, {
+const retryClient = addRetry(client, {
   maxRetries: 5,
   delay: 1000, // Base delay in ms
   strategy: "exponential", // 'fixed', 'linear', or 'exponential'
@@ -47,21 +47,21 @@ client.use(retryMiddleware);
 
 ```ts
 // Fixed delay between retries
-const fixedRetryClient = useRetry(client, {
+const fixedRetryClient = addRetry(client, {
   strategy: "fixed",
   delay: 2000, // Always wait 2 seconds
   maxRetries: 3,
 });
 
 // Linear backoff (delay increases linearly)
-const linearRetryClient = useRetry(client, {
+const linearRetryClient = addRetry(client, {
   strategy: "linear",
   delay: 1000, // 1s, 2s, 3s, 4s, ...
   maxRetries: 5,
 });
 
 // Exponential backoff (default)
-const exponentialRetryClient = useRetry(client, {
+const exponentialRetryClient = addRetry(client, {
   strategy: "exponential",
   delay: 1000, // 1s, 2s, 4s, 8s, 16s, ...
   maxRetries: 5,
@@ -98,7 +98,7 @@ By default, requests are retried for:
 
 ```ts
 // Resilient API client
-const apiClient = useRetry(new FetchClient(), {
+const apiClient = addRetry(new FetchClient(), {
   maxRetries: 3,
   shouldRetry: (response) => {
     // Retry on server errors, rate limits, and timeouts
@@ -122,7 +122,7 @@ const userData = await apiClient.get("/api/users/123");
 
 ```ts
 // Retry only specific operations
-const selectiveRetryClient = useRetry(client, {
+const selectiveRetryClient = addRetry(client, {
   shouldRetry: (response, request) => {
     // Only retry GET requests and certain endpoints
     return (
@@ -140,7 +140,7 @@ const selectiveRetryClient = useRetry(client, {
 
 ```ts
 // Add randomization to prevent thundering herd
-const jitteredRetryClient = useRetry(client, {
+const jitteredRetryClient = addRetry(client, {
   strategy: "exponential",
   delay: 1000,
   jitter: true, // Adds ±25% randomization
@@ -172,7 +172,7 @@ client.use(createFixedRetry(3, 2000)); // Fixed 2s delays
 ### Final Failure
 
 ```ts
-const retryClient = useRetry(client, {
+const retryClient = addRetry(client, {
   maxRetries: 3,
   onRetry: (response, attempt) => {
     console.log(`Attempt ${attempt} failed with status ${response.status}`);
@@ -191,7 +191,7 @@ try {
 ### Retry Exhausted Callback
 
 ```ts
-const retryClient = useRetry(client, {
+const retryClient = addRetry(client, {
   maxRetries: 3,
   onRetryExhausted: (lastResponse, totalAttempts) => {
     console.error(
@@ -240,7 +240,7 @@ class CircuitBreaker {
 
 const circuitBreaker = new CircuitBreaker();
 
-const resilientClient = useRetry(client, {
+const resilientClient = addRetry(client, {
   shouldRetry: (response) => {
     if (!circuitBreaker.shouldRetry()) {
       console.log("Circuit breaker open, not retrying");
@@ -262,7 +262,7 @@ const resilientClient = useRetry(client, {
 ### Retry with Rate Limiting Awareness
 
 ```ts
-const smartRetryClient = useRetry(client, {
+const smartRetryClient = addRetry(client, {
   shouldRetry: (response) => {
     if (response.status === 429) {
       // Extract retry-after header

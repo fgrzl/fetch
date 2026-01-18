@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import {
-  useAuthentication,
+  addAuthentication,
   createAuthenticationMiddleware,
 } from '../../../src/middleware/authentication/index';
 
@@ -25,10 +25,10 @@ beforeEach(() => {
 });
 
 describe('Authentication Middleware', () => {
-  describe('useAuthentication (Pit of Success API)', () => {
+  describe('addAuthentication (Pit of Success API)', () => {
     it('should add Bearer token to requests', async () => {
       const client = new FetchClient();
-      const authClient = useAuthentication(client, {
+      const authClient = addAuthentication(client, {
         tokenProvider: () => 'test-token-123',
       });
 
@@ -46,7 +46,7 @@ describe('Authentication Middleware', () => {
 
     it('should handle async token provider', async () => {
       const client = new FetchClient();
-      const authClient = useAuthentication(client, {
+      const authClient = addAuthentication(client, {
         tokenProvider: async () => {
           await new Promise((resolve) => setTimeout(resolve, 10));
           return 'async-token-456';
@@ -67,7 +67,7 @@ describe('Authentication Middleware', () => {
 
     it('should skip requests when token is empty', async () => {
       const client = new FetchClient();
-      const authClient = useAuthentication(client, {
+      const authClient = addAuthentication(client, {
         tokenProvider: () => '',
       });
 
@@ -85,7 +85,7 @@ describe('Authentication Middleware', () => {
 
     it('should respect skip patterns', async () => {
       const client = new FetchClient();
-      const authClient = useAuthentication(client, {
+      const authClient = addAuthentication(client, {
         tokenProvider: () => 'test-token',
         skipPatterns: ['/public', /^\/health/],
       });
@@ -120,7 +120,7 @@ describe('Authentication Middleware', () => {
 
     it('should respect include patterns', async () => {
       const client = new FetchClient();
-      const authClient = useAuthentication(client, {
+      const authClient = addAuthentication(client, {
         tokenProvider: () => 'test-token',
         includePatterns: ['/api/', /^\/secure/],
       });
@@ -155,7 +155,7 @@ describe('Authentication Middleware', () => {
 
     it('should use custom header name and token type', async () => {
       const client = new FetchClient();
-      const authClient = useAuthentication(client, {
+      const authClient = addAuthentication(client, {
         tokenProvider: () => 'api-key-789',
         headerName: 'X-API-Key',
         tokenType: 'ApiKey',
@@ -175,7 +175,7 @@ describe('Authentication Middleware', () => {
 
     it('should handle token provider errors gracefully', async () => {
       const client = new FetchClient();
-      const authClient = useAuthentication(client, {
+      const authClient = addAuthentication(client, {
         tokenProvider: () => {
           throw new Error('Token fetch failed');
         },

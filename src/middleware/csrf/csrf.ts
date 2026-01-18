@@ -53,19 +53,19 @@ function shouldSkipCSRF(
  * @example Basic usage (uses cookies automatically):
  * ```typescript
  * const client = new FetchClient();
- * const csrfClient = useCSRF(client);
+ * const csrfClient = addCSRF(client);
  * ```
  *
  * @example Custom token provider:
  * ```typescript
- * const csrfClient = useCSRF(client, {
+ * const csrfClient = addCSRF(client, {
  *   tokenProvider: () => localStorage.getItem('csrf-token') || ''
  * });
  * ```
  *
  * @example Skip external APIs:
  * ```typescript
- * const csrfClient = useCSRF(client, {
+ * const csrfClient = addCSRF(client, {
  *   skipPatterns: [/^https:\/\/api\.external\.com\//, '/webhook/']
  * });
  * ```

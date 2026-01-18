@@ -26,7 +26,7 @@ export { createCSRFMiddleware } from './csrf';
  * @example Basic usage (automatic cookie-based CSRF):
  * ```typescript
  * const client = new FetchClient();
- * const protectedClient = useCSRF(client);
+ * const protectedClient = addCSRF(client);
  *
  * // CSRF token automatically added to POST requests
  * await protectedClient.post('/api/users', { name: 'John' });
@@ -34,14 +34,14 @@ export { createCSRFMiddleware } from './csrf';
  *
  * @example Custom token provider:
  * ```typescript
- * const protectedClient = useCSRF(client, {
+ * const protectedClient = addCSRF(client, {
  *   tokenProvider: () => localStorage.getItem('csrf-token') || ''
  * });
  * ```
  *
  * @example Custom header and cookie names:
  * ```typescript
- * const protectedClient = useCSRF(client, {
+ * const protectedClient = addCSRF(client, {
  *   headerName: 'X-CSRF-Token',
  *   cookieName: 'csrf-token'
  * });
@@ -49,7 +49,7 @@ export { createCSRFMiddleware } from './csrf';
  *
  * @example Skip patterns for external APIs:
  * ```typescript
- * const protectedClient = useCSRF(client, {
+ * const protectedClient = addCSRF(client, {
  *   skipPatterns: [
  *     /^https:\/\/api\.external\.com\//,  // Skip external API
  *     '/webhook/',                        // Skip webhook endpoints
@@ -58,7 +58,7 @@ export { createCSRFMiddleware } from './csrf';
  * });
  * ```
  */
-export function useCSRF(
+export function addCSRF(
   client: FetchClient,
   options: CSRFOptions = {},
 ): FetchClient {

@@ -33,9 +33,9 @@ describe('README Examples Validation', () => {
 
   it('should work with custom authentication as shown in README', async () => {
     // This tests the second example from README
-    const { FetchClient, useAuthentication } = await import('../src/index');
+    const { FetchClient, addAuthentication } = await import('../src/index');
 
-    const authClient = useAuthentication(new FetchClient(), {
+    const authClient = addAuthentication(new FetchClient(), {
       tokenProvider: () => 'test-token',
     });
 
@@ -56,18 +56,18 @@ describe('README Examples Validation', () => {
     const fetchLib = await import('../src/index');
 
     // Verify all middleware exports exist as documented
-    expect(typeof fetchLib.useAuthentication).toBe('function');
-    expect(typeof fetchLib.useCSRF).toBe('function');
-    expect(typeof fetchLib.useAuthorization).toBe('function');
-    expect(typeof fetchLib.useRetry).toBe('function');
-    expect(typeof fetchLib.useCache).toBe('function');
-    expect(typeof fetchLib.useLogging).toBe('function');
-    expect(typeof fetchLib.useRateLimit).toBe('function');
+    expect(typeof fetchLib.addAuthentication).toBe('function');
+    expect(typeof fetchLib.addCSRF).toBe('function');
+    expect(typeof fetchLib.addAuthorization).toBe('function');
+    expect(typeof fetchLib.addRetry).toBe('function');
+    expect(typeof fetchLib.addCache).toBe('function');
+    expect(typeof fetchLib.addLogging).toBe('function');
+    expect(typeof fetchLib.addRateLimit).toBe('function');
 
     // Verify pre-built stacks
-    expect(typeof fetchLib.useProductionStack).toBe('function');
-    expect(typeof fetchLib.useDevelopmentStack).toBe('function');
-    expect(typeof fetchLib.useBasicStack).toBe('function');
+    expect(typeof fetchLib.addProductionStack).toBe('function');
+    expect(typeof fetchLib.addDevelopmentStack).toBe('function');
+    expect(typeof fetchLib.addBasicStack).toBe('function');
   });
 
   it('should have correct TypeScript types as documented', async () => {

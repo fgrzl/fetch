@@ -71,13 +71,13 @@ function shouldSkipLogging(
  *
  * @example Basic logging:
  * ```typescript
- * const loggedClient = useLogging(client);
+ * const loggedClient = addLogging(client);
  * // Logs all requests to console
  * ```
  *
  * @example Custom logger:
  * ```typescript
- * const loggedClient = useLogging(client, {
+ * const loggedClient = addLogging(client, {
  *   logger: winston.createLogger({...}),
  *   level: 'debug',
  *   includeRequestHeaders: true

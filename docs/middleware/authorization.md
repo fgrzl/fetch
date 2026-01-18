@@ -7,17 +7,17 @@ Automatically handles HTTP 401 Unauthorized and 403 Forbidden responses with int
 ### Smart Defaults (Zero Config)
 
 ```ts
-import { useAuthorization } from "@fgrzl/fetch";
+import { addAuthorization } from "@fgrzl/fetch";
 
 // ✨ Ultimate simplicity - redirects to '/login?return_url=current-page' on 401
-const authClient = useAuthorization(client);
+const authClient = addAuthorization(client);
 ```
 
 ### Custom Configuration
 
 ```ts
 // Custom redirect path
-useAuthorization(client, {
+addAuthorization(client, {
   redirectConfig: {
     redirectPath: "/signin", // Default: "/login"
     returnUrlParam: "redirect_to", // Default: "return_url"
@@ -25,7 +25,7 @@ useAuthorization(client, {
 });
 
 // Disable return URL if not needed
-useAuthorization(client, {
+addAuthorization(client, {
   redirectConfig: {
     redirectPath: "/login",
     includeReturnUrl: false, // Default: true
@@ -33,7 +33,7 @@ useAuthorization(client, {
 });
 
 // Works with existing query parameters
-useAuthorization(client, {
+addAuthorization(client, {
   redirectConfig: {
     redirectPath: "/login?theme=dark&lang=en",
     // Results in: /login?theme=dark&lang=en&return_url=current-page
@@ -47,7 +47,7 @@ For complete control over unauthorized responses:
 
 ```ts
 // Custom handler (overrides smart defaults)
-useAuthorization(client, {
+addAuthorization(client, {
   onUnauthorized: (response, request) => {
     localStorage.removeItem("auth-token");
     window.location.href = "/login";
@@ -55,7 +55,7 @@ useAuthorization(client, {
 });
 
 // Handle both 401 and 403 responses
-useAuthorization(client, {
+addAuthorization(client, {
   onForbidden: (response) => {
     showAccessDeniedMessage();
   },
@@ -67,7 +67,7 @@ useAuthorization(client, {
 
 ```ts
 // Skip authorization for certain endpoints
-useAuthorization(client, {
+addAuthorization(client, {
   skipPatterns: ["/login", "/register", /^\/public\//],
 });
 
@@ -108,10 +108,10 @@ type UnauthorizedHandler = (
 ### React Router
 
 ```tsx
-import { useAuthorization } from "@fgrzl/fetch";
+import { addAuthorization } from "@fgrzl/fetch";
 
 // Smart defaults work perfectly with React Router
-const apiClient = useAuthorization(new FetchClient());
+const apiClient = addAuthorization(new FetchClient());
 
 // After successful login, redirect back:
 function LoginPage() {
@@ -133,7 +133,7 @@ function LoginPage() {
 
 ```ts
 // Smart defaults work with Next.js
-const apiClient = useAuthorization(new FetchClient());
+const apiClient = addAuthorization(new FetchClient());
 
 // In your login API route:
 export default function handler(req: NextApiRequest, res: NextApiResponse) {

@@ -63,9 +63,9 @@ if (users.ok) {
 **Need custom config?** Add it when you need it:
 
 ```ts
-import { FetchClient, useAuthentication } from "@fgrzl/fetch";
+import { FetchClient, addAuthentication } from "@fgrzl/fetch";
 
-const authClient = useAuthentication(new FetchClient(), {
+const authClient = addAuthentication(new FetchClient(), {
   tokenProvider: () => localStorage.getItem("token") || "",
 });
 ```
@@ -91,9 +91,9 @@ await apiClient.get("https://other-api.com/data"); // → GET https://other-api.
 
 ```ts
 // Smart defaults - just works
-useCSRF(client);
-useAuthorization(client); // Redirects to /login with return URL
-useRetry(client);
+addCSRF(client);
+addAuthorization(client); // Redirects to /login with return URL
+addRetry(client);
 
 // All requests now return FetchResponse<T>
 interface User {

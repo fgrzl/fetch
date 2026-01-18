@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import {
-  useLogging,
+  addLogging,
   createLoggingMiddleware,
 } from '../../../src/middleware/logging/index';
 import type { Logger } from '../../../src/middleware/logging/types';
@@ -26,13 +26,13 @@ beforeEach(() => {
 });
 
 describe('Logging Middleware', () => {
-  describe('useLogging (Pit of Success API)', () => {
+  describe('addLogging (Pit of Success API)', () => {
     it('should log requests and responses to console by default', async () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client);
+      const loggedClient = addLogging(client);
 
       await loggedClient.get('https://api.example.com/users');
 
@@ -59,7 +59,7 @@ describe('Logging Middleware', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client);
+      const loggedClient = addLogging(client);
 
       await loggedClient.get('https://api.example.com/error');
 
@@ -85,7 +85,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
       });
 
@@ -111,7 +111,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
         level: 'warn', // Only warn and error
       });
@@ -133,7 +133,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
         level: 'debug',
       });
@@ -167,7 +167,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
         skipPatterns: ['/health', /\/metrics/],
       });
@@ -193,7 +193,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
         level: 'debug',
         includeRequestHeaders: true,
@@ -235,7 +235,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
         includeResponseHeaders: true,
       });
@@ -264,7 +264,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
         level: 'debug',
         includeRequestBody: true,
@@ -300,7 +300,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
         formatter: customFormatter,
       });
@@ -332,7 +332,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
       });
 
@@ -365,7 +365,7 @@ describe('Logging Middleware', () => {
       };
 
       const client = new FetchClient();
-      const loggedClient = useLogging(client, {
+      const loggedClient = addLogging(client, {
         logger: mockLogger,
       });
 
@@ -464,11 +464,11 @@ describe('Logging Middleware', () => {
 
       const client = new FetchClient();
 
-      const { useAuthentication } = await import(
+      const { addAuthentication } = await import(
         '../../../src/middleware/authentication'
       );
 
-      const authLoggedClient = useAuthentication(client, {
+      const authLoggedClient = addAuthentication(client, {
         tokenProvider: () => 'test-token',
       }).use(
         createLoggingMiddleware({
@@ -536,7 +536,7 @@ describe('Logging Middleware', () => {
         };
 
         const client = new FetchClient();
-        const loggedClient = useLogging(client, {
+        const loggedClient = addLogging(client, {
           logger: mockLogger,
           level: minLevel,
         });

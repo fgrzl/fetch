@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import {
-  useCache,
+  addCache,
   createCacheMiddleware,
 } from '../../../src/middleware/cache/index';
 import type { CacheStorage } from '../../../src/middleware/cache/types';
@@ -26,10 +26,10 @@ beforeEach(() => {
 });
 
 describe('Cache Middleware', () => {
-  describe('useCache (Pit of Success API)', () => {
+  describe('addCache (Pit of Success API)', () => {
     it('should cache GET requests', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       // First call
       const response1 = await cachedClient.get('https://api.example.com/users');
@@ -44,7 +44,7 @@ describe('Cache Middleware', () => {
 
     it('should not cache POST requests by default', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       // First POST
       await cachedClient.post('https://api.example.com/users', {
@@ -63,7 +63,7 @@ describe('Cache Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         ttl: 1000, // 1 second
       });
 
@@ -86,7 +86,7 @@ describe('Cache Middleware', () => {
 
     it('should cache custom methods when configured', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         methods: ['GET', 'POST'],
       });
 
@@ -105,7 +105,7 @@ describe('Cache Middleware', () => {
 
     it('should skip caching for URLs matching skip patterns', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         skipPatterns: ['/dynamic', /\/user\//],
       });
 
@@ -130,7 +130,7 @@ describe('Cache Middleware', () => {
 
     it('should use custom cache key generator', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         keyGenerator: (request) => request.url || 'default',
       });
 
@@ -148,7 +148,7 @@ describe('Cache Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         ttl: 1000,
         staleWhileRevalidate: true,
       });
@@ -190,7 +190,7 @@ describe('Cache Middleware', () => {
       };
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         storage: mockStorage,
       });
 
@@ -219,7 +219,7 @@ describe('Cache Middleware', () => {
       };
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         storage: faultyStorage,
       });
 
@@ -269,7 +269,7 @@ describe('Cache Middleware', () => {
   describe('Cache key generation', () => {
     it('should generate different keys for different requests', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       // Different URLs
       await cachedClient.get('https://api.example.com/users');
@@ -286,7 +286,7 @@ describe('Cache Middleware', () => {
 
     it('should generate same key for identical requests', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         methods: ['GET', 'POST'],
       });
 
@@ -303,7 +303,7 @@ describe('Cache Middleware', () => {
 
     it('should handle requests with no URL or method', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       // Test default key generator with empty/undefined values
       await cachedClient.request('', {}); // Empty URL
@@ -314,7 +314,7 @@ describe('Cache Middleware', () => {
 
     it('should handle requests with no headers', async () => {
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       // Test requests without headers
       await cachedClient.get('https://api.example.com/no-headers');
@@ -331,7 +331,7 @@ describe('Cache Middleware', () => {
       );
 
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       // First 404 call
       const response1 = await cachedClient.get(
@@ -352,7 +352,7 @@ describe('Cache Middleware', () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       await expect(
         cachedClient.get('https://api.example.com/users'),
@@ -366,7 +366,7 @@ describe('Cache Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, { ttl: 1000 });
+      const cachedClient = addCache(client, { ttl: 1000 });
 
       // First call to populate cache
       await cachedClient.get('https://api.example.com/users');
@@ -386,7 +386,7 @@ describe('Cache Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         ttl: 1000,
         staleWhileRevalidate: true,
       });
@@ -424,7 +424,7 @@ describe('Cache Middleware', () => {
       };
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         storage: customStorage,
         staleWhileRevalidate: true,
       });
@@ -493,7 +493,7 @@ describe('Cache Middleware', () => {
 
       const client = new FetchClient();
       // Use default storage (MemoryStorage) without custom storage
-      const cachedClient = useCache(client, { ttl: 1000 });
+      const cachedClient = addCache(client, { ttl: 1000 });
 
       // Populate cache
       await cachedClient.get('https://api.example.com/test');
@@ -626,7 +626,7 @@ describe('Cache Middleware', () => {
       };
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, { storage: faultyStorage });
+      const cachedClient = addCache(client, { storage: faultyStorage });
 
       // Should still work and return response even if cache storage fails
       const response = await cachedClient.get('https://api.example.com/users');
@@ -640,7 +640,7 @@ describe('Cache Middleware', () => {
       mockFetch.mockRejectedValue(networkError);
 
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       await expect(
         cachedClient.get('https://api.example.com/users'),
@@ -652,7 +652,7 @@ describe('Cache Middleware', () => {
       mockFetch.mockRejectedValue(fetchError);
 
       const client = new FetchClient();
-      const cachedClient = useCache(client);
+      const cachedClient = addCache(client);
 
       await expect(
         cachedClient.get('https://api.example.com/users'),
@@ -668,7 +668,7 @@ describe('Cache Middleware', () => {
       };
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, { storage: faultyStorage });
+      const cachedClient = addCache(client, { storage: faultyStorage });
 
       // Should fallback to network request when cache retrieval fails with non-error
       const response = await cachedClient.get('https://api.example.com/users');
@@ -686,7 +686,7 @@ describe('Cache Middleware', () => {
       };
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, { storage: faultyStorage });
+      const cachedClient = addCache(client, { storage: faultyStorage });
 
       // Should fallback to network request
       const response = await cachedClient.get('https://api.example.com/users');
@@ -700,7 +700,7 @@ describe('Cache Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const cachedClient = useCache(client, {
+      const cachedClient = addCache(client, {
         ttl: 1000,
         staleWhileRevalidate: true,
       });
@@ -731,11 +731,11 @@ describe('Cache Middleware', () => {
     it('should work with authentication middleware', async () => {
       const client = new FetchClient();
 
-      const { useAuthentication } = await import(
+      const { addAuthentication } = await import(
         '../../../src/middleware/authentication'
       );
 
-      const authCachedClient = useAuthentication(client, {
+      const authCachedClient = addAuthentication(client, {
         tokenProvider: () => 'test-token',
       }).use(createCacheMiddleware());
 

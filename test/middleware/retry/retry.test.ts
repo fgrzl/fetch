@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import {
-  useRetry,
+  addRetry,
   createRetryMiddleware,
 } from '../../../src/middleware/retry/index';
 
@@ -24,10 +24,10 @@ describe('Retry Middleware', () => {
     vi.useRealTimers();
   });
 
-  describe('useRetry (Pit of Success API)', () => {
+  describe('addRetry (Pit of Success API)', () => {
     it('should add retry middleware with default options', async () => {
       const client = new FetchClient();
-      const result = useRetry(client);
+      const result = addRetry(client);
 
       // Should return the client for chaining
       expect(result).toBe(client);
@@ -35,7 +35,7 @@ describe('Retry Middleware', () => {
 
     it('should retry failed requests', async () => {
       const client = new FetchClient();
-      useRetry(client, { delay: 100 });
+      addRetry(client, { delay: 100 });
 
       // First call fails, second succeeds
       mockFetch
@@ -61,7 +61,7 @@ describe('Retry Middleware', () => {
 
     it('should retry 5xx server errors', async () => {
       const client = new FetchClient();
-      useRetry(client, { maxRetries: 1, delay: 50 });
+      addRetry(client, { maxRetries: 1, delay: 50 });
 
       // First call returns 500, second succeeds
       mockFetch
@@ -90,7 +90,7 @@ describe('Retry Middleware', () => {
 
     it('should not retry 4xx client errors by default', async () => {
       const client = new FetchClient();
-      useRetry(client);
+      addRetry(client);
 
       mockFetch.mockResolvedValueOnce(
         new Response('Not Found', {
@@ -108,7 +108,7 @@ describe('Retry Middleware', () => {
 
     it('should respect maxRetries option', async () => {
       const client = new FetchClient();
-      useRetry(client, { maxRetries: 2, delay: 10 });
+      addRetry(client, { maxRetries: 2, delay: 10 });
 
       // Always fail
       mockFetch.mockRejectedValue(new Error('Network error'));
@@ -127,7 +127,7 @@ describe('Retry Middleware', () => {
       const client = new FetchClient();
       const onRetry = vi.fn();
 
-      useRetry(client, { maxRetries: 1, delay: 100, onRetry });
+      addRetry(client, { maxRetries: 1, delay: 100, onRetry });
 
       mockFetch
         .mockRejectedValueOnce(new Error('Network error'))

@@ -5,10 +5,10 @@ Automatically includes CSRF tokens in requests for secure APIs.
 ## Usage
 
 ```ts
-import { useCSRF, createCSRFMiddleware } from "@fgrzl/fetch";
+import { addCSRF, createCSRFMiddleware } from "@fgrzl/fetch";
 
 // Simple usage
-useCSRF(client, {
+addCSRF(client, {
   cookieName: "XSRF-TOKEN", // Industry standard
   headerName: "X-XSRF-TOKEN", // HTTP header convention
 });

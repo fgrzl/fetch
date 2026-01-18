@@ -31,15 +31,15 @@ describe('Middleware Module Exports', () => {
 
   describe('Authentication Middleware Exports', () => {
     it('should export authentication functions', () => {
-      expect(middleware.useAuthentication).toBeDefined();
+      expect(middleware.addAuthentication).toBeDefined();
       expect(middleware.createAuthenticationMiddleware).toBeDefined();
-      expect(typeof middleware.useAuthentication).toBe('function');
+      expect(typeof middleware.addAuthentication).toBe('function');
       expect(typeof middleware.createAuthenticationMiddleware).toBe('function');
     });
 
     it('should create functional authentication middleware', async () => {
       const client = new FetchClient();
-      const authClient = middleware.useAuthentication(client, {
+      const authClient = middleware.addAuthentication(client, {
         tokenProvider: () => 'test-token',
       });
 
@@ -52,15 +52,15 @@ describe('Middleware Module Exports', () => {
 
   describe('Authorization Middleware Exports', () => {
     it('should export authorization functions', () => {
-      expect(middleware.useAuthorization).toBeDefined();
+      expect(middleware.addAuthorization).toBeDefined();
       expect(middleware.createAuthorizationMiddleware).toBeDefined();
-      expect(typeof middleware.useAuthorization).toBe('function');
+      expect(typeof middleware.addAuthorization).toBe('function');
       expect(typeof middleware.createAuthorizationMiddleware).toBe('function');
     });
 
     it('should create functional authorization middleware', () => {
       const client = new FetchClient();
-      const authzClient = middleware.useAuthorization(client, {
+      const authzClient = middleware.addAuthorization(client, {
         onUnauthorized: () => console.log('Unauthorized'),
       });
 
@@ -70,15 +70,15 @@ describe('Middleware Module Exports', () => {
 
   describe('Cache Middleware Exports', () => {
     it('should export cache functions', () => {
-      expect(middleware.useCache).toBeDefined();
+      expect(middleware.addCache).toBeDefined();
       expect(middleware.createCacheMiddleware).toBeDefined();
-      expect(typeof middleware.useCache).toBe('function');
+      expect(typeof middleware.addCache).toBe('function');
       expect(typeof middleware.createCacheMiddleware).toBe('function');
     });
 
     it('should create functional cache middleware', () => {
       const client = new FetchClient();
-      const cacheClient = middleware.useCache(client, {
+      const cacheClient = middleware.addCache(client, {
         ttl: 1000,
         methods: ['GET'],
       });
@@ -89,8 +89,8 @@ describe('Middleware Module Exports', () => {
 
   describe('CSRF Middleware Exports', () => {
     it('should export CSRF function', () => {
-      expect(middleware.useCSRF).toBeDefined();
-      expect(typeof middleware.useCSRF).toBe('function');
+      expect(middleware.addCSRF).toBeDefined();
+      expect(typeof middleware.addCSRF).toBe('function');
     });
 
     it('should create functional CSRF middleware', () => {
@@ -101,7 +101,7 @@ describe('Middleware Module Exports', () => {
       });
 
       const client = new FetchClient();
-      const csrfClient = middleware.useCSRF(client, {
+      const csrfClient = middleware.addCSRF(client, {
         tokenProvider: () => 'test-csrf-token',
         headerName: 'X-CSRFToken',
       });
@@ -112,9 +112,9 @@ describe('Middleware Module Exports', () => {
 
   describe('Logging Middleware Exports', () => {
     it('should export logging functions', () => {
-      expect(middleware.useLogging).toBeDefined();
+      expect(middleware.addLogging).toBeDefined();
       expect(middleware.createLoggingMiddleware).toBeDefined();
-      expect(typeof middleware.useLogging).toBe('function');
+      expect(typeof middleware.addLogging).toBe('function');
       expect(typeof middleware.createLoggingMiddleware).toBe('function');
     });
 
@@ -127,7 +127,7 @@ describe('Middleware Module Exports', () => {
         error: vi.fn(),
       };
 
-      const loggingClient = middleware.useLogging(client, {
+      const loggingClient = middleware.addLogging(client, {
         level: 'info',
         logger,
       });
@@ -138,15 +138,15 @@ describe('Middleware Module Exports', () => {
 
   describe('Rate Limit Middleware Exports', () => {
     it('should export rate limit functions', () => {
-      expect(middleware.useRateLimit).toBeDefined();
+      expect(middleware.addRateLimit).toBeDefined();
       expect(middleware.createRateLimitMiddleware).toBeDefined();
-      expect(typeof middleware.useRateLimit).toBe('function');
+      expect(typeof middleware.addRateLimit).toBe('function');
       expect(typeof middleware.createRateLimitMiddleware).toBe('function');
     });
 
     it('should create functional rate limit middleware', () => {
       const client = new FetchClient();
-      const rateLimitClient = middleware.useRateLimit(client, {
+      const rateLimitClient = middleware.addRateLimit(client, {
         maxRequests: 10,
         windowMs: 1000,
       });
@@ -157,15 +157,15 @@ describe('Middleware Module Exports', () => {
 
   describe('Retry Middleware Exports', () => {
     it('should export retry functions', () => {
-      expect(middleware.useRetry).toBeDefined();
+      expect(middleware.addRetry).toBeDefined();
       expect(middleware.createRetryMiddleware).toBeDefined();
-      expect(typeof middleware.useRetry).toBeDefined();
+      expect(typeof middleware.addRetry).toBeDefined();
       expect(typeof middleware.createRetryMiddleware).toBe('function');
     });
 
     it('should create functional retry middleware', () => {
       const client = new FetchClient();
-      const retryClient = middleware.useRetry(client, {
+      const retryClient = middleware.addRetry(client, {
         maxRetries: 3,
         delay: 1000,
       });
@@ -176,18 +176,18 @@ describe('Middleware Module Exports', () => {
 
   describe('Pre-built Stacks Exports', () => {
     it('should export all middleware stacks', () => {
-      expect(middleware.useProductionStack).toBeDefined();
-      expect(middleware.useDevelopmentStack).toBeDefined();
-      expect(middleware.useBasicStack).toBeDefined();
+      expect(middleware.addProductionStack).toBeDefined();
+      expect(middleware.addDevelopmentStack).toBeDefined();
+      expect(middleware.addBasicStack).toBeDefined();
 
-      expect(typeof middleware.useProductionStack).toBe('function');
-      expect(typeof middleware.useDevelopmentStack).toBe('function');
-      expect(typeof middleware.useBasicStack).toBeDefined();
+      expect(typeof middleware.addProductionStack).toBe('function');
+      expect(typeof middleware.addDevelopmentStack).toBe('function');
+      expect(typeof middleware.addBasicStack).toBeDefined();
     });
 
     it('should create functional production stack', async () => {
       const client = new FetchClient();
-      const prodClient = middleware.useProductionStack(client, {
+      const prodClient = middleware.addProductionStack(client, {
         retry: { maxRetries: 1 },
         cache: { ttl: 1000, methods: ['GET'] },
         logging: { level: 'error' },
@@ -200,7 +200,7 @@ describe('Middleware Module Exports', () => {
 
     it('should create functional development stack', async () => {
       const client = new FetchClient();
-      const devClient = middleware.useDevelopmentStack(client, {
+      const devClient = middleware.addDevelopmentStack(client, {
         auth: { tokenProvider: () => 'dev-token' },
       });
 
@@ -210,7 +210,7 @@ describe('Middleware Module Exports', () => {
 
     it('should create functional basic stack', async () => {
       const client = new FetchClient();
-      const basicClient = middleware.useBasicStack(client, {
+      const basicClient = middleware.addBasicStack(client, {
         auth: { tokenProvider: () => 'basic-token' },
       });
 
@@ -223,8 +223,8 @@ describe('Middleware Module Exports', () => {
     it('should support chaining multiple middleware from exports', async () => {
       const client = new FetchClient();
 
-      const enhancedClient = middleware.useAuthentication(
-        middleware.useRetry(client, { maxRetries: 1 }),
+      const enhancedClient = middleware.addAuthentication(
+        middleware.addRetry(client, { maxRetries: 1 }),
         { tokenProvider: () => 'test-token' },
       );
 

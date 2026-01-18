@@ -146,8 +146,8 @@ export function createClient(config?: ClientConfig): FetchClient {
   const client = new FetchClient(config);
 
   // Apply smart defaults
-  useCSRF(client);
-  useRetry(client);
+  addCSRF(client);
+  addRetry(client);
 
   return client;
 }

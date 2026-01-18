@@ -19,30 +19,30 @@ The middleware module also provides pre-configured stacks for common use cases:
 
 ```ts
 import {
-  useProductionStack,
-  useDevelopmentStack,
-  useBasicStack,
+  addProductionStack,
+  addDevelopmentStack,
+  addBasicStack,
 } from "@fgrzl/fetch";
 
 // Production: auth + cache + retry + rate limiting + logging
-const prodClient = useProductionStack(client, {
+const prodClient = addProductionStack(client, {
   auth: { tokenProvider: () => getToken() },
   cache: { ttl: 5 * 60 * 1000 },
   logging: { level: "info" },
 });
 
 // Development: auth + retry + comprehensive logging
-const devClient = useDevelopmentStack(client, {
+const devClient = addDevelopmentStack(client, {
   auth: { tokenProvider: () => "dev-token" },
 });
 
 // Basic: just auth + retry
-const basicClient = useBasicStack(client, {
+const basicClient = addBasicStack(client, {
   auth: { tokenProvider: () => getToken() },
 });
 
 // 💡 Combine with dynamic base URL
-const apiClient = useProductionStack(new FetchClient(), {
+const apiClient = addProductionStack(new FetchClient(), {
   auth: { tokenProvider: () => getToken() },
   retry: { maxRetries: 3 },
   logging: { level: "info" },
@@ -54,19 +54,19 @@ const apiClient = useProductionStack(new FetchClient(), {
 ```ts
 import { FetchClient } from "@fgrzl/fetch";
 import {
-  useAuthentication,
-  useAuthorization,
-  useRetry,
-  useLogging,
+  addAuthentication,
+  addAuthorization,
+  addRetry,
+  addLogging,
 } from "@fgrzl/fetch";
 
 const client = new FetchClient();
 
 // Compose nested middleware for a complete API client
-const apiClient = useLogging(
-  useRetry(
-    useAuthorization(
-      useAuthentication(client, {
+const apiClient = addLogging(
+  addRetry(
+    addAuthorization(
+      addAuthentication(client, {
         tokenProvider: () => localStorage.getItem("token") || "",
       }),
     ),
@@ -85,12 +85,12 @@ You can also apply middleware step by step for better readability:
 ```ts
 // Step-by-step composition (client is mutated in place)
 const client = new FetchClient();
-useAuthentication(client, {
+addAuthentication(client, {
   tokenProvider: () => localStorage.getItem("token") || "",
 });
-useAuthorization(client);
-useRetry(client);
-useLogging(client, { level: "info" });
+addAuthorization(client);
+addRetry(client);
+addLogging(client, { level: "info" });
 
 // Use the enhanced client
 const users = await client.get("/api/users");

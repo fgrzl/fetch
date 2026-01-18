@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../src/client/fetch-client';
-import { useProductionStack } from '../src/middleware';
+import { addProductionStack } from '../src/middleware';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -266,7 +266,7 @@ describe('Edge Cases and Error Handling', () => {
       );
 
       const client = new FetchClient();
-      const prodClient = useProductionStack(client, {
+      const prodClient = addProductionStack(client, {
         // No auth provided - should skip auth middleware
         cache: { ttl: 1000, methods: ['GET'] },
         retry: { maxRetries: 1 },
@@ -288,7 +288,7 @@ describe('Edge Cases and Error Handling', () => {
       );
 
       const client = new FetchClient();
-      const prodClient = useProductionStack(client, {
+      const prodClient = addProductionStack(client, {
         auth: { tokenProvider: () => 'test-token' },
         // cache: undefined - should skip cache middleware
         retry: { maxRetries: 1 },
@@ -310,7 +310,7 @@ describe('Edge Cases and Error Handling', () => {
       );
 
       const client = new FetchClient();
-      const prodClient = useProductionStack(client, {
+      const prodClient = addProductionStack(client, {
         auth: { tokenProvider: () => 'test-token' },
         cache: { ttl: 1000, methods: ['GET'] },
         // retry: undefined - should skip retry middleware
@@ -332,7 +332,7 @@ describe('Edge Cases and Error Handling', () => {
       );
 
       const client = new FetchClient();
-      const prodClient = useProductionStack(client, {
+      const prodClient = addProductionStack(client, {
         auth: { tokenProvider: () => 'test-token' },
         cache: { ttl: 1000, methods: ['GET'] },
         retry: { maxRetries: 1 },
@@ -354,7 +354,7 @@ describe('Edge Cases and Error Handling', () => {
       );
 
       const client = new FetchClient();
-      const prodClient = useProductionStack(client, {
+      const prodClient = addProductionStack(client, {
         auth: { tokenProvider: () => 'test-token' },
         cache: { ttl: 1000, methods: ['GET'] },
         retry: { maxRetries: 1 },

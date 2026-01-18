@@ -25,7 +25,7 @@ export { createCacheMiddleware, MemoryStorage } from './cache';
  *
  * @example Basic caching (5 minute TTL):
  * ```typescript
- * const cachedClient = useCache(client);
+ * const cachedClient = addCache(client);
  *
  * // First call hits the network
  * await cachedClient.get('/api/data');
@@ -36,7 +36,7 @@ export { createCacheMiddleware, MemoryStorage } from './cache';
  *
  * @example Custom TTL and methods:
  * ```typescript
- * const cachedClient = useCache(client, {
+ * const cachedClient = addCache(client, {
  *   ttl: 10 * 60 * 1000, // 10 minutes
  *   methods: ['GET', 'HEAD']
  * });
@@ -44,13 +44,13 @@ export { createCacheMiddleware, MemoryStorage } from './cache';
  *
  * @example Stale-while-revalidate:
  * ```typescript
- * const cachedClient = useCache(client, {
+ * const cachedClient = addCache(client, {
  *   staleWhileRevalidate: true
  * });
  * // Returns stale data immediately, updates cache in background
  * ```
  */
-export function useCache(
+export function addCache(
   client: FetchClient,
   options: CacheOptions = {},
 ): FetchClient {

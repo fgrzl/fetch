@@ -31,10 +31,10 @@ const users = await api.get("/api/users");
 ### 🎯 Level 2: Custom Client Creation (15% of users)
 
 ```typescript
-import { FetchClient, useAuthentication } from "@fgrzl/fetch";
+import { FetchClient, addAuthentication } from "@fgrzl/fetch";
 
 const client = new FetchClient(config);
-const authClient = useAuthentication(client, options);
+const authClient = addAuthentication(client, options);
 ```
 
 **What:** Core classes and middleware functions  
@@ -81,7 +81,7 @@ Each middleware can:
 Middleware is composable and non-blocking:
 
 ```typescript
-const client = useAuthentication(useRetry(useLogging(new FetchClient())));
+const client = addAuthentication(addRetry(addLogging(new FetchClient())));
 ```
 
 Each middleware returns a new enhanced client, enabling clean composition.
@@ -115,8 +115,8 @@ const paymentService = new FetchClient({
 });
 
 // Each service has its own error handling and middleware
-const authUserService = useAuthentication(userService, userAuthConfig);
-const retryOrderService = useRetry(orderService, orderRetryConfig);
+const authUserService = addAuthentication(userService, userAuthConfig);
+const retryOrderService = addRetry(orderService, orderRetryConfig);
 ```
 
 ### Environment Configuration
@@ -168,17 +168,17 @@ Each microservice gets its own configured client:
 
 ```typescript
 // services/api.ts
-export const authService = useAuthentication(
+export const authService = addAuthentication(
   new FetchClient({ baseUrl: config.AUTH_SERVICE_URL }),
   { tokenProvider: getAuthToken },
 );
 
-export const userService = useProductionStack(
+export const userService = addProductionStack(
   new FetchClient({ baseUrl: config.USER_SERVICE_URL }),
   productionConfig,
 );
 
-export const notificationService = useRetry(
+export const notificationService = addRetry(
   new FetchClient({ baseUrl: config.NOTIFICATION_SERVICE_URL }),
   { maxRetries: 5, delay: 1000 },
 );
@@ -261,7 +261,7 @@ const response = await api.get<User[]>("/api/users");
 TypeScript ensures middleware configuration is correct:
 
 ```typescript
-const authClient = useAuthentication(client, {
+const authClient = addAuthentication(client, {
   tokenProvider: () => getToken(), // Must return string | Promise<string>
   authScheme: "Bearer", // Only valid auth schemes allowed
 });
@@ -273,8 +273,8 @@ Middleware functions are fully typed to prevent composition errors:
 
 ```typescript
 // This would be a TypeScript error:
-const invalid = useAuthentication(
-  useCache(client, { ttl: "5 minutes" }), // ❌ ttl must be number
+const invalid = addAuthentication(
+  addCache(client, { ttl: "5 minutes" }), // ❌ ttl must be number
 );
 ```
 
@@ -286,7 +286,7 @@ The export structure enables optimal bundle sizes:
 
 ```typescript
 // Only includes the authentication middleware
-import { useAuthentication } from "@fgrzl/fetch";
+import { addAuthentication } from "@fgrzl/fetch";
 ```
 
 ### Middleware Overhead
@@ -312,7 +312,7 @@ Each middleware is independently testable:
 describe("Authentication Middleware", () => {
   it("adds authorization header", async () => {
     const mockClient = new FetchClient();
-    const authClient = useAuthentication(mockClient, {
+    const authClient = addAuthentication(mockClient, {
       tokenProvider: () => "test-token",
     });
 
@@ -326,7 +326,7 @@ describe("Authentication Middleware", () => {
 Test complete middleware stacks:
 
 ```typescript
-const testClient = useProductionStack(new FetchClient(), config);
+const testClient = addProductionStack(new FetchClient(), config);
 // Test the entire pipeline
 ```
 
@@ -395,7 +395,7 @@ class RedisStorage implements CacheStorage {
   }
 }
 
-const client = useCache(baseClient, {
+const client = addCache(baseClient, {
   storage: new RedisStorage(),
 });
 ```

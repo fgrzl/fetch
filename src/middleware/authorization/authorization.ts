@@ -82,13 +82,13 @@ function shouldSkipAuth(
  *
  * @example Smart defaults (no configuration needed):
  * ```typescript
- * const authzClient = useAuthorization(client);
+ * const authzClient = addAuthorization(client);
  * // Redirects to '/login?return_url=current-page' on 401
  * ```
  *
  * @example Custom redirect configuration:
  * ```typescript
- * const authzClient = useAuthorization(client, {
+ * const authzClient = addAuthorization(client, {
  *   redirectConfig: {
  *     redirectPath: '/signin',
  *     returnUrlParam: 'redirect_to'
@@ -98,14 +98,14 @@ function shouldSkipAuth(
  *
  * @example Manual handler (full control):
  * ```typescript
- * const authzClient = useAuthorization(client, {
+ * const authzClient = addAuthorization(client, {
  *   onUnauthorized: () => window.location.href = '/login'
  * });
  * ```
  *
  * @example Handle both 401 and 403:
  * ```typescript
- * const authzClient = useAuthorization(client, {
+ * const authzClient = addAuthorization(client, {
  *   onForbidden: () => showAccessDeniedMessage(),
  *   statusCodes: [401, 403]
  * });

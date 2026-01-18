@@ -88,7 +88,7 @@ export class FetchClient {
    *
    * @example Chain with middleware:
    * ```typescript
-   * const client = useProductionStack(new FetchClient())
+   * const client = addProductionStack(new FetchClient())
    *   .setBaseUrl(process.env.API_BASE_URL);
    * ```
    */

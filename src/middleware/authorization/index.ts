@@ -24,20 +24,20 @@ export { createAuthorizationMiddleware } from './authorization';
  *
  * @example Smart defaults - no configuration needed:
  * ```typescript
- * const authzClient = useAuthorization(client);
+ * const authzClient = addAuthorization(client);
  * // Redirects to '/login?return_url=current-page' on 401
  * ```
  *
  * @example Custom redirect path:
  * ```typescript
- * const authzClient = useAuthorization(client, {
+ * const authzClient = addAuthorization(client, {
  *   redirectConfig: { redirectPath: '/signin', returnUrlParam: 'redirect_to' }
  * });
  * ```
  *
  * @example Manual handler (full control):
  * ```typescript
- * const authzClient = useAuthorization(client, {
+ * const authzClient = addAuthorization(client, {
  *   onUnauthorized: () => {
  *     localStorage.removeItem('auth-token');
  *     window.location.href = '/login';
@@ -47,13 +47,13 @@ export { createAuthorizationMiddleware } from './authorization';
  *
  * @example Handle multiple status codes:
  * ```typescript
- * const authzClient = useAuthorization(client, {
+ * const authzClient = addAuthorization(client, {
  *   onForbidden: () => showAccessDenied(),
  *   statusCodes: [401, 403]
  * });
  * ```
  */
-export function useAuthorization(
+export function addAuthorization(
   client: FetchClient,
   options: AuthorizationOptions = {},
 ): FetchClient {

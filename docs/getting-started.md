@@ -119,7 +119,7 @@ const invoice = await paymentAPI.get("/invoices/123"); // → payments.api.com
 Need to change the base URL after creating a client? Use `setBaseUrl()`:
 
 ```typescript
-import { FetchClient, useProductionStack } from "@fgrzl/fetch";
+import { FetchClient, addProductionStack } from "@fgrzl/fetch";
 
 // Start with a client
 const client = new FetchClient();
@@ -133,7 +133,7 @@ client.setBaseUrl("https://staging-api.example.com");
 await client.get("/users"); // → GET https://staging-api.example.com/users
 
 // Works great with middleware stacks
-const prodClient = useProductionStack(new FetchClient(), {
+const prodClient = addProductionStack(new FetchClient(), {
   auth: { tokenProvider: () => getAuthToken() },
   retry: { maxRetries: 3 },
   logging: { level: "info" },
@@ -149,7 +149,7 @@ Perfect for different deployment environments:
 
 ```typescript
 // Environment-aware setup
-const client = useProductionStack(new FetchClient()).setBaseUrl(
+const client = addProductionStack(new FetchClient()).setBaseUrl(
   process.env.NODE_ENV === "production"
     ? "https://api.mycompany.com"
     : "http://localhost:3000/api",

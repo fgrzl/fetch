@@ -22,10 +22,10 @@ const users = await api.get("/api/users");
 ### 🎯 Level 2: Custom Client Creation (15% of users)
 
 ```typescript
-import { FetchClient, useCSRF, useAuthorization, useRetry } from "@fgrzl/fetch";
+import { FetchClient, addCSRF, addAuthorization, addRetry } from "@fgrzl/fetch";
 
 const client = new FetchClient(config);
-useCSRF(client);
+addCSRF(client);
 ```
 
 **What:** Core classes and middleware functions  

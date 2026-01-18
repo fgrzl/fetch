@@ -20,7 +20,7 @@ export { createLoggingMiddleware } from './logging';
  *
  * @example Basic logging to console:
  * ```typescript
- * const loggedClient = useLogging(client);
+ * const loggedClient = addLogging(client);
  *
  * // Logs: → GET /api/users
  * // Logs: ← GET /api/users → 200 (245ms)
@@ -29,7 +29,7 @@ export { createLoggingMiddleware } from './logging';
  *
  * @example Custom log level and headers:
  * ```typescript
- * const loggedClient = useLogging(client, {
+ * const loggedClient = addLogging(client, {
  *   level: 'debug',
  *   includeRequestHeaders: true,
  *   includeResponseHeaders: true
@@ -38,12 +38,12 @@ export { createLoggingMiddleware } from './logging';
  *
  * @example Skip health check endpoints:
  * ```typescript
- * const loggedClient = useLogging(client, {
+ * const loggedClient = addLogging(client, {
  *   skipPatterns: ['/health', '/metrics', '/ping']
  * });
  * ```
  */
-export function useLogging(
+export function addLogging(
   client: FetchClient,
   options: LoggingOptions = {},
 ): FetchClient {

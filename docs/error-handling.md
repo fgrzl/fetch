@@ -107,10 +107,10 @@ if (response.ok) {
 Set up global error handling with middleware:
 
 ```typescript
-import { useAuthorization, useLogging } from "@fgrzl/fetch";
+import { addAuthorization, addLogging } from "@fgrzl/fetch";
 
-const client = useLogging(
-  useAuthorization(new FetchClient(), {
+const client = addLogging(
+  addAuthorization(new FetchClient(), {
     onUnauthorized: () => {
       // Global 401 handling
       localStorage.removeItem("auth-token");
@@ -130,9 +130,9 @@ const client = useLogging(
 ### Retry with Error Handling
 
 ```typescript
-import { useRetry } from "@fgrzl/fetch";
+import { addRetry } from "@fgrzl/fetch";
 
-const retryClient = useRetry(client, {
+const retryClient = addRetry(client, {
   maxRetries: 3,
   retryOn: [429, 502, 503, 504], // Which status codes to retry
   onRetry: (attempt, response) => {
@@ -171,9 +171,9 @@ if (!response.ok) {
 Enable verbose error logging in development:
 
 ```typescript
-import { useDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from "@fgrzl/fetch";
 
-const devClient = useDevelopmentStack(new FetchClient(), {
+const devClient = addDevelopmentStack(new FetchClient(), {
   auth: { tokenProvider: () => getDevToken() },
 });
 

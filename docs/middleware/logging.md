@@ -7,13 +7,13 @@ Provides comprehensive request and response logging for debugging, monitoring, a
 ### Simple Logging
 
 ```ts
-import { useLogging } from "@fgrzl/fetch";
+import { addLogging } from "@fgrzl/fetch";
 
 // Default logging (info level)
-const loggedClient = useLogging(client);
+const loggedClient = addLogging(client);
 
 // Custom log level
-const debugClient = useLogging(client, {
+const debugClient = addLogging(client, {
   level: "debug",
 });
 ```
@@ -21,10 +21,10 @@ const debugClient = useLogging(client, {
 ### Advanced Configuration
 
 ```ts
-import { useLogging, createLoggingMiddleware } from "@fgrzl/fetch";
+import { addLogging, createLoggingMiddleware } from "@fgrzl/fetch";
 
 // Comprehensive logging configuration
-const loggedClient = useLogging(client, {
+const loggedClient = addLogging(client, {
   level: "debug",
   includeRequestHeaders: true,
   includeResponseHeaders: true,
@@ -45,7 +45,7 @@ client.use(loggingMiddleware);
 ### Custom Logger
 
 ```ts
-import { useLogging } from "@fgrzl/fetch";
+import { addLogging } from "@fgrzl/fetch";
 
 // Custom logger implementation
 const customLogger = {
@@ -59,7 +59,7 @@ const customLogger = {
     console.error(`[ERROR] ${message}`, meta),
 };
 
-const loggedClient = useLogging(client, {
+const loggedClient = addLogging(client, {
   logger: customLogger,
   level: "debug",
 });
@@ -149,7 +149,7 @@ interface Logger {
 
 ```ts
 // Production-safe logging configuration
-const productionClient = useLogging(client, {
+const productionClient = addLogging(client, {
   level: "info",
   includeRequestHeaders: false,
   includeResponseHeaders: false,
@@ -170,7 +170,7 @@ const productionClient = useLogging(client, {
 
 ```ts
 // Full visibility for development
-const devClient = useLogging(client, {
+const devClient = addLogging(client, {
   level: "debug",
   includeRequestHeaders: true,
   includeResponseHeaders: true,
@@ -183,7 +183,7 @@ const devClient = useLogging(client, {
 
 ```ts
 // Only log API requests, skip health checks
-const selectiveClient = useLogging(client, {
+const selectiveClient = addLogging(client, {
   filter: (request) =>
     request.url?.startsWith("/api/") && !request.url.includes("/health"),
   level: "info",
@@ -201,7 +201,7 @@ const winstonLogger = winston.createLogger({
   transports: [new winston.transports.File({ filename: "api-requests.log" })],
 });
 
-const structuredClient = useLogging(client, {
+const structuredClient = addLogging(client, {
   logger: {
     debug: (msg, meta) => winstonLogger.debug(msg, meta),
     info: (msg, meta) => winstonLogger.info(msg, meta),
@@ -219,7 +219,7 @@ const structuredClient = useLogging(client, {
 
 ```ts
 // Monitor API route performance
-const monitoredClient = useLogging(new FetchClient(), {
+const monitoredClient = addLogging(new FetchClient(), {
   logger: {
     info: (message, meta) => {
       console.log(message);
@@ -240,7 +240,7 @@ const monitoredClient = useLogging(new FetchClient(), {
 ```ts
 import * as Sentry from "@sentry/node";
 
-const errorTrackingClient = useLogging(client, {
+const errorTrackingClient = addLogging(client, {
   logger: {
     error: (message, meta) => {
       console.error(message, meta);
@@ -262,7 +262,7 @@ const errorTrackingClient = useLogging(client, {
 ### Data Sanitization
 
 ```ts
-const secureClient = useLogging(client, {
+const secureClient = addLogging(client, {
   sanitize: (data) => {
     const sanitized = { ...data };
 

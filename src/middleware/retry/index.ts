@@ -5,7 +5,7 @@ import { createRetryMiddleware } from './retry';
 export type { RetryOptions } from './types';
 export { createRetryMiddleware } from './retry';
 
-export function useRetry(
+export function addRetry(
   client: FetchClient,
   options: RetryOptions = {},
 ): FetchClient {

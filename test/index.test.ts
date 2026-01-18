@@ -98,62 +98,62 @@ describe('Main Library Exports', () => {
 
   describe('Named Exports - Level 3 (Individual Middleware)', () => {
     it('should export authentication middleware', () => {
-      expect(fetchLib.useAuthentication).toBeDefined();
+      expect(fetchLib.addAuthentication).toBeDefined();
       expect(fetchLib.createAuthenticationMiddleware).toBeDefined();
-      expect(typeof fetchLib.useAuthentication).toBe('function');
+      expect(typeof fetchLib.addAuthentication).toBe('function');
       expect(typeof fetchLib.createAuthenticationMiddleware).toBe('function');
     });
 
     it('should export authorization middleware', () => {
-      expect(fetchLib.useAuthorization).toBeDefined();
+      expect(fetchLib.addAuthorization).toBeDefined();
       expect(fetchLib.createAuthorizationMiddleware).toBeDefined();
-      expect(typeof fetchLib.useAuthorization).toBe('function');
+      expect(typeof fetchLib.addAuthorization).toBe('function');
       expect(typeof fetchLib.createAuthorizationMiddleware).toBe('function');
     });
 
     it('should export cache middleware', () => {
-      expect(fetchLib.useCache).toBeDefined();
+      expect(fetchLib.addCache).toBeDefined();
       expect(fetchLib.createCacheMiddleware).toBeDefined();
-      expect(typeof fetchLib.useCache).toBe('function');
+      expect(typeof fetchLib.addCache).toBe('function');
       expect(typeof fetchLib.createCacheMiddleware).toBe('function');
     });
 
     it('should export CSRF middleware', () => {
-      expect(fetchLib.useCSRF).toBeDefined();
-      expect(typeof fetchLib.useCSRF).toBe('function');
+      expect(fetchLib.addCSRF).toBeDefined();
+      expect(typeof fetchLib.addCSRF).toBe('function');
     });
 
     it('should export logging middleware', () => {
-      expect(fetchLib.useLogging).toBeDefined();
+      expect(fetchLib.addLogging).toBeDefined();
       expect(fetchLib.createLoggingMiddleware).toBeDefined();
-      expect(typeof fetchLib.useLogging).toBe('function');
+      expect(typeof fetchLib.addLogging).toBe('function');
       expect(typeof fetchLib.createLoggingMiddleware).toBe('function');
     });
 
     it('should export rate limit middleware', () => {
-      expect(fetchLib.useRateLimit).toBeDefined();
+      expect(fetchLib.addRateLimit).toBeDefined();
       expect(fetchLib.createRateLimitMiddleware).toBeDefined();
-      expect(typeof fetchLib.useRateLimit).toBe('function');
+      expect(typeof fetchLib.addRateLimit).toBe('function');
       expect(typeof fetchLib.createRateLimitMiddleware).toBe('function');
     });
 
     it('should export retry middleware', () => {
-      expect(fetchLib.useRetry).toBeDefined();
+      expect(fetchLib.addRetry).toBeDefined();
       expect(fetchLib.createRetryMiddleware).toBeDefined();
-      expect(typeof fetchLib.useRetry).toBe('function');
+      expect(typeof fetchLib.addRetry).toBe('function');
       expect(typeof fetchLib.createRetryMiddleware).toBe('function');
     });
   });
 
   describe('Named Exports - Level 4 (Pre-built Stacks)', () => {
     it('should export middleware stacks', () => {
-      expect(fetchLib.useProductionStack).toBeDefined();
-      expect(fetchLib.useDevelopmentStack).toBeDefined();
-      expect(fetchLib.useBasicStack).toBeDefined();
+      expect(fetchLib.addProductionStack).toBeDefined();
+      expect(fetchLib.addDevelopmentStack).toBeDefined();
+      expect(fetchLib.addBasicStack).toBeDefined();
 
-      expect(typeof fetchLib.useProductionStack).toBe('function');
-      expect(typeof fetchLib.useDevelopmentStack).toBe('function');
-      expect(typeof fetchLib.useBasicStack).toBeDefined();
+      expect(typeof fetchLib.addProductionStack).toBe('function');
+      expect(typeof fetchLib.addDevelopmentStack).toBe('function');
+      expect(typeof fetchLib.addBasicStack).toBeDefined();
     });
 
     it('should export query utilities', () => {
@@ -168,7 +168,7 @@ describe('Main Library Exports', () => {
   describe('Middleware Functions Integration', () => {
     it('should be able to create authenticated client from exports', async () => {
       const client = new fetchLib.FetchClient();
-      const authClient = fetchLib.useAuthentication(client, {
+      const authClient = fetchLib.addAuthentication(client, {
         tokenProvider: () => 'test-token',
       });
 
@@ -180,11 +180,11 @@ describe('Main Library Exports', () => {
 
     it('should be able to create client with multiple middleware', async () => {
       const client = new fetchLib.FetchClient();
-      const enhancedClient = fetchLib.useAuthentication(client, {
+      const enhancedClient = fetchLib.addAuthentication(client, {
         tokenProvider: () => 'test-token',
       });
 
-      const finalClient = fetchLib.useLogging(enhancedClient, {
+      const finalClient = fetchLib.addLogging(enhancedClient, {
         level: 'info',
         logger: {
           debug: vi.fn(),
@@ -203,7 +203,7 @@ describe('Main Library Exports', () => {
 
     it('should be able to use production stack', async () => {
       const client = new fetchLib.FetchClient();
-      const prodClient = fetchLib.useProductionStack(client, {
+      const prodClient = fetchLib.addProductionStack(client, {
         retry: { maxRetries: 1 },
         cache: { ttl: 1000, methods: ['GET'] },
         logging: { level: 'error' },
@@ -223,13 +223,13 @@ describe('Main Library Exports', () => {
       const exportedNames = Object.keys(fetchLib);
 
       // Check that middleware function exports exist (types are co-located)
-      expect(exportedNames).toContain('useAuthentication');
-      expect(exportedNames).toContain('useAuthorization');
-      expect(exportedNames).toContain('useCache');
-      expect(exportedNames).toContain('useCSRF');
-      expect(exportedNames).toContain('useLogging');
-      expect(exportedNames).toContain('useRateLimit');
-      expect(exportedNames).toContain('useRetry');
+      expect(exportedNames).toContain('addAuthentication');
+      expect(exportedNames).toContain('addAuthorization');
+      expect(exportedNames).toContain('addCache');
+      expect(exportedNames).toContain('addCSRF');
+      expect(exportedNames).toContain('addLogging');
+      expect(exportedNames).toContain('addRateLimit');
+      expect(exportedNames).toContain('addRetry');
     });
   });
 });

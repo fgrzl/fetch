@@ -12,21 +12,21 @@
  *
  * Each middleware follows the "pit of success" pattern with:
  * - Smart defaults for common scenarios
- * - Simple `use{Middleware}()` convenience functions
+ * - Simple `add{Middleware}()` convenience functions
  * - Advanced `create{Middleware}Middleware()` for custom scenarios
  * - Comprehensive TypeScript support
  *
  * @example Quick setup with multiple middleware:
  * ```typescript
  * import { FetchClient } from '@fgrzl/fetch';
- * import { useAuthentication, useRetry, useLogging } from '@fgrzl/fetch/middleware';
+ * import { addAuthentication, addRetry, addLogging } from '@fgrzl/fetch/middleware';
  *
  * const client = new FetchClient();
- * const enhancedClient = useAuthentication(client, {
+ * const enhancedClient = addAuthentication(client, {
  *   tokenProvider: () => localStorage.getItem('auth-token') || ''
  * })
- * .pipe(useRetry, { retries: 3 })
- * .pipe(useLogging);
+ * .pipe(addRetry, { retries: 3 })
+ * .pipe(addLogging);
  * ```
  */
 
@@ -37,7 +37,7 @@ export type {
 } from './authentication';
 
 export {
-  useAuthentication,
+  addAuthentication,
   createAuthenticationMiddleware,
 } from './authentication';
 
@@ -48,7 +48,7 @@ export type {
 } from './authorization';
 
 export {
-  useAuthorization,
+  addAuthorization,
   createAuthorizationMiddleware,
 } from './authorization';
 
@@ -60,25 +60,25 @@ export type {
   CacheKeyGenerator,
 } from './cache';
 
-export { useCache, createCacheMiddleware } from './cache';
+export { addCache, createCacheMiddleware } from './cache';
 
 // 🔒 CSRF middleware
-export { useCSRF } from './csrf';
+export { addCSRF } from './csrf';
 
 // 📝 Logging middleware
 export type { LoggingOptions, Logger, LogLevel } from './logging';
 
-export { useLogging, createLoggingMiddleware } from './logging';
+export { addLogging, createLoggingMiddleware } from './logging';
 
 // 🚦 Rate limiting middleware
 export type { RateLimitOptions, RateLimitAlgorithm } from './rate-limit';
 
-export { useRateLimit, createRateLimitMiddleware } from './rate-limit';
+export { addRateLimit, createRateLimitMiddleware } from './rate-limit';
 
 // 🔄 Retry middleware
 export type { RetryOptions } from './retry';
 
-export { useRetry, createRetryMiddleware } from './retry';
+export { addRetry, createRetryMiddleware } from './retry';
 
 /**
  * Common middleware combinations for typical use cases.
@@ -86,11 +86,11 @@ export { useRetry, createRetryMiddleware } from './retry';
  */
 
 import type { FetchClient } from '../client/fetch-client';
-import { useAuthentication } from './authentication';
-import { useRetry } from './retry';
-import { useLogging } from './logging';
-import { useCache } from './cache';
-import { useRateLimit } from './rate-limit';
+import { addAuthentication } from './authentication';
+import { addRetry } from './retry';
+import { addLogging } from './logging';
+import { addCache } from './cache';
+import { addRateLimit } from './rate-limit';
 
 /**
  * Production-ready middleware stack with authentication, retry, logging, and caching.
@@ -102,44 +102,44 @@ import { useRateLimit } from './rate-limit';
  *
  * @example
  * ```typescript
- * const apiClient = useProductionStack(new FetchClient(), {
+ * const apiClient = addProductionStack(new FetchClient(), {
  *   auth: { tokenProvider: () => getAuthToken() },
  *   cache: { ttl: 5 * 60 * 1000 }, // 5 minutes
  *   logging: { level: 'info' }
  * });
  * ```
  */
-export function useProductionStack(
+export function addProductionStack(
   client: FetchClient,
   config: {
-    auth?: Parameters<typeof useAuthentication>[1];
-    retry?: Parameters<typeof useRetry>[1];
-    cache?: Parameters<typeof useCache>[1];
-    logging?: Parameters<typeof useLogging>[1];
-    rateLimit?: Parameters<typeof useRateLimit>[1];
+    auth?: Parameters<typeof addAuthentication>[1];
+    retry?: Parameters<typeof addRetry>[1];
+    cache?: Parameters<typeof addCache>[1];
+    logging?: Parameters<typeof addLogging>[1];
+    rateLimit?: Parameters<typeof addRateLimit>[1];
   } = {},
 ): FetchClient {
   let enhanced = client;
 
   // Apply middleware in order: auth → cache → retry → rate-limit → logging
   if (config.auth) {
-    enhanced = useAuthentication(enhanced, config.auth);
+    enhanced = addAuthentication(enhanced, config.auth);
   }
 
   if (config.cache !== undefined) {
-    enhanced = useCache(enhanced, config.cache);
+    enhanced = addCache(enhanced, config.cache);
   }
 
   if (config.retry !== undefined) {
-    enhanced = useRetry(enhanced, config.retry);
+    enhanced = addRetry(enhanced, config.retry);
   }
 
   if (config.rateLimit !== undefined) {
-    enhanced = useRateLimit(enhanced, config.rateLimit);
+    enhanced = addRateLimit(enhanced, config.rateLimit);
   }
 
   if (config.logging !== undefined) {
-    enhanced = useLogging(enhanced, config.logging);
+    enhanced = addLogging(enhanced, config.logging);
   }
 
   return enhanced;
@@ -155,30 +155,30 @@ export function useProductionStack(
  *
  * @example
  * ```typescript
- * const devClient = useDevelopmentStack(new FetchClient(), {
+ * const devClient = addDevelopmentStack(new FetchClient(), {
  *   auth: { tokenProvider: () => 'dev-token' }
  * });
  * ```
  */
-export function useDevelopmentStack(
+export function addDevelopmentStack(
   client: FetchClient,
   config: {
-    auth?: Parameters<typeof useAuthentication>[1];
+    auth?: Parameters<typeof addAuthentication>[1];
   } = {},
 ): FetchClient {
   let enhanced = client;
 
   if (config.auth) {
-    enhanced = useAuthentication(enhanced, config.auth);
+    enhanced = addAuthentication(enhanced, config.auth);
   }
 
   // Development-optimized settings
-  enhanced = useRetry(enhanced, {
+  enhanced = addRetry(enhanced, {
     maxRetries: 1,
     delay: 100,
   });
 
-  enhanced = useLogging(enhanced, {
+  enhanced = addLogging(enhanced, {
     level: 'debug',
     includeRequestHeaders: true,
     includeResponseHeaders: true,
@@ -199,16 +199,16 @@ export function useDevelopmentStack(
  *
  * @example
  * ```typescript
- * const basicClient = useBasicStack(new FetchClient(), {
+ * const basicClient = addBasicStack(new FetchClient(), {
  *   auth: { tokenProvider: () => getToken() }
  * });
  * ```
  */
-export function useBasicStack(
+export function addBasicStack(
   client: FetchClient,
   config: {
-    auth: Parameters<typeof useAuthentication>[1];
+    auth: Parameters<typeof addAuthentication>[1];
   },
 ): FetchClient {
-  return useRetry(useAuthentication(client, config.auth), { maxRetries: 2 });
+  return addRetry(addAuthentication(client, config.auth), { maxRetries: 2 });
 }

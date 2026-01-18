@@ -72,20 +72,20 @@ const api = new FetchClient();
 **Problem:**
 
 ```typescript
-import { useAuthentication } from "@fgrzl/fetch/middleware"; // ❌ Not found
+import { addAuthentication } from "@fgrzl/fetch/middleware"; // ❌ Not found
 ```
 
 **Solution:** Import from main module:
 
 ```typescript
-import { useAuthentication } from "@fgrzl/fetch"; // ✅ Correct
+import { addAuthentication } from "@fgrzl/fetch"; // ✅ Correct
 ```
 
 ## Runtime Issues
 
 ### CSRF Token Not Found
 
-**Problem:** Requests failing with CSRF errors despite using `useCSRF`
+**Problem:** Requests failing with CSRF errors despite using `addCSRF`
 
 **Symptoms:**
 
@@ -109,7 +109,7 @@ document.cookie.split(";").forEach((cookie) => {
 2. **Custom token provider:**
 
 ```typescript
-const csrfClient = useCSRF(client, {
+const csrfClient = addCSRF(client, {
   tokenProvider: () => {
     // Get token from meta tag
     const metaTag = document.querySelector('meta[name="csrf-token"]');
@@ -122,7 +122,7 @@ const csrfClient = useCSRF(client, {
 
 ```typescript
 // Ensure cookies are accessible to your domain
-const csrfClient = useCSRF(client, {
+const csrfClient = addCSRF(client, {
   cookieName: "XSRF-TOKEN", // Verify exact name
   skipPatterns: ["/api/auth/*"], // Skip for login endpoints
 });
@@ -142,7 +142,7 @@ const csrfClient = useCSRF(client, {
 1. **Debug token provider:**
 
 ```typescript
-const authClient = useAuthentication(client, {
+const authClient = addAuthentication(client, {
   tokenProvider: () => {
     const token = localStorage.getItem("auth-token");
     console.log("Token:", token); // Debug log
@@ -158,7 +158,7 @@ const authClient = useAuthentication(client, {
 console.log("Stored token:", localStorage.getItem("auth-token"));
 
 // Check for async token retrieval
-const authClient = useAuthentication(client, {
+const authClient = addAuthentication(client, {
   tokenProvider: async () => {
     const token = await getTokenFromSecureStorage();
     if (!token) {
@@ -173,7 +173,7 @@ const authClient = useAuthentication(client, {
 
 ```typescript
 // If API uses different auth header
-const authClient = useAuthentication(client, {
+const authClient = addAuthentication(client, {
   tokenProvider: () => getApiKey(),
   headerName: "X-API-Key",
   authScheme: "ApiKey",
@@ -226,9 +226,9 @@ if (!response.ok) {
 3. **Enable debug logging:**
 
 ```typescript
-import { useDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from "@fgrzl/fetch";
 
-const debugClient = useDevelopmentStack(client, {
+const debugClient = addDevelopmentStack(client, {
   auth: { tokenProvider: () => getToken() },
 });
 // Will log all requests and responses
@@ -361,12 +361,12 @@ await client.get("/api/users");
 
 ```typescript
 // ✅ Correct order: Auth → Cache → Retry → Logging
-const client = useLogging(
-  useRetry(useCache(useAuthentication(baseClient, authConfig))),
+const client = addLogging(
+  addRetry(addCache(addAuthentication(baseClient, authConfig))),
 );
 
 // ❌ Wrong order: Auth after retry won't work for retried requests
-const badClient = useAuthentication(useRetry(baseClient), authConfig);
+const badClient = addAuthentication(addRetry(baseClient), authConfig);
 ```
 
 ### Rate Limiting Triggered
@@ -378,7 +378,7 @@ const badClient = useAuthentication(useRetry(baseClient), authConfig);
 1. **Check rate limits:**
 
 ```typescript
-const limitedClient = useRateLimit(client, {
+const limitedClient = addRateLimit(client, {
   maxRequests: 50, // Reduce if hitting limits
   windowMs: 60 * 1000,
   onLimitReached: (retryAfter) => {
@@ -390,7 +390,7 @@ const limitedClient = useRateLimit(client, {
 2. **Implement backoff:**
 
 ```typescript
-const retryClient = useRetry(client, {
+const retryClient = addRetry(client, {
   maxRetries: 3,
   delay: 1000,
   backoff: "exponential",
@@ -410,7 +410,7 @@ const retryClient = useRetry(client, {
 
 ```typescript
 // Enable caching for GET requests
-const cachedClient = useCache(client, {
+const cachedClient = addCache(client, {
   ttl: 5 * 60 * 1000, // 5 minutes
   methods: ["GET", "HEAD"],
 });
@@ -420,7 +420,7 @@ const cachedClient = useCache(client, {
 
 ```typescript
 // Reduce logging in production
-const prodClient = useLogging(client, {
+const prodClient = addLogging(client, {
   level: "error", // Only log errors
   includeRequestBody: false,
   includeResponseBody: false,
@@ -445,7 +445,7 @@ console.log("Request duration:", response.timing?.duration);
 
 ```typescript
 // Limit cache size
-const cachedClient = useCache(client, {
+const cachedClient = addCache(client, {
   maxSize: 100, // Limit cached responses
   ttl: 5 * 60 * 1000,
 });
@@ -486,11 +486,11 @@ function cleanup() {
 const isProd = process.env.NODE_ENV === "production";
 
 const client = isProd
-  ? useProductionStack(new FetchClient(), {
+  ? addProductionStack(new FetchClient(), {
       auth: { tokenProvider: () => getSecureToken() },
       logging: { level: "error" },
     })
-  : useDevelopmentStack(new FetchClient(), {
+  : addDevelopmentStack(new FetchClient(), {
       auth: { tokenProvider: () => "dev-token" },
     });
 ```
@@ -510,9 +510,9 @@ const client = isProd
 ### Enable Debug Logging
 
 ```typescript
-import { useDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from "@fgrzl/fetch";
 
-const debugClient = useDevelopmentStack(new FetchClient(), {
+const debugClient = addDevelopmentStack(new FetchClient(), {
   auth: { tokenProvider: () => getToken() },
 });
 

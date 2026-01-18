@@ -92,13 +92,13 @@ function shouldSkipCache(
  *
  * @example Basic caching:
  * ```typescript
- * const cachedClient = useCache(client);
+ * const cachedClient = addCache(client);
  * // GET requests will be cached for 5 minutes
  * ```
  *
  * @example Custom TTL:
  * ```typescript
- * const cachedClient = useCache(client, {
+ * const cachedClient = addCache(client, {
  *   ttl: 10 * 60 * 1000 // 10 minutes
  * });
  * ```

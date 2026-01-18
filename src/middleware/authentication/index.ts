@@ -20,14 +20,14 @@ export { createAuthenticationMiddleware } from './authentication';
  *
  * @example Basic token from localStorage:
  * ```typescript
- * const authClient = useAuthentication(client, {
+ * const authClient = addAuthentication(client, {
  *   tokenProvider: () => localStorage.getItem('auth-token') || ''
  * });
  * ```
  *
  * @example Async token with refresh:
  * ```typescript
- * const authClient = useAuthentication(client, {
+ * const authClient = addAuthentication(client, {
  *   tokenProvider: async () => {
  *     let token = localStorage.getItem('auth-token');
  *     if (!token || isExpired(token)) {
@@ -38,7 +38,7 @@ export { createAuthenticationMiddleware } from './authentication';
  * });
  * ```
  */
-export function useAuthentication(
+export function addAuthentication(
   client: FetchClient,
   options: AuthenticationOptions,
 ): FetchClient {

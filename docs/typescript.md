@@ -83,15 +83,15 @@ TypeScript ensures middleware is composed correctly:
 ```typescript
 import {
   FetchClient,
-  useAuthentication,
-  useRetry,
-  useLogging,
+  addAuthentication,
+  addRetry,
+  addLogging,
 } from "@fgrzl/fetch";
 
 // ✅ Correct composition
-const client = useLogging(
-  useRetry(
-    useAuthentication(new FetchClient(), {
+const client = addLogging(
+  addRetry(
+    addAuthentication(new FetchClient(), {
       tokenProvider: () => getToken(),
     }),
     { maxRetries: 3 },
@@ -100,7 +100,7 @@ const client = useLogging(
 );
 
 // ❌ TypeScript would catch configuration errors:
-const invalidClient = useAuthentication(new FetchClient(), {
+const invalidClient = addAuthentication(new FetchClient(), {
   tokenProvider: 123, // ❌ Error: must be function
 });
 ```
@@ -277,11 +277,11 @@ function createTypedClient<T extends string>(
 
   switch (type) {
     case "auth":
-      return useAuthentication(client, config as AuthenticationOptions);
+      return addAuthentication(client, config as AuthenticationOptions);
     case "retry":
-      return useRetry(client, config as RetryOptions);
+      return addRetry(client, config as RetryOptions);
     case "cache":
-      return useCache(client, config as CacheOptions);
+      return addCache(client, config as CacheOptions);
     default:
       return client;
   }
@@ -311,7 +311,7 @@ function composeMiddleware<TOptions1, TOptions2>(
 }
 
 // Usage
-const authRetryMiddleware = composeMiddleware(useAuthentication, useRetry);
+const authRetryMiddleware = composeMiddleware(addAuthentication, addRetry);
 
 const client = authRetryMiddleware(new FetchClient(), {
   // ✅ TypeScript requires both auth and retry options

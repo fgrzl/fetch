@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import {
-  useAuthorization,
+  addAuthorization,
   createAuthorizationMiddleware,
 } from '../../../src/middleware/authorization/index';
 
@@ -17,7 +17,7 @@ beforeEach(() => {
 });
 
 describe('Authorization Middleware', () => {
-  describe('useAuthorization (Pit of Success API)', () => {
+  describe('addAuthorization (Pit of Success API)', () => {
     it('should call onUnauthorized for 401 responses', async () => {
       const onUnauthorized = vi.fn();
       mockFetch.mockImplementation(() =>
@@ -30,7 +30,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, { onUnauthorized });
+      const authzClient = addAuthorization(client, { onUnauthorized });
 
       const response = await authzClient.get('https://api.example.com/secure');
 
@@ -52,7 +52,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
         onForbidden,
         statusCodes: [401, 403],
@@ -78,7 +78,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
         onForbidden,
         statusCodes: [401, 403],
@@ -102,7 +102,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
         skipPatterns: ['/login', /^\/auth/],
       });
@@ -129,7 +129,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, { onUnauthorized });
+      const authzClient = addAuthorization(client, { onUnauthorized });
 
       await authzClient.get('https://api.example.com/secure');
 
@@ -148,7 +148,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, { onUnauthorized });
+      const authzClient = addAuthorization(client, { onUnauthorized });
 
       const response = await authzClient.get('https://api.example.com/secure');
 
@@ -169,7 +169,7 @@ describe('Authorization Middleware', () => {
       mockFetch.mockResolvedValue(new Response('Forbidden', { status: 403 }));
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
         statusCodes: [401], // Only 401, not 403
       });
@@ -249,7 +249,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized: () => {
           window.location.href = '/login';
         },
@@ -274,7 +274,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized: () => {
           localStorage.removeItem('auth-token');
         },
@@ -292,7 +292,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
         skipPatterns: ['public'], // String pattern that should match
       });
@@ -312,7 +312,7 @@ describe('Authorization Middleware', () => {
       );
 
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
         skipPatterns: [/api\/public/], // Regex pattern
       });
@@ -329,7 +329,7 @@ describe('Authorization Middleware', () => {
     it('should handle requests with undefined URL', async () => {
       const onUnauthorized = vi.fn();
       const client = new FetchClient();
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
       });
 
@@ -367,7 +367,7 @@ describe('Authorization Middleware', () => {
         new Response('Unauthorized', { status: 401 }),
       );
 
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         redirectConfig: {},
       });
 
@@ -385,7 +385,7 @@ describe('Authorization Middleware', () => {
         new Response('Unauthorized', { status: 401 }),
       );
 
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         redirectConfig: { redirectPath: '/signin' },
       });
 
@@ -403,7 +403,7 @@ describe('Authorization Middleware', () => {
         new Response('Unauthorized', { status: 401 }),
       );
 
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         redirectConfig: {
           redirectPath: '/signin',
           returnUrlParam: 'redirect_to',
@@ -424,7 +424,7 @@ describe('Authorization Middleware', () => {
         new Response('Unauthorized', { status: 401 }),
       );
 
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         redirectConfig: {
           redirectPath: '/login',
           includeReturnUrl: false,
@@ -443,7 +443,7 @@ describe('Authorization Middleware', () => {
         new Response('Unauthorized', { status: 401 }),
       );
 
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         redirectConfig: {
           redirectPath: '/login?theme=dark',
         },
@@ -472,7 +472,7 @@ describe('Authorization Middleware', () => {
       );
 
       // Should work with no options at all
-      const authzClient = useAuthorization(client);
+      const authzClient = addAuthorization(client);
 
       await authzClient.get('https://api.example.com/secure');
 
@@ -489,7 +489,7 @@ describe('Authorization Middleware', () => {
         new Response('Unauthorized', { status: 401 }),
       );
 
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         onUnauthorized,
         redirectConfig: { redirectPath: '/signin' },
       });
@@ -513,7 +513,7 @@ describe('Authorization Middleware', () => {
         new Response('Unauthorized', { status: 401 }),
       );
 
-      const authzClient = useAuthorization(client, {
+      const authzClient = addAuthorization(client, {
         redirectConfig: {},
       });
 

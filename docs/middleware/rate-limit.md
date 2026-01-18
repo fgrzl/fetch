@@ -7,25 +7,25 @@ Implements client-side rate limiting using token bucket algorithm to prevent ove
 ### Simple Rate Limiting
 
 ```ts
-import { useRateLimit } from "@fgrzl/fetch";
+import { addRateLimit } from "@fgrzl/fetch";
 
 // Allow 100 requests per minute
-const rateLimitedClient = useRateLimit(client, {
+const rateLimitedClient = addRateLimit(client, {
   requestsPerWindow: 100,
   windowMs: 60 * 1000, // 1 minute
 });
 
 // Default rate limiting (60 requests per minute)
-const rateLimitedClient = useRateLimit(client);
+const rateLimitedClient = addRateLimit(client);
 ```
 
 ### Advanced Configuration
 
 ```ts
-import { useRateLimit, createRateLimitMiddleware } from "@fgrzl/fetch";
+import { addRateLimit, createRateLimitMiddleware } from "@fgrzl/fetch";
 
 // Custom rate limiting with different strategies
-const rateLimitedClient = useRateLimit(client, {
+const rateLimitedClient = addRateLimit(client, {
   requestsPerWindow: 1000,
   windowMs: 60 * 1000, // 1 minute window
   algorithm: "token-bucket", // or 'sliding-window'
@@ -47,7 +47,7 @@ client.use(rateLimitMiddleware);
 
 ```ts
 // Different limits for different endpoints
-const smartRateLimitedClient = useRateLimit(client, {
+const smartRateLimitedClient = addRateLimit(client, {
   keyGenerator: (request) => {
     if (request.url?.includes("/api/search")) return "search";
     if (request.url?.includes("/api/upload")) return "upload";
@@ -88,7 +88,7 @@ interface RateLimitStorage {
 
 ```ts
 // Respect GitHub API rate limits (5000/hour for authenticated requests)
-const githubClient = useRateLimit(new FetchClient(), {
+const githubClient = addRateLimit(new FetchClient(), {
   requestsPerWindow: 5000,
   windowMs: 60 * 60 * 1000, // 1 hour
   onRateLimited: (retryAfter) => {
@@ -104,7 +104,7 @@ const repos = await githubClient.get("/user/repos");
 
 ```ts
 // Different rate limits for read vs write operations
-const apiClient = useRateLimit(client, {
+const apiClient = addRateLimit(client, {
   keyGenerator: (request) => {
     const isWrite = ["POST", "PUT", "PATCH", "DELETE"].includes(
       request.method || "GET",
@@ -133,7 +133,7 @@ class RedisRateLimitStorage implements RateLimitStorage {
 }
 
 // Shared rate limiting across multiple instances
-const distributedClient = useRateLimit(client, {
+const distributedClient = addRateLimit(client, {
   storage: new RedisRateLimitStorage(),
   requestsPerWindow: 1000,
   windowMs: 60 * 1000,
@@ -146,7 +146,7 @@ const distributedClient = useRateLimit(client, {
 
 ```ts
 // Allows burst traffic up to bucket size, then steady rate
-const burstClient = useRateLimit(client, {
+const burstClient = addRateLimit(client, {
   algorithm: "token-bucket",
   requestsPerWindow: 100, // Bucket size
   windowMs: 60 * 1000, // Refill rate (100 tokens per minute)
@@ -158,7 +158,7 @@ const burstClient = useRateLimit(client, {
 
 ```ts
 // Smooth rate limiting over a sliding time window
-const smoothClient = useRateLimit(client, {
+const smoothClient = addRateLimit(client, {
   algorithm: "sliding-window",
   requestsPerWindow: 100,
   windowMs: 60 * 1000,
@@ -169,7 +169,7 @@ const smoothClient = useRateLimit(client, {
 
 ```ts
 // Simple fixed-window rate limiting
-const simpleClient = useRateLimit(client, {
+const simpleClient = addRateLimit(client, {
   algorithm: "fixed-window",
   requestsPerWindow: 100,
   windowMs: 60 * 1000, // Resets every minute
@@ -181,7 +181,7 @@ const simpleClient = useRateLimit(client, {
 ### Rate Limit Exceeded
 
 ```ts
-const rateLimitedClient = useRateLimit(client, {
+const rateLimitedClient = addRateLimit(client, {
   requestsPerWindow: 10,
   windowMs: 60 * 1000,
   onRateLimited: (retryAfter) => {
@@ -206,7 +206,7 @@ try {
 ### Graceful Degradation
 
 ```ts
-const resilientClient = useRateLimit(client, {
+const resilientClient = addRateLimit(client, {
   onRateLimited: async (retryAfter) => {
     // Wait and retry automatically
     await new Promise((resolve) => setTimeout(resolve, retryAfter));
@@ -219,11 +219,11 @@ const resilientClient = useRateLimit(client, {
 ### Combined with Retry Middleware
 
 ```ts
-import { useRateLimit, useRetry } from "@fgrzl/fetch";
+import { addRateLimit, addRetry } from "@fgrzl/fetch";
 
 // Rate limiting with intelligent retries
-const resilientClient = useRetry(
-  useRateLimit(client, {
+const resilientClient = addRetry(
+  addRateLimit(client, {
     requestsPerWindow: 100,
     windowMs: 60 * 1000,
   }),
@@ -239,7 +239,7 @@ const resilientClient = useRetry(
 
 ```ts
 // Rate limit WebSocket-like polling
-const pollingClient = useRateLimit(client, {
+const pollingClient = addRateLimit(client, {
   requestsPerWindow: 60, // Once per second
   windowMs: 60 * 1000,
   keyGenerator: () => "polling", // Single rate limit for all polling

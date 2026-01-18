@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import {
-  useCSRF,
+  addCSRF,
   createCSRFMiddleware,
 } from '../../../src/middleware/csrf/index';
 
@@ -33,10 +33,10 @@ beforeEach(() => {
 });
 
 describe('CSRF Middleware', () => {
-  describe('useCSRF (Pit of Success API)', () => {
+  describe('addCSRF (Pit of Success API)', () => {
     it('should add CSRF token to POST requests from cookies', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.post('https://api.example.com/users', { name: 'John' });
 
@@ -52,7 +52,7 @@ describe('CSRF Middleware', () => {
 
     it('should add CSRF token to PUT requests', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.put('https://api.example.com/users/123', {
         name: 'Jane',
@@ -70,7 +70,7 @@ describe('CSRF Middleware', () => {
 
     it('should add CSRF token to PATCH requests', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.patch('https://api.example.com/users/123', {
         name: 'Bob',
@@ -88,7 +88,7 @@ describe('CSRF Middleware', () => {
 
     it('should add CSRF token to DELETE requests', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.del('https://api.example.com/users/123');
 
@@ -104,7 +104,7 @@ describe('CSRF Middleware', () => {
 
     it('should NOT add CSRF token to GET requests', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.get('https://api.example.com/users');
 
@@ -120,7 +120,7 @@ describe('CSRF Middleware', () => {
 
     it('should use custom token provider', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client, {
+      const csrfClient = addCSRF(client, {
         tokenProvider: () => 'custom-token-456',
       });
 
@@ -142,7 +142,7 @@ describe('CSRF Middleware', () => {
       };
 
       const client = new FetchClient();
-      const csrfClient = useCSRF(client, {
+      const csrfClient = addCSRF(client, {
         headerName: 'X-CSRF-Token',
         cookieName: '_token',
       });
@@ -161,7 +161,7 @@ describe('CSRF Middleware', () => {
 
     it('should skip CSRF for URLs matching skip patterns', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client, {
+      const csrfClient = addCSRF(client, {
         skipPatterns: ['/webhook/', /^https:\/\/external\.api/],
       });
 
@@ -201,7 +201,7 @@ describe('CSRF Middleware', () => {
       (global as any).document = { cookie: 'other=value' }; // No CSRF token
 
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.post('https://api.example.com/data', { test: true });
 
@@ -217,7 +217,7 @@ describe('CSRF Middleware', () => {
 
     it('should work with custom protected methods', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client, {
+      const csrfClient = addCSRF(client, {
         protectedMethods: ['POST'], // Only POST, not PUT/PATCH/DELETE
       });
 
@@ -246,7 +246,7 @@ describe('CSRF Middleware', () => {
       global.document = undefined;
 
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.post('https://api.example.com/data', { test: true });
 
@@ -329,7 +329,7 @@ describe('CSRF Middleware', () => {
 
       for (let i = 0; i < testCases.length; i++) {
         (global as any).document = { cookie: testCases[i] };
-        const csrfClient = useCSRF(client);
+        const csrfClient = addCSRF(client);
 
         mockFetch.mockClear();
         await csrfClient.post('https://api.example.com/test', {});
@@ -354,7 +354,7 @@ describe('CSRF Middleware', () => {
       };
 
       const client = new FetchClient();
-      const csrfClient = useCSRF(client);
+      const csrfClient = addCSRF(client);
 
       await csrfClient.post('https://api.example.com/test', {});
 
@@ -374,11 +374,11 @@ describe('CSRF Middleware', () => {
       const client = new FetchClient();
 
       // Import authentication here to avoid circular dependencies in real scenarios
-      const { useAuthentication } = await import(
+      const { addAuthentication } = await import(
         '../../../src/middleware/authentication'
       );
 
-      const protectedClient = useAuthentication(client, {
+      const protectedClient = addAuthentication(client, {
         tokenProvider: () => 'bearer-token',
       }).use(
         createCSRFMiddleware({
@@ -405,7 +405,7 @@ describe('CSRF Middleware', () => {
   describe('Edge cases and branch coverage', () => {
     it('should handle regex skip patterns', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client, {
+      const csrfClient = addCSRF(client, {
         skipPatterns: [/\/api\/public.*/, /.*\/webhook$/],
         tokenProvider: () => 'test-csrf-token',
       });
@@ -443,7 +443,7 @@ describe('CSRF Middleware', () => {
 
     it('should handle requests with undefined or empty URL', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client, {
+      const csrfClient = addCSRF(client, {
         tokenProvider: () => 'test-csrf-token',
       });
 
@@ -467,7 +467,7 @@ describe('CSRF Middleware', () => {
 
     it('should handle requests with undefined method (fallback to GET)', async () => {
       const client = new FetchClient();
-      const csrfClient = useCSRF(client, {
+      const csrfClient = addCSRF(client, {
         tokenProvider: () => 'test-csrf-token',
       });
 

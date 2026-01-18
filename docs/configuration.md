@@ -126,10 +126,10 @@ await apiClient.get("https://other.com"); // → GET https://other.com (absolute
 ### Token-Based Authentication
 
 ```typescript
-import { FetchClient, useAuthentication } from "@fgrzl/fetch";
+import { FetchClient, addAuthentication } from "@fgrzl/fetch";
 
 const client = new FetchClient();
-const authClient = useAuthentication(client, {
+const authClient = addAuthentication(client, {
   tokenProvider: () => localStorage.getItem("auth-token") || "",
 });
 
@@ -140,7 +140,7 @@ const profile = await authClient.get("/api/profile");
 ### JWT with Refresh
 
 ```typescript
-const authClient = useAuthentication(client, {
+const authClient = addAuthentication(client, {
   tokenProvider: async () => {
     let token = localStorage.getItem("jwt-token");
 
@@ -158,7 +158,7 @@ const authClient = useAuthentication(client, {
 ### Custom Authorization Header
 
 ```typescript
-const authClient = useAuthentication(client, {
+const authClient = addAuthentication(client, {
   tokenProvider: () => getApiKey(),
   authScheme: "ApiKey", // Default: "Bearer"
   headerName: "X-API-Key", // Default: "Authorization"
@@ -172,9 +172,9 @@ const authClient = useAuthentication(client, {
 Ready-to-use configuration for production applications:
 
 ```typescript
-import { useProductionStack } from "@fgrzl/fetch";
+import { addProductionStack } from "@fgrzl/fetch";
 
-const prodClient = useProductionStack(new FetchClient(), {
+const prodClient = addProductionStack(new FetchClient(), {
   auth: {
     tokenProvider: () => getAuthToken(),
   },
@@ -201,9 +201,9 @@ const prodClient = useProductionStack(new FetchClient(), {
 Optimized for local development with verbose logging:
 
 ```typescript
-import { useDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from "@fgrzl/fetch";
 
-const devClient = useDevelopmentStack(new FetchClient(), {
+const devClient = addDevelopmentStack(new FetchClient(), {
   auth: {
     tokenProvider: () => "dev-token",
   },
@@ -215,9 +215,9 @@ const devClient = useDevelopmentStack(new FetchClient(), {
 Minimal configuration with just authentication and retry:
 
 ```typescript
-import { useBasicStack } from "@fgrzl/fetch";
+import { addBasicStack } from "@fgrzl/fetch";
 
-const basicClient = useBasicStack(new FetchClient(), {
+const basicClient = addBasicStack(new FetchClient(), {
   auth: {
     tokenProvider: () => getToken(),
   },
@@ -229,13 +229,13 @@ const basicClient = useBasicStack(new FetchClient(), {
 ### CSRF Protection
 
 ```typescript
-import { useCSRF } from "@fgrzl/fetch";
+import { addCSRF } from "@fgrzl/fetch";
 
 // Default: reads XSRF-TOKEN cookie, adds X-XSRF-TOKEN header
-const csrfClient = useCSRF(client);
+const csrfClient = addCSRF(client);
 
 // Custom configuration
-const customCsrfClient = useCSRF(client, {
+const customCsrfClient = addCSRF(client, {
   cookieName: "csrf-token",
   headerName: "X-CSRF-Token",
   skipPatterns: ["/api/public/*"],
@@ -245,9 +245,9 @@ const customCsrfClient = useCSRF(client, {
 ### Authorization Handling
 
 ```typescript
-import { useAuthorization } from "@fgrzl/fetch";
+import { addAuthorization } from "@fgrzl/fetch";
 
-const authzClient = useAuthorization(client, {
+const authzClient = addAuthorization(client, {
   onUnauthorized: (response) => {
     // Clear stored tokens
     localStorage.removeItem("auth-token");
@@ -265,9 +265,9 @@ const authzClient = useAuthorization(client, {
 ### Caching
 
 ```typescript
-import { useCache } from "@fgrzl/fetch";
+import { addCache } from "@fgrzl/fetch";
 
-const cachedClient = useCache(client, {
+const cachedClient = addCache(client, {
   ttl: 10 * 60 * 1000, // 10 minutes
   methods: ["GET", "HEAD"],
   keyGenerator: (method, url) => `${method}:${url}`,
@@ -278,9 +278,9 @@ const cachedClient = useCache(client, {
 ### Retry Logic
 
 ```typescript
-import { useRetry } from "@fgrzl/fetch";
+import { addRetry } from "@fgrzl/fetch";
 
-const retryClient = useRetry(client, {
+const retryClient = addRetry(client, {
   maxRetries: 3,
   delay: 1000,
   backoff: "exponential", // "fixed" | "linear" | "exponential"
@@ -294,9 +294,9 @@ const retryClient = useRetry(client, {
 ### Logging
 
 ```typescript
-import { useLogging } from "@fgrzl/fetch";
+import { addLogging } from "@fgrzl/fetch";
 
-const loggedClient = useLogging(client, {
+const loggedClient = addLogging(client, {
   level: "info", // "debug" | "info" | "warn" | "error"
   includeRequestHeaders: true,
   includeResponseHeaders: false,
@@ -309,9 +309,9 @@ const loggedClient = useLogging(client, {
 ### Rate Limiting
 
 ```typescript
-import { useRateLimit } from "@fgrzl/fetch";
+import { addRateLimit } from "@fgrzl/fetch";
 
-const limitedClient = useRateLimit(client, {
+const limitedClient = addRateLimit(client, {
   maxRequests: 100,
   windowMs: 60 * 1000, // 100 requests per minute
   algorithm: "token-bucket", // "fixed-window" | "sliding-window" | "token-bucket"
@@ -333,7 +333,7 @@ const prodConfig = {
   },
 };
 
-const prodClient = useProductionStack(new FetchClient(prodConfig), {
+const prodClient = addProductionStack(new FetchClient(prodConfig), {
   auth: { tokenProvider: () => getSecureToken() },
   logging: { level: "error" }, // Minimal logging in production
   cache: { ttl: 15 * 60 * 1000 }, // Longer cache in production
@@ -347,7 +347,7 @@ const devConfig = {
   credentials: "omit" as const, // No cookies in dev
 };
 
-const devClient = useDevelopmentStack(new FetchClient(devConfig), {
+const devClient = addDevelopmentStack(new FetchClient(devConfig), {
   auth: { tokenProvider: () => "dev-token" },
 });
 ```

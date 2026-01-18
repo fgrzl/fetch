@@ -6,7 +6,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../../src/client/fetch-client';
 import type { FetchResponse } from '../../../src/client/types';
 import {
-  useRateLimit,
+  addRateLimit,
   createRateLimitMiddleware,
 } from '../../../src/middleware/rate-limit/index';
 
@@ -35,10 +35,10 @@ afterEach(() => {
 });
 
 describe('Rate Limit Middleware', () => {
-  describe('useRateLimit (Pit of Success API)', () => {
+  describe('addRateLimit (Pit of Success API)', () => {
     it('should allow requests within rate limit', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 5,
         windowMs: 1000,
       });
@@ -61,7 +61,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should block requests exceeding rate limit', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 2,
         windowMs: 1000,
       });
@@ -85,7 +85,7 @@ describe('Rate Limit Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 2,
         windowMs: 1000,
       });
@@ -116,7 +116,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should use default rate limit options', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client); // Uses defaults
+      const rateLimitedClient = addRateLimit(client); // Uses defaults
 
       // Should allow many requests with generous defaults
       const promises = Array.from({ length: 50 }, (_, i) =>
@@ -133,7 +133,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should respect per-endpoint rate limiting', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 2,
         windowMs: 1000,
         keyGenerator: (request) => {
@@ -163,7 +163,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should skip rate limiting for matching patterns', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
         skipPatterns: ['/health', /\/metrics/],
@@ -192,7 +192,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should include retry-after header in rate limit response', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 1,
         windowMs: 5000,
       });
@@ -210,7 +210,7 @@ describe('Rate Limit Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 2,
         windowMs: 1000,
       });
@@ -262,7 +262,7 @@ describe('Rate Limit Middleware', () => {
       });
 
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
         onRateLimitExceeded: customHandler,
@@ -369,12 +369,12 @@ describe('Rate Limit Middleware', () => {
 
       const client = new FetchClient();
 
-      const { useRetry } = await import('../../../src/middleware/retry');
+      const { addRetry } = await import('../../../src/middleware/retry');
 
       // Test that rate limiting works correctly with retry middleware
       // Rate limiting should only count external requests, not internal retries
-      const rateLimitedRetryClient = useRateLimit(
-        useRetry(client, {
+      const rateLimitedRetryClient = addRateLimit(
+        addRetry(client, {
           maxRetries: 2,
           delay: 10,
         }),
@@ -403,7 +403,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should handle concurrent requests correctly', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 3,
         windowMs: 1000,
       });
@@ -457,7 +457,7 @@ describe('Rate Limit Middleware', () => {
   describe('Token bucket algorithm edge cases', () => {
     it('should handle high-frequency requests correctly', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 10,
         windowMs: 1000,
       });
@@ -481,7 +481,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should maintain separate buckets for different keys', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 2,
         windowMs: 1000,
         keyGenerator: (request) => {
@@ -513,7 +513,7 @@ describe('Rate Limit Middleware', () => {
       vi.useFakeTimers();
 
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 2,
         windowMs: 1000,
       });
@@ -543,7 +543,7 @@ describe('Rate Limit Middleware', () => {
   describe('Edge cases and branch coverage', () => {
     it('should handle regex skip patterns correctly', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
         skipPatterns: [/\/skip-.*/], // Regex pattern
@@ -568,7 +568,7 @@ describe('Rate Limit Middleware', () => {
       const client = new FetchClient();
       const onRateLimitExceeded = vi.fn().mockResolvedValue(null); // Returns null
 
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
         onRateLimitExceeded,
@@ -602,7 +602,7 @@ describe('Rate Limit Middleware', () => {
 
       const onRateLimitExceeded = vi.fn().mockResolvedValue(customResponse);
 
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
         onRateLimitExceeded,
@@ -623,7 +623,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should handle retryAfter being null in rate limit response', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 1,
         windowMs: 1000,
       });
@@ -646,7 +646,7 @@ describe('Rate Limit Middleware', () => {
 
     it('should handle empty URL in requests', async () => {
       const client = new FetchClient();
-      const rateLimitedClient = useRateLimit(client, {
+      const rateLimitedClient = addRateLimit(client, {
         maxRequests: 2,
         windowMs: 1000,
       });
