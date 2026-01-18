@@ -6,12 +6,14 @@
 **A TypeScript HTTP client that works out of the box and grows with you.**
 
 Use this if you want:
+
 - ✅ Simple, typed HTTP requests that just work
 - ✅ Built-in CSRF, retries, and error handling
 - ✅ Zero config to start, full control when needed
 - ✅ TypeScript-first with zero dependencies
 
 Don't use this if you:
+
 - ❌ Need complex GraphQL support
 - ❌ Require advanced request/response transformations
 
@@ -36,23 +38,25 @@ if (users.ok) {
 
 ## What's Included
 
-| Feature | Details |
-|---------|---------|
-| **Zero Config** | Smart defaults handle CSRF, retries, and errors |
-| **Typed** | Full TypeScript support with `api.get<User>()` |
-| **Middleware** | Add auth, caching, custom logic when needed |
-| **Errors** | Structured error handling, not thrown exceptions |
-| **Lightweight** | No dependencies, ~5KB gzipped |
+| Feature         | Details                                          |
+| --------------- | ------------------------------------------------ |
+| **Zero Config** | Smart defaults handle CSRF, retries, and errors  |
+| **Typed**       | Full TypeScript support with `api.get<User>()`   |
+| **Middleware**  | Add auth, caching, custom logic when needed      |
+| **Errors**      | Structured error handling, not thrown exceptions |
+| **Lightweight** | No dependencies, ~5KB gzipped                    |
 
 ## Examples
 
 **Set a base URL:**
+
 ```ts
 api.setBaseUrl("https://api.example.com");
 await api.get("/users"); // GET https://api.example.com/users
 ```
 
 **Add authentication:**
+
 ```ts
 import { FetchClient, addAuthentication } from "@fgrzl/fetch";
 
@@ -62,8 +66,12 @@ const client = addAuthentication(new FetchClient(), {
 ```
 
 **Use with TypeScript:**
+
 ```ts
-interface User { id: number; name: string }
+interface User {
+  id: number;
+  name: string;
+}
 const response = await api.get<User>("/api/user");
 if (response.ok) console.log(response.data.name);
 ```

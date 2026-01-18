@@ -1,0 +1,33 @@
+name: Version
+
+on:
+  workflow_call:
+    outputs:
+      semver:
+        description: "Semantic version"
+        value: ${{ jobs.version.outputs.semver }}
+      label:
+        description: "Pre-release label"
+        value: ${{ jobs.version.outputs.label }}
+
+jobs:
+  version:
+    name: Calculate Version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      semver: ${{ steps.version.outputs.semver }}
+      label: ${{ steps.version.outputs.label }}
+
+    steps:
+      - name: Checkout Full History
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install GitVersion
+        uses: gittools/actions/gitversion/setup@v4.2.0
+
+      - name: Calculate Version
+        id: version
+        uses: gittools/actions/gitversion/execute@v4.2.0
