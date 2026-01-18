@@ -56,18 +56,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-  cleanup:
-    runs-on: ubuntu-latest
-    concurrency:
-      group: cleanup-${{ github.repository }}
-      cancel-in-progress: false
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Workflow Cleanup
-        uses: fgrzl/actions/workflow-cleanup@v0.0.5
-        with:
-          days_old: 1

@@ -6,6 +6,7 @@ on:
 permissions:
   contents: write
   packages: read
+  id-token: write
 
 jobs:
   TagAndPublish:
@@ -15,15 +16,16 @@ jobs:
 
     steps:
       - name: Checkout Full History
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "lts/*"
           cache: "npm"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install Dependencies
         run: npm ci
@@ -35,24 +37,25 @@ jobs:
         run: npm run build
 
       - name: Install GitVersion
-        uses: gittools/actions/gitversion/setup@v4.1.0
+        uses: gittools/actions/gitversion/setup@v4.2.0
 
       - name: Calculate Version
         id: version
-        uses: gittools/actions/gitversion/execute@v4.1.0
+        uses: gittools/actions/gitversion/execute@v4.2.0
 
       - name: Tag Commit
         if: ${{!startsWith(github.ref, 'refs/tags/') }}
-        uses: fgrzl/actions/tag-commit@v0.0.5
+        uses: fgrzl/actions/tag-commit@v0.0.6
         with:
           tag: ${{ steps.version.outputs.semVer }}
 
       - name: Publish NPM
-        uses: fgrzl/actions/publish-npm@v0.0.5
+        uses: fgrzl/actions/publish-npm@v0.0.6
         with:
-          npm-token: ${{ secrets.NPM_TOKEN }}
           label: ${{ steps.version.outputs.PreReleaseLabel }}
           version: ${{ steps.version.outputs.semVer }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Prune Pre-release Tags
-        uses: fgrzl/actions/prune-tags@v0.0.5
+        uses: fgrzl/actions/prune-tags@v0.0.6
