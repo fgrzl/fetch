@@ -436,9 +436,8 @@ describe('Cache Middleware', () => {
     });
 
     it('should test delete and clear methods directly', async () => {
-      const { createCacheMiddleware } = await import(
-        '../../../src/middleware/cache'
-      );
+      const { createCacheMiddleware } =
+        await import('../../../src/middleware/cache');
 
       // Create a custom storage that we can monitor
       const storageMap = new Map();
@@ -731,9 +730,8 @@ describe('Cache Middleware', () => {
     it('should work with authentication middleware', async () => {
       const client = new FetchClient();
 
-      const { addAuthentication } = await import(
-        '../../../src/middleware/authentication'
-      );
+      const { addAuthentication } =
+        await import('../../../src/middleware/authentication');
 
       const authCachedClient = addAuthentication(client, {
         tokenProvider: () => 'test-token',

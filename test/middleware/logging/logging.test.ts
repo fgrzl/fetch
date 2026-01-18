@@ -464,9 +464,8 @@ describe('Logging Middleware', () => {
 
       const client = new FetchClient();
 
-      const { addAuthentication } = await import(
-        '../../../src/middleware/authentication'
-      );
+      const { addAuthentication } =
+        await import('../../../src/middleware/authentication');
 
       const authLoggedClient = addAuthentication(client, {
         tokenProvider: () => 'test-token',

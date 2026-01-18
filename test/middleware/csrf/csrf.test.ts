@@ -374,9 +374,8 @@ describe('CSRF Middleware', () => {
       const client = new FetchClient();
 
       // Import authentication here to avoid circular dependencies in real scenarios
-      const { addAuthentication } = await import(
-        '../../../src/middleware/authentication'
-      );
+      const { addAuthentication } =
+        await import('../../../src/middleware/authentication');
 
       const protectedClient = addAuthentication(client, {
         tokenProvider: () => 'bearer-token',

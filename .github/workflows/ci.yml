@@ -5,10 +5,22 @@ on:
   push:
     branches:
       - "**"
+    paths:
+      - "src/**"
+      - "test/**"
+      - ".github/workflows/ci.yml"
+      - "package*.json"
+      - "tsconfig.json"
   pull_request:
     branches:
       - main
       - develop
+    paths:
+      - "src/**"
+      - "test/**"
+      - ".github/workflows/ci.yml"
+      - "package*.json"
+      - "tsconfig.json"
 
 permissions:
   contents: read
