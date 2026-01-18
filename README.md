@@ -3,119 +3,70 @@
 
 # @fgrzl/fetch
 
-A production-ready HTTP client for TypeScript that **just works** out of the box.
+**A TypeScript HTTP client that works out of the box and grows with you.**
 
-## ✨ Features
+Use this if you want:
+- ✅ Simple, typed HTTP requests that just work
+- ✅ Built-in CSRF, retries, and error handling
+- ✅ Zero config to start, full control when needed
+- ✅ TypeScript-first with zero dependencies
 
-- **Pit of Success Design**: Simple defaults that just work, customizable when needed
-- Simple API: `api.get('/api/user')`
-- Built-in CSRF token support (XSRF-TOKEN standard)
-- Smart 401 redirect handling with return URL preservation
-- Retry middleware with configurable strategies
-- Custom middleware support (request/response)
-- TypeScript-first, small and dependency-free
+Don't use this if you:
+- ❌ Need complex GraphQL support
+- ❌ Require advanced request/response transformations
 
-## 📦 Installation
-
-**Install**
+## Quick Start
 
 ```bash
 npm install @fgrzl/fetch
 ```
 
-**Use immediately** - no configuration required:
-
 ```ts
 import api from "@fgrzl/fetch";
 
-// It just works! 🎉
+// Works immediately
 const users = await api.get("https://api.example.com/api/users");
-const newUser = await api.post("https://api.example.com/api/users", {
-  name: "John",
-});
 
-// Built-in error handling
 if (users.ok) {
-  console.log("Users:", users.data);
+  console.log(users.data);
 } else {
-  console.error("Error:", users.error?.message);
+  console.error(users.error?.message);
 }
 ```
 
+## What's Included
+
+| Feature | Details |
+|---------|---------|
+| **Zero Config** | Smart defaults handle CSRF, retries, and errors |
+| **Typed** | Full TypeScript support with `api.get<User>()` |
+| **Middleware** | Add auth, caching, custom logic when needed |
+| **Errors** | Structured error handling, not thrown exceptions |
+| **Lightweight** | No dependencies, ~5KB gzipped |
+
+## Examples
+
+**Set a base URL:**
 ```ts
-import api from "@fgrzl/fetch";
-
-// Set the base url to keep things simple
 api.setBaseUrl("https://api.example.com");
-
-// It just works! 🎉
-const users = await api.get("/api/users");
-const newUser = await api.post("/api/users", { name: "John" });
-
-// Built-in error handling
-if (users.ok) {
-  console.log("Users:", users.data);
-} else {
-  console.error("Error:", users.error?.message);
-}
+await api.get("/users"); // GET https://api.example.com/users
 ```
 
-**Need custom config?** Add it when you need it:
-
+**Add authentication:**
 ```ts
 import { FetchClient, addAuthentication } from "@fgrzl/fetch";
 
-const authClient = addAuthentication(new FetchClient(), {
+const client = addAuthentication(new FetchClient(), {
   tokenProvider: () => localStorage.getItem("token") || "",
 });
 ```
 
-**Working with APIs?** Use a base URL:
-
+**Use with TypeScript:**
 ```ts
-import { FetchClient } from "@fgrzl/fetch";
-
-const apiClient = new FetchClient({
-  baseUrl: "https://api.example.com",
-});
-
-// All relative URLs are prefixed with the base URL
-await apiClient.get("/users"); // → GET https://api.example.com/users
-await apiClient.post("/users", data); // → POST https://api.example.com/users
-
-// Absolute URLs work as expected
-await apiClient.get("https://other-api.com/data"); // → GET https://other-api.com/data
+interface User { id: number; name: string }
+const response = await api.get<User>("/api/user");
+if (response.ok) console.log(response.data.name);
 ```
-
-**Advanced usage** with middleware stacks:
-
-```ts
-// Smart defaults - just works
-addCSRF(client);
-addAuthorization(client); // Redirects to /login with return URL
-addRetry(client);
-
-// All requests now return FetchResponse<T>
-interface User {
-  id: number;
-  name: string;
-}
-const userResponse = await client.get<User>("/api/user");
-if (userResponse.ok) {
-  console.log(userResponse.data.name); // Typed access to data
-} else {
-  console.error(`Failed with status ${userResponse.status}`);
-}
-```
-
-## ✨ What You Get Out of the Box
-
-- **Zero Configuration** - Works immediately with smart defaults
-- **CSRF Protection** - Automatic XSRF-TOKEN handling
-- **Retry Logic** - Exponential backoff for failed requests
-- **Request Logging** - Built-in observability
-- **TypeScript First** - Full type safety and IntelliSense
-- **Middleware System** - Composable and extensible
 
 ## 📚 Documentation
 
