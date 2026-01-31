@@ -37,13 +37,15 @@ if (users.ok) {
 
 ## What's Included
 
-| Feature         | Details                                          |
-| --------------- | ------------------------------------------------ |
-| **Zero Config** | Smart defaults handle CSRF, retries, and errors  |
-| **Typed**       | Full TypeScript support with `api.get<User>()`   |
-| **Middleware**  | Add auth, caching, custom logic when needed      |
-| **Errors**      | Structured error handling, not thrown exceptions |
-| **Lightweight** | No dependencies, ~5KB gzipped                    |
+| Feature            | Details                                            |
+| ------------------ | -------------------------------------------------- |
+| **Zero Config**    | Smart defaults handle CSRF, retries, and errors    |
+| **Typed**          | Full TypeScript support with `api.get<User>()`     |
+| **Middleware**     | Add auth, caching, custom logic when needed        |
+| **Errors**         | Structured error handling, not thrown exceptions   |
+| **Cancellation**   | AbortController support with configurable timeouts |
+| **Tree-Shakeable** | Modular imports for minimal bundle size            |
+| **Lightweight**    | No dependencies, ~5KB gzipped                      |
 
 ## Examples
 
@@ -75,6 +77,23 @@ const response = await api.get<User>("/api/user");
 if (response.ok) console.log(response.data.name);
 ```
 
+**Cancel requests and set timeouts:**
+
+```ts
+const controller = new AbortController();
+const response = await api.get(
+  "/api/data",
+  {},
+  {
+    signal: controller.signal,
+    timeout: 5000, // 5 second timeout
+  },
+);
+
+// Cancel it
+controller.abort();
+```
+
 ## 📚 Documentation
 
 Ready to go deeper? Check out our comprehensive guides:
@@ -82,6 +101,7 @@ Ready to go deeper? Check out our comprehensive guides:
 - **[Getting Started](docs/getting-started.md)** - Installation and basic usage
 - **[Configuration](docs/configuration.md)** - Advanced client setup
 - **[Middleware](docs/middleware.md)** - Authentication, caching, retries
+- **[Cancellation & Timeouts](docs/cancellation.md)** - Abort requests and set timeouts
 - **[Error Handling](docs/error-handling.md)** - Robust error management
 - **[TypeScript Guide](docs/typescript.md)** - Type-safe API calls
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions

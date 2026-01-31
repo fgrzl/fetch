@@ -57,10 +57,12 @@ export class FetchClient {
   private middlewares: FetchMiddleware[] = [];
   private credentials: RequestCredentials;
   private baseUrl: string | undefined;
+  private defaultTimeout: number | undefined;
 
   constructor(config: FetchClientOptions = {}) {
     this.credentials = config.credentials ?? 'same-origin';
     this.baseUrl = config.baseUrl;
+    this.defaultTimeout = config.timeout;
   }
 
   use(middleware: FetchMiddleware): this {
@@ -100,9 +102,36 @@ export class FetchClient {
   async request<T = unknown>(
     url: string,
     init: RequestInit = {},
+    options?: { signal?: AbortSignal; timeout?: number },
   ): Promise<FetchResponse<T>> {
     // Resolve URL against baseUrl if relative
     const resolvedUrl = this.resolveUrl(url);
+
+    // Handle timeout and signal
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let timeoutController: AbortController | undefined;
+    let effectiveSignal = options?.signal || init.signal;
+
+    // Create timeout if specified (request-level timeout takes precedence)
+    const timeoutMs = options?.timeout ?? this.defaultTimeout;
+    if (timeoutMs && timeoutMs > 0) {
+      timeoutController = new AbortController();
+
+      // If user provided a signal, we need to combine them
+      if (effectiveSignal) {
+        // Listen to user's signal and propagate abort
+        effectiveSignal.addEventListener('abort', () => {
+          timeoutController?.abort();
+        });
+      }
+
+      effectiveSignal = timeoutController.signal;
+
+      // Set timeout to abort the request
+      timeoutId = setTimeout(() => {
+        timeoutController?.abort();
+      }, timeoutMs);
+    }
 
     // Create the execution chain
     let index = 0;
@@ -111,7 +140,11 @@ export class FetchClient {
       request?: RequestInit & { url?: string },
     ): Promise<FetchResponse<unknown>> => {
       // Use provided request or fall back to original
-      const currentRequest = request || { ...init, url: resolvedUrl };
+      const currentRequest: RequestInit & { url?: string } = request || {
+        ...init,
+        url: resolvedUrl,
+        ...(effectiveSignal ? { signal: effectiveSignal } : {}),
+      };
       const currentUrl = currentRequest.url || resolvedUrl;
 
       if (index >= this.middlewares.length) {
@@ -128,8 +161,15 @@ export class FetchClient {
       return middleware(currentRequest, execute);
     };
 
-    const result = await execute();
-    return result as FetchResponse<T>;
+    try {
+      const result = await execute();
+      return result as FetchResponse<T>;
+    } finally {
+      // Clean up timeout
+      if (timeoutId !== undefined) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   private async coreFetch(
@@ -171,6 +211,23 @@ export class FetchClient {
             }),
       };
     } catch (error) {
+      // Handle AbortError (from timeout or manual cancellation)
+      if (error instanceof Error && error.name === 'AbortError') {
+        return {
+          data: null,
+          status: 0,
+          statusText: 'Request Aborted',
+          headers: new Headers(),
+          url,
+          ok: false,
+          error: {
+            message: 'Request was aborted',
+            body: error,
+          },
+        };
+      }
+
+      // Handle network errors
       if (error instanceof TypeError && error.message.includes('fetch')) {
         return {
           data: null,
@@ -300,6 +357,7 @@ export class FetchClient {
    * @template T - Expected response data type (will be null for HEAD requests)
    * @param url - Request URL
    * @param params - Query parameters to append to URL
+   * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response (data will always be null)
    *
    * @example Check if resource exists:
@@ -312,20 +370,20 @@ export class FetchClient {
    * }
    * ```
    *
-   * @example Check with query parameters:
+   * @example With cancellation:
    * ```typescript
-   * const exists = await client.head('/api/users', { id: 123 });
-   * if (exists.status === 404) {
-   *   console.log('User not found');
-   * }
+   * const controller = new AbortController();
+   * const request = client.head('/api/users', { id: 123 }, { signal: controller.signal });
+   * controller.abort(); // Cancel the request
    * ```
    */
   head<T = null>(
     url: string,
     params?: Record<string, string | number | boolean | undefined>,
+    options?: { signal?: AbortSignal; timeout?: number },
   ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
-    return this.request<T>(finalUrl, { method: 'HEAD' });
+    return this.request<T>(finalUrl, { method: 'HEAD' }, options);
   }
 
   /**
@@ -388,6 +446,7 @@ export class FetchClient {
    * @template T - Expected response data type
    * @param url - Request URL
    * @param params - Query parameters to append to URL
+   * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response
    *
    * @example
@@ -396,13 +455,19 @@ export class FetchClient {
    * const filteredUsers = await client.get<User[]>('/api/users', { status: 'active', limit: 10 });
    * if (users.ok) console.log(users.data);
    * ```
+   *
+   * @example With timeout:
+   * ```typescript
+   * const users = await client.get<User[]>('/api/users', {}, { timeout: 5000 });
+   * ```
    */
   get<T>(
     url: string,
     params?: Record<string, string | number | boolean | undefined>,
+    options?: { signal?: AbortSignal; timeout?: number },
   ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
-    return this.request<T>(finalUrl, { method: 'GET' });
+    return this.request<T>(finalUrl, { method: 'GET' }, options);
   }
 
   /**
@@ -412,28 +477,41 @@ export class FetchClient {
    * @param url - Request URL
    * @param body - Request body (auto-serialized to JSON)
    * @param headers - Additional headers (Content-Type: application/json is default)
+   * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response
    *
    * @example
    * ```typescript
    * const result = await client.post<User>('/api/users', { name: 'John' });
    * ```
+   *
+   * @example With cancellation:
+   * ```typescript
+   * const controller = new AbortController();
+   * const result = client.post('/api/users', { name: 'John' }, {}, { signal: controller.signal });
+   * controller.abort();
+   * ```
    */
   post<T>(
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
+    options?: { signal?: AbortSignal; timeout?: number },
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
       ...(headers ?? {}),
     };
 
-    return this.request<T>(url, {
-      method: 'POST',
-      headers: requestHeaders,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
+    return this.request<T>(
+      url,
+      {
+        method: 'POST',
+        headers: requestHeaders,
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      },
+      options,
+    );
   }
 
   /**
@@ -443,23 +521,29 @@ export class FetchClient {
    * @param url - Request URL
    * @param body - Request body (auto-serialized to JSON)
    * @param headers - Additional headers (Content-Type: application/json is default)
+   * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response
    */
   put<T>(
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
+    options?: { signal?: AbortSignal; timeout?: number },
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
       ...(headers ?? {}),
     };
 
-    return this.request<T>(url, {
-      method: 'PUT',
-      headers: requestHeaders,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
+    return this.request<T>(
+      url,
+      {
+        method: 'PUT',
+        headers: requestHeaders,
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      },
+      options,
+    );
   }
 
   /**
@@ -469,23 +553,29 @@ export class FetchClient {
    * @param url - Request URL
    * @param body - Request body (auto-serialized to JSON)
    * @param headers - Additional headers (Content-Type: application/json is default)
+   * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response
    */
   patch<T>(
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
+    options?: { signal?: AbortSignal; timeout?: number },
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
       ...(headers ?? {}),
     };
 
-    return this.request<T>(url, {
-      method: 'PATCH',
-      headers: requestHeaders,
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
+    return this.request<T>(
+      url,
+      {
+        method: 'PATCH',
+        headers: requestHeaders,
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      },
+      options,
+    );
   }
 
   /**
@@ -494,6 +584,7 @@ export class FetchClient {
    * @template T - Expected response data type
    * @param url - Request URL
    * @param params - Query parameters to append to URL
+   * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response
    *
    * @example
@@ -506,8 +597,9 @@ export class FetchClient {
   del<T>(
     url: string,
     params?: Record<string, string | number | boolean | undefined>,
+    options?: { signal?: AbortSignal; timeout?: number },
   ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
-    return this.request<T>(finalUrl, { method: 'DELETE' });
+    return this.request<T>(finalUrl, { method: 'DELETE' }, options);
   }
 }

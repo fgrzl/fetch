@@ -11,6 +11,8 @@ export default defineConfig([
     outDir: 'dist',
     target: 'es2020',
     minify: false,
+    treeshake: true,
+    splitting: true,
   },
   // ESM build (minified)
   {

@@ -12,7 +12,11 @@ export { FetchClient } from './fetch-client';
 
 // 🎯 LEVEL 2: Types for TypeScript users (discovered when needed)
 export type { FetchMiddleware } from './fetch-client';
-export type { FetchResponse, FetchClientOptions } from './types';
+export type {
+  FetchResponse,
+  FetchClientOptions,
+  RequestOptions,
+} from './types';
 
 // 🎯 LEVEL 3: Utilities for advanced use cases
 export { buildQueryParams, appendQueryParams } from './query';

@@ -40,17 +40,25 @@ jobs:
       - name: Build Library
         run: npm run build
 
+      - name: Get Version from Package.json
+        id: package-version
+        run: |
+          VERSION=$(npm pkg get version | tr -d '"')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+          # Determine npm tag based on version
+          case "$VERSION" in
+            *-alpha*) echo "tag=alpha" >> $GITHUB_OUTPUT ;;
+            *-beta*)  echo "tag=beta" >> $GITHUB_OUTPUT ;;
+            *)        echo "tag=latest" >> $GITHUB_OUTPUT ;;
+          esac
+
       - name: Tag Commit
         if: github.ref_type != 'tag'
         uses: fgrzl/actions/tag-commit@v0.0.6
         with:
-          tag: ${{ needs.version.outputs.package }}
+          tag: v${{ steps.package-version.outputs.version }}
 
       - name: Publish to npm (Trusted Publishing)
-        if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
-        run: |
-          npm version ${{ needs.version.outputs.package }} --no-git-tag-version
-          npm publish --provenance --tag ${{ needs.version.outputs.preReleaseLabel || 'latest' }}
-
-      - name: Prune Pre-release Tags
-        uses: fgrzl/actions/prune-tags@v0.0.6
+        if: github.ref_type == 'tag' || github.ref == 'refs/heads/develop'
+        run: npm publish --provenance

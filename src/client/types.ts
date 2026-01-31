@@ -5,6 +5,39 @@
  * Designed for discoverability and type safety.
  */
 
+// Export RequestOptions interface so it's available to consumers
+export interface RequestOptions {
+  /**
+   * AbortSignal for cancelling the request.
+   *
+   * Use AbortController to cancel requests programmatically.
+   *
+   * @example
+   * ```typescript
+   * const controller = new AbortController();
+   * const request = client.get('/api/slow', {}, { signal: controller.signal });
+   *
+   * // Cancel the request
+   * controller.abort();
+   * ```
+   */
+  signal?: AbortSignal;
+
+  /**
+   * Request timeout in milliseconds.
+   *
+   * Overrides the default timeout set in FetchClientOptions.
+   * Set to 0 or undefined for no timeout.
+   *
+   * @example
+   * ```typescript
+   * // Override default timeout for this specific request
+   * await client.get('/api/fast', {}, { timeout: 1000 });
+   * ```
+   */
+  timeout?: number;
+}
+
 /**
  * Typed response wrapper with consistent shape.
  *
@@ -76,4 +109,19 @@ export interface FetchClientOptions {
    * ```
    */
   baseUrl?: string;
+
+  /**
+   * Default timeout for requests in milliseconds.
+   *
+   * When set, requests will automatically be aborted after this duration.
+   * Individual requests can override this by providing their own timeout or signal.
+   * Set to 0 or undefined for no timeout.
+   *
+   * @example
+   * ```typescript
+   * const client = new FetchClient({ timeout: 5000 }); // 5 second timeout
+   * await client.get('/api/users'); // Will timeout after 5 seconds
+   * ```
+   */
+  timeout?: number;
 }

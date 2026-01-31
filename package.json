@@ -1,6 +1,6 @@
 {
   "name": "@fgrzl/fetch",
-  "version": "0.0.0",
+  "version": "1.2.0",
   "description": "A modern, type-safe HTTP client with middleware support for CSRF protection and authentication",
   "keywords": [
     "fetch",
@@ -40,6 +40,56 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.min.js",
       "require": "./dist/cjs/index.min.js"
+    },
+    "./client": {
+      "types": "./dist/client/index.d.ts",
+      "import": "./dist/client/index.js",
+      "require": "./dist/cjs/client/index.js"
+    },
+    "./middleware": {
+      "types": "./dist/middleware/index.d.ts",
+      "import": "./dist/middleware/index.js",
+      "require": "./dist/cjs/middleware/index.js"
+    },
+    "./middleware/authentication": {
+      "types": "./dist/middleware/authentication/index.d.ts",
+      "import": "./dist/middleware/authentication/index.js",
+      "require": "./dist/cjs/middleware/authentication/index.js"
+    },
+    "./middleware/authorization": {
+      "types": "./dist/middleware/authorization/index.d.ts",
+      "import": "./dist/middleware/authorization/index.js",
+      "require": "./dist/cjs/middleware/authorization/index.js"
+    },
+    "./middleware/cache": {
+      "types": "./dist/middleware/cache/index.d.ts",
+      "import": "./dist/middleware/cache/index.js",
+      "require": "./dist/cjs/middleware/cache/index.js"
+    },
+    "./middleware/csrf": {
+      "types": "./dist/middleware/csrf/index.d.ts",
+      "import": "./dist/middleware/csrf/index.js",
+      "require": "./dist/cjs/middleware/csrf/index.js"
+    },
+    "./middleware/logging": {
+      "types": "./dist/middleware/logging/index.d.ts",
+      "import": "./dist/middleware/logging/index.js",
+      "require": "./dist/cjs/middleware/logging/index.js"
+    },
+    "./middleware/rate-limit": {
+      "types": "./dist/middleware/rate-limit/index.d.ts",
+      "import": "./dist/middleware/rate-limit/index.js",
+      "require": "./dist/cjs/middleware/rate-limit/index.js"
+    },
+    "./middleware/retry": {
+      "types": "./dist/middleware/retry/index.d.ts",
+      "import": "./dist/middleware/retry/index.js",
+      "require": "./dist/cjs/middleware/retry/index.js"
+    },
+    "./errors": {
+      "types": "./dist/errors/index.d.ts",
+      "import": "./dist/errors/index.js",
+      "require": "./dist/cjs/errors/index.js"
     }
   },
   "files": [
@@ -48,6 +98,7 @@
     "README.md",
     "CONTRIBUTING.md"
   ],
+  "sideEffects": false,
   "overrides": {
     "@typescript-eslint/utils": "^8.39.1"
   },
