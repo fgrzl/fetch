@@ -8,13 +8,8 @@ permissions:
   packages: read
 
 jobs:
-  version:
-    name: Calculate Version
-    uses: ./.github/workflows/version.yml
-
   publish:
     name: Tag and Publish
-    needs: version
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
