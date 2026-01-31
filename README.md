@@ -1,15 +1,18 @@
-[![ci](https://github.com/fgrzl/fetch/actions/workflows/ci.yml/badge.svg)](https://github.com/fgrzl/fetch/actions/workflows/ci.yml)[](url)
+[![ci](https://github.com/fgrzl/fetch/actions/workflows/ci.yml/badge.svg)](https://github.com/fgrzl/fetch/actions/workflows/ci.yml)
 
 # @fgrzl/fetch
 
-**A TypeScript HTTP client that works out of the box and grows with you.**
+**A TypeScript HTTP client wrapper around `fetch` that adds typed responses, middleware, and sane defaults.**
+
+If you’ve ever thought “I just want a small client that makes `fetch` feel production-ready”, this is it.
 
 Use this if you want:
 
 - ✅ Simple, typed HTTP requests that just work
-- ✅ Built-in CSRF, retries, and error handling
+- ✅ A consistent response shape (`ok`, `data`, `error`) instead of `try/catch` everywhere
+- ✅ Middleware for auth, retries, caching, logging, CSRF, rate limiting
 - ✅ Zero config to start, full control when needed
-- ✅ TypeScript-first with zero dependencies
+- ✅ TypeScript-first with zero runtime dependencies
 
 Don't use this if you:
 
@@ -35,17 +38,54 @@ if (users.ok) {
 }
 ```
 
-## What's Included
+## Why This Exists
 
-| Feature            | Details                                            |
-| ------------------ | -------------------------------------------------- |
-| **Zero Config**    | Smart defaults handle CSRF, retries, and errors    |
-| **Typed**          | Full TypeScript support with `api.get<User>()`     |
-| **Middleware**     | Add auth, caching, custom logic when needed        |
-| **Errors**         | Structured error handling, not thrown exceptions   |
-| **Cancellation**   | AbortController support with configurable timeouts |
-| **Tree-Shakeable** | Modular imports for minimal bundle size            |
-| **Lightweight**    | No dependencies, ~5KB gzipped                      |
+`fetch` is a great low-level primitive, but most apps end up re-implementing the same things:
+
+- Base URLs + query params
+- Typed responses
+- Retry/backoff
+- Caching
+- Auth header injection
+- Timeouts and cancellation
+- Consistent error handling
+
+`@fgrzl/fetch` provides those in a small, composable way.
+
+## Two Ways To Use It
+
+### 1) Default client (recommended)
+
+The default export is a ready-to-use client with a production-friendly middleware stack (retry, cache, logging, rate limiting). Add auth (or anything else) via middleware when you need it.
+
+```ts
+import api from "@fgrzl/fetch";
+
+api.setBaseUrl("https://api.example.com");
+const users = await api.get("/users");
+```
+
+### 2) Custom client
+
+Start with a plain `FetchClient` (no middleware), then add only what you want.
+
+```ts
+import { FetchClient } from "@fgrzl/fetch";
+
+const client = new FetchClient({ credentials: "omit" });
+const result = await client.get("https://api.example.com/users");
+```
+
+## What You Can Do
+
+| Task | How |
+| --- | --- |
+| Make requests | `api.get()`, `api.post()`, `api.put()`, etc. |
+| Type responses | `api.get<User>("/user")` |
+| Add auth | `addAuthentication(api, { tokenProvider })` |
+| Handle errors | `if (response.ok) { ... } else { ... }` |
+| Cancel / timeout | Pass `signal` or `timeout` in request options |
+| Add retries / cache / logging | Use the prebuilt middleware or stacks |
 
 ## Examples
 
@@ -59,11 +99,14 @@ await api.get("/users"); // GET https://api.example.com/users
 **Add authentication:**
 
 ```ts
-import { FetchClient, addAuthentication } from "@fgrzl/fetch";
+import api, { addAuthentication } from "@fgrzl/fetch";
 
-const client = addAuthentication(new FetchClient(), {
+const authedApi = addAuthentication(api, {
   tokenProvider: () => localStorage.getItem("token") || "",
 });
+
+// Use the authenticated client
+await authedApi.get("/users");
 ```
 
 **Use with TypeScript:**
@@ -105,22 +148,7 @@ Ready to go deeper? Check out our comprehensive guides:
 - **[Error Handling](docs/error-handling.md)** - Robust error management
 - **[TypeScript Guide](docs/typescript.md)** - Type-safe API calls
 - **[Troubleshooting](docs/troubleshooting.md)** - Common issues and solutions
-
-### 🔧 For Maintainers
-
-- **[Release Guide](docs/releases.md)** - How to create releases
 - **[Contributing](CONTRIBUTING.md)** - Development setup and guidelines
-
-## 🏗️ Architecture
-
-Built on a **"pit of success"** philosophy where:
-
-- Simple things are simple (`api.get("/path")`)
-- Complex things are possible (custom middleware stacks)
-- TypeScript guides you to correct usage
-- Smart defaults handle 80% of use cases
-
-[Learn more about our architecture →](docs/architecture.md)
 
 ## License
 
