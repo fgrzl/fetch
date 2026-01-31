@@ -6,11 +6,11 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { FetchClient } from '../../src/client/fetch-client';
 
 describe('AbortController and Timeout Support', () => {
-  let mockFetch: ReturnType<typeof vi.fn>;
+  let mockFetch: ReturnType<typeof vi.fn<typeof fetch>>;
 
   beforeEach(() => {
-    mockFetch = vi.fn();
-    global.fetch = mockFetch;
+    mockFetch = vi.fn<typeof fetch>();
+    global.fetch = mockFetch as typeof fetch;
     vi.useFakeTimers();
   });
 
@@ -25,9 +25,9 @@ describe('AbortController and Timeout Support', () => {
       const controller = new AbortController();
 
       let fetchPromise: Promise<Response>;
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         fetchPromise = new Promise((_, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The user aborted a request.', 'AbortError'),
@@ -60,9 +60,9 @@ describe('AbortController and Timeout Support', () => {
       const client = new FetchClient();
       const controller = new AbortController();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((_, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The user aborted a request.', 'AbortError'),
@@ -114,9 +114,9 @@ describe('AbortController and Timeout Support', () => {
     it('should timeout after specified duration', async () => {
       const client = new FetchClient();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -141,9 +141,9 @@ describe('AbortController and Timeout Support', () => {
     it('should use default timeout from client config', async () => {
       const client = new FetchClient({ timeout: 100 });
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -182,9 +182,9 @@ describe('AbortController and Timeout Support', () => {
     it('should override default timeout with request-specific timeout', async () => {
       const client = new FetchClient({ timeout: 1000 });
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -225,9 +225,9 @@ describe('AbortController and Timeout Support', () => {
       const client = new FetchClient();
       const controller = new AbortController();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The user aborted a request.', 'AbortError'),
@@ -257,9 +257,9 @@ describe('AbortController and Timeout Support', () => {
       const client = new FetchClient();
       const controller = new AbortController();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -288,9 +288,9 @@ describe('AbortController and Timeout Support', () => {
     it('should support timeout on HEAD requests', async () => {
       const client = new FetchClient();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -312,9 +312,9 @@ describe('AbortController and Timeout Support', () => {
     it('should support timeout on POST requests', async () => {
       const client = new FetchClient();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -341,9 +341,9 @@ describe('AbortController and Timeout Support', () => {
     it('should support timeout on PUT requests', async () => {
       const client = new FetchClient();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -370,9 +370,9 @@ describe('AbortController and Timeout Support', () => {
     it('should support timeout on PATCH requests', async () => {
       const client = new FetchClient();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -399,9 +399,9 @@ describe('AbortController and Timeout Support', () => {
     it('should support timeout on DELETE requests', async () => {
       const client = new FetchClient();
 
-      mockFetch.mockImplementation((url, init: RequestInit) => {
+      mockFetch.mockImplementation((url, init?: RequestInit) => {
         return new Promise((resolve, reject) => {
-          if (init.signal) {
+          if (init?.signal) {
             init.signal.addEventListener('abort', () => {
               reject(
                 new DOMException('The operation was aborted.', 'AbortError'),
@@ -421,3 +421,4 @@ describe('AbortController and Timeout Support', () => {
     });
   });
 });
+
