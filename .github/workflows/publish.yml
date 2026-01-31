@@ -24,12 +24,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-tags: true
 
       - name: Setup Node
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v6
         with:
           node-version: "lts/*"
           registry-url: "https://registry.npmjs.org"
@@ -40,14 +40,17 @@ jobs:
       - name: Build Library
         run: npm run build
 
-      - name: Update package.json version
-        run: npm version ${{ needs.version.outputs.semver }} --no-git-tag-version
-
       - name: Tag Commit
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        if: github.ref_type != 'tag'
         uses: fgrzl/actions/tag-commit@v0.0.6
         with:
-          tag: ${{ needs.version.outputs.semver }}
+          tag: ${{ needs.version.outputs.package }}
 
       - name: Publish to npm (Trusted Publishing)
-        run: npm publish --provenance=false --tag ${{ needs.version.outputs.label || 'latest' }}
+        if: github.ref_type == 'tag' || github.ref == 'refs/heads/main'
+        run: |
+          npm version ${{ needs.version.outputs.package }} --no-git-tag-version
+          npm publish --provenance --tag ${{ needs.version.outputs.preReleaseLabel || 'latest' }}
+
+      - name: Prune Pre-release Tags
+        uses: fgrzl/actions/prune-tags@v0.0.6
