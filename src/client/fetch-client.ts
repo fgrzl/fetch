@@ -102,7 +102,7 @@ export class FetchClient {
   async request<T = unknown>(
     url: string,
     init: RequestInit = {},
-    options?: { signal?: AbortSignal; timeout?: number },
+    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
   ): Promise<FetchResponse<T>> {
     // Resolve URL against baseUrl if relative
     const resolvedUrl = this.resolveUrl(url);
@@ -131,6 +131,14 @@ export class FetchClient {
       timeoutId = setTimeout(() => {
         timeoutController?.abort();
       }, timeoutMs);
+    }
+
+    // Add operation ID header if provided
+    if (options?.operationId) {
+      init.headers = {
+        ...init.headers,
+        'x-operation-id': options.operationId,
+      };
     }
 
     // Create the execution chain
@@ -380,7 +388,7 @@ export class FetchClient {
   head<T = null>(
     url: string,
     params?: Record<string, string | number | boolean | undefined>,
-    options?: { signal?: AbortSignal; timeout?: number },
+    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
   ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
     return this.request<T>(finalUrl, { method: 'HEAD' }, options);
@@ -464,7 +472,7 @@ export class FetchClient {
   get<T>(
     url: string,
     params?: Record<string, string | number | boolean | undefined>,
-    options?: { signal?: AbortSignal; timeout?: number },
+    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
   ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
     return this.request<T>(finalUrl, { method: 'GET' }, options);
@@ -496,7 +504,7 @@ export class FetchClient {
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
-    options?: { signal?: AbortSignal; timeout?: number },
+    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
@@ -528,7 +536,7 @@ export class FetchClient {
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
-    options?: { signal?: AbortSignal; timeout?: number },
+    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
@@ -560,7 +568,7 @@ export class FetchClient {
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
-    options?: { signal?: AbortSignal; timeout?: number },
+    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
@@ -597,7 +605,7 @@ export class FetchClient {
   del<T>(
     url: string,
     params?: Record<string, string | number | boolean | undefined>,
-    options?: { signal?: AbortSignal; timeout?: number },
+    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
   ): Promise<FetchResponse<T>> {
     const finalUrl = this.buildUrlWithParams(url, params);
     return this.request<T>(finalUrl, { method: 'DELETE' }, options);

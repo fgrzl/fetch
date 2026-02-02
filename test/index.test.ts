@@ -201,6 +201,17 @@ describe('Main Library Exports', () => {
       expect(options?.headers?.authorization).toBe('Bearer test-token');
     });
 
+    it('should support operationId in request options', async () => {
+      const client = new fetchLib.FetchClient();
+      const operationId = 'test-operation-123';
+
+      await client.get('/api/test', {}, { operationId });
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [, options] = mockFetch.mock.calls[0];
+      expect(options?.headers?.['x-operation-id']).toBe(operationId);
+    });
+
     it('should be able to use production stack', async () => {
       const client = new fetchLib.FetchClient();
       const prodClient = fetchLib.addProductionStack(client, {

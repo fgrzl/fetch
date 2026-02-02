@@ -81,6 +81,68 @@ describe('FetchClient', () => {
     expect(middlewareExecuted).toBe(true);
   });
 
+  it('should set x-operation-id header when operationId is provided', async () => {
+    const client = new FetchClient();
+    const operationId = 'test-op-123';
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await client.get('/api/test', {}, { operationId });
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: { 'x-operation-id': operationId },
+    });
+  });
+
+  it('should set x-operation-id header for POST requests', async () => {
+    const client = new FetchClient();
+    const operationId = 'post-op-456';
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: 1 }), {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await client.post('/api/users', { name: 'Test' }, {}, { operationId });
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/users', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-operation-id': operationId,
+      },
+      body: JSON.stringify({ name: 'Test' }),
+    });
+  });
+
+  it('should not set x-operation-id header when operationId is not provided', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await client.get('/api/test');
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+      credentials: 'same-origin',
+      method: 'GET',
+    });
+  });
+
   it('should support all HTTP methods', async () => {
     const client = new FetchClient();
 

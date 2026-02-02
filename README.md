@@ -78,14 +78,14 @@ const result = await client.get("https://api.example.com/users");
 
 ## What You Can Do
 
-| Task | How |
-| --- | --- |
-| Make requests | `api.get()`, `api.post()`, `api.put()`, etc. |
-| Type responses | `api.get<User>("/user")` |
-| Add auth | `addAuthentication(api, { tokenProvider })` |
-| Handle errors | `if (response.ok) { ... } else { ... }` |
-| Cancel / timeout | Pass `signal` or `timeout` in request options |
-| Add retries / cache / logging | Use the prebuilt middleware or stacks |
+| Task                          | How                                           |
+| ----------------------------- | --------------------------------------------- |
+| Make requests                 | `api.get()`, `api.post()`, `api.put()`, etc.  |
+| Type responses                | `api.get<User>("/user")`                      |
+| Add auth                      | `addAuthentication(api, { tokenProvider })`   |
+| Handle errors                 | `if (response.ok) { ... } else { ... }`       |
+| Cancel / timeout              | Pass `signal` or `timeout` in request options |
+| Add retries / cache / logging | Use the prebuilt middleware or stacks         |
 
 ## Examples
 

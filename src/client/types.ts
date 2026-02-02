@@ -36,6 +36,27 @@ export interface RequestOptions {
    * ```
    */
   timeout?: number;
+
+  /**
+   * Operation ID for request tracing and correlation.
+   *
+   * When provided, automatically sets the 'x-operation-id' header.
+   * Useful for distributed tracing, logging, and request correlation.
+   *
+   * @example
+   * ```typescript
+   * // Track a specific operation across services
+   * await client.get('/api/users', {}, { operationId: crypto.randomUUID() });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // Use with request context
+   * const operationId = request.headers['x-request-id'];
+   * await client.post('/api/logs', data, {}, { operationId });
+   * ```
+   */
+  operationId?: string;
 }
 
 /**
