@@ -2,89 +2,48 @@ import { defineConfig } from 'vite';
 import dts from 'vite-plugin-dts';
 
 /**
- * Library build configuration that mirrors the previous tsup outputs:
- * - ESM (unminified + minified)
- * - CJS (unminified + minified)
- * - Generates TypeScript declarations into `dist/index.d.ts`
+ * Vite config that supports two-step builds via `MIN` env flag:
+ * - `MIN=false` : unminified build + types (writes types to `dist/`)
+ * - `MIN=true`  : minified build (does NOT clean `dist`)
+ *
+ * Usage in package.json:
+ *  - "build:unmin": "cross-env MIN=false vite build"
+ *  - "build:min": "cross-env MIN=true vite build"
  */
-export default defineConfig([
-  // ESM - unminified (with types)
-  {
-    build: {
-      lib: {
-        entry: 'src/index.ts',
-        formats: ['es'],
-        fileName: () => 'index.js',
-      },
-      outDir: 'dist',
-      sourcemap: true,
-      minify: false,
-      target: 'es2020',
-      rollupOptions: {
-        // keep externalization minimal so consumers bundle as they want
-      },
-    },
-    plugins: [
-      dts({
-        outputDir: 'dist',
-        insertTypesEntry: true,
-      }),
-    ],
-  },
+export default defineConfig(() => {
+  const isMin = process.env.MIN === 'true';
 
-  // ESM - minified
-  {
+  return {
     build: {
       lib: {
         entry: 'src/index.ts',
-        formats: ['es'],
-        fileName: () => 'index.min.js',
+        formats: ['es', 'cjs'],
+        fileName: (format) => {
+          if (format === 'es') return isMin ? 'index.min.js' : 'index.js';
+          return isMin ? 'cjs/index.min.js' : 'cjs/index.js';
+        },
       },
       outDir: 'dist',
       sourcemap: true,
-      minify: 'terser',
+      minify: isMin ? true : false,
       target: 'es2020',
-      rollupOptions: {},
-    },
-  },
-
-  // CJS - unminified
-  {
-    build: {
-      lib: {
-        entry: 'src/index.ts',
-        formats: ['cjs'],
-        fileName: () => 'cjs/index.js',
-      },
-      outDir: 'dist',
-      sourcemap: true,
-      minify: false,
-      target: 'es2020',
+      // On minified builds, avoid emptying the output dir so types emitted earlier stay.
+      emptyOutDir: !isMin,
       rollupOptions: {
         output: {
           exports: 'named',
         },
       },
     },
-  },
-
-  // CJS - minified
-  {
-    build: {
-      lib: {
-        entry: 'src/index.ts',
-        formats: ['cjs'],
-        fileName: () => 'cjs/index.min.js',
-      },
-      outDir: 'dist',
-      sourcemap: true,
-      minify: 'terser',
-      target: 'es2020',
-      rollupOptions: {
-        output: {
-          exports: 'named',
-        },
-      },
-    },
-  },
-]);
+    plugins: isMin
+      ? []
+      : [
+          dts({
+            outputDir: 'dist',
+            insertTypesEntry: true,
+            skipDiagnostics: true,
+            include: ['src/**/*'],
+          }),
+        ],
+  };
+});

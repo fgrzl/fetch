@@ -103,7 +103,9 @@
     "@typescript-eslint/utils": "^8.39.1"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "npm run build:unmin && npm run build:min",
+    "build:unmin": "cross-env MIN=false vite build",
+    "build:min": "cross-env MIN=true vite build",
     "clean": "rimraf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "fmt": "prettier --write .",
@@ -130,6 +132,7 @@
     "rimraf": "^6.1.2",
     "vite": "^5.2.0",
     "vite-plugin-dts": "^4.0.2",
+    "cross-env": "^7.0.3",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18"

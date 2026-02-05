@@ -1,257 +1,297 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Operation ID Browser Test</title>
-  <style>
-    body {
-      font-family: system-ui, -apple-system, sans-serif;
-      max-width: 1200px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    button {
-      padding: 0.5rem 1rem;
-      margin: 0.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-      background: #0969da;
-      color: white;
-      border: none;
-      border-radius: 6px;
-    }
-    button:hover {
-      background: #0860ca;
-    }
-    pre {
-      background: #f6f8fa;
-      padding: 1rem;
-      border-radius: 6px;
-      overflow-x: auto;
-      border: 1px solid #d0d7de;
-    }
-    .section {
-      margin: 2rem 0;
-      padding: 1rem;
-      border: 1px solid #d0d7de;
-      border-radius: 6px;
-    }
-    h2 {
-      margin-top: 0;
-    }
-    .success {
-      color: #1a7f37;
-    }
-    .error {
-      color: #cf222e;
-    }
-    .info {
-      color: #0969da;
-    }
-  </style>
-</head>
-<body>
-  <h1>🧪 Operation ID Browser Test</h1>
-  
-  <div class="section">
-    <h2>Instructions</h2>
-    <ol>
-      <li>Open DevTools (F12) → Network tab</li>
-      <li>Click one of the test buttons below</li>
-      <li>In the Network tab, click on the request</li>
-      <li>Check the "Request Headers" section for <code>x-operation-id</code></li>
-    </ol>
-  </div>
-
-  <div class="section">
-    <h2>Test Buttons</h2>
-    <button id="testWithOpId">✅ Test WITH Operation ID</button>
-    <button id="testWithoutOpId">❌ Test WITHOUT Operation ID</button>
-    <button id="testWithMiddleware">🔧 Test WITH Operation ID + Middleware</button>
-    <button id="testPost">📤 Test POST with Operation ID</button>
-  </div>
-
-  <div class="section">
-    <h2>Output</h2>
-    <pre id="output">Ready! Click a button to start testing...</pre>
-  </div>
-
-  <script type="module">
-    // Import directly from source for development
-    import { FetchClient } from '../src/index.ts';
-
-    const output = document.getElementById('output');
-
-    function log(message, type = 'info') {
-      const timestamp = new Date().toLocaleTimeString();
-      const className = type === 'error' ? 'error' : type === 'success' ? 'success' : 'info';
-      output.innerHTML += `\n<span class="${className}">[${timestamp}] ${message}</span>`;
-      output.scrollTop = output.scrollHeight;
-    }
-
-    function clearOutput() {
-      output.textContent = '';
-    }
-
-    // Test 1: With Operation ID
-    document.getElementById('testWithOpId').addEventListener('click', async () => {
-      clearOutput();
-      log('🚀 Testing GET request WITH operation ID...', 'info');
-      
-      const client = new FetchClient();
-      
-      try {
-        log('Request URL: https://httpbin.org/headers');
-        log('Operation ID: browser-test-123', 'info');
-        log('Expected header: x-operation-id: browser-test-123', 'info');
-        
-        const response = await client.get(
-          'https://httpbin.org/headers',
-          {},
-          { operationId: 'browser-test-123' }
-        );
-        
-        if (response.ok) {
-          log('✅ Request successful!', 'success');
-          log('\nServer received headers:');
-          log(JSON.stringify(response.data, null, 2));
-          
-          // Check if our header was received
-          if (response.data?.headers?.['X-Operation-Id']) {
-            log('\n✅ SUCCESS! x-operation-id header was sent and received!', 'success');
-          } else {
-            log('\n❌ WARNING: x-operation-id header NOT found in server response', 'error');
-            log('Check DevTools Network tab → Request Headers', 'info');
-          }
-        } else {
-          log('❌ Request failed: ' + response.statusText, 'error');
-        }
-      } catch (error) {
-        log('❌ Error: ' + error.message, 'error');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Operation ID Browser Test</title>
+    <style>
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
       }
-    });
-
-    // Test 2: Without Operation ID
-    document.getElementById('testWithoutOpId').addEventListener('click', async () => {
-      clearOutput();
-      log('🚀 Testing GET request WITHOUT operation ID...', 'info');
-      
-      const client = new FetchClient();
-      
-      try {
-        log('Request URL: https://httpbin.org/headers');
-        log('No operation ID provided', 'info');
-        
-        const response = await client.get('https://httpbin.org/headers');
-        
-        if (response.ok) {
-          log('✅ Request successful!', 'success');
-          log('\nServer received headers:');
-          log(JSON.stringify(response.data, null, 2));
-          
-          if (response.data?.headers?.['X-Operation-Id']) {
-            log('\n❌ UNEXPECTED: x-operation-id header found when it should NOT be there', 'error');
-          } else {
-            log('\n✅ CORRECT: No x-operation-id header (as expected)', 'success');
-          }
-        }
-      } catch (error) {
-        log('❌ Error: ' + error.message, 'error');
+      button {
+        padding: 0.5rem 1rem;
+        margin: 0.5rem;
+        font-size: 1rem;
+        cursor: pointer;
+        background: #0969da;
+        color: white;
+        border: none;
+        border-radius: 6px;
       }
-    });
-
-    // Test 3: With Middleware
-    document.getElementById('testWithMiddleware').addEventListener('click', async () => {
-      clearOutput();
-      log('🚀 Testing with middleware AND operation ID...', 'info');
-      
-      const client = new FetchClient();
-      
-      // Add middleware that logs and adds another header
-      client.use(async (request, next) => {
-        log('📋 Middleware intercept - headers before modification:', 'info');
-        log(JSON.stringify(request.headers, null, 2));
-        
-        request.headers = {
-          ...request.headers,
-          'X-Custom-Middleware': 'middleware-was-here',
-        };
-        
-        log('📋 Middleware - headers after adding custom header:', 'info');
-        log(JSON.stringify(request.headers, null, 2));
-        
-        return next(request);
-      });
-      
-      try {
-        log('Request URL: https://httpbin.org/headers');
-        log('Operation ID: middleware-test-456', 'info');
-        
-        const response = await client.get(
-          'https://httpbin.org/headers',
-          {},
-          { operationId: 'middleware-test-456' }
-        );
-        
-        if (response.ok) {
-          log('✅ Request successful!', 'success');
-          log('\nServer received headers:');
-          log(JSON.stringify(response.data, null, 2));
-          
-          const hasOpId = response.data?.headers?.['X-Operation-Id'];
-          const hasCustom = response.data?.headers?.['X-Custom-Middleware'];
-          
-          if (hasOpId && hasCustom) {
-            log('\n✅ SUCCESS! Both operation ID and middleware headers present!', 'success');
-          } else if (!hasOpId) {
-            log('\n❌ WARNING: x-operation-id header MISSING', 'error');
-          } else if (!hasCustom) {
-            log('\n❌ WARNING: x-custom-middleware header MISSING', 'error');
-          }
-        }
-      } catch (error) {
-        log('❌ Error: ' + error.message, 'error');
+      button:hover {
+        background: #0860ca;
       }
-    });
-
-    // Test 4: POST with Operation ID
-    document.getElementById('testPost').addEventListener('click', async () => {
-      clearOutput();
-      log('🚀 Testing POST request with operation ID...', 'info');
-      
-      const client = new FetchClient();
-      
-      try {
-        log('Request URL: https://httpbin.org/post');
-        log('Operation ID: post-test-789', 'info');
-        log('Body: { test: "data" }', 'info');
-        
-        const response = await client.post(
-          'https://httpbin.org/post',
-          { test: 'data' },
-          {},
-          { operationId: 'post-test-789' }
-        );
-        
-        if (response.ok) {
-          log('✅ Request successful!', 'success');
-          log('\nServer received headers:');
-          log(JSON.stringify(response.data?.headers, null, 2));
-          
-          if (response.data?.headers?.['X-Operation-Id']) {
-            log('\n✅ SUCCESS! x-operation-id header present in POST!', 'success');
-          } else {
-            log('\n❌ WARNING: x-operation-id header NOT found', 'error');
-          }
-        }
-      } catch (error) {
-        log('❌ Error: ' + error.message, 'error');
+      pre {
+        background: #f6f8fa;
+        padding: 1rem;
+        border-radius: 6px;
+        overflow-x: auto;
+        border: 1px solid #d0d7de;
       }
-    });
+      .section {
+        margin: 2rem 0;
+        padding: 1rem;
+        border: 1px solid #d0d7de;
+        border-radius: 6px;
+      }
+      h2 {
+        margin-top: 0;
+      }
+      .success {
+        color: #1a7f37;
+      }
+      .error {
+        color: #cf222e;
+      }
+      .info {
+        color: #0969da;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Operation ID Browser Test</h1>
 
-    log('✨ Test page loaded successfully!', 'success');
-    log('Open DevTools Network tab and click a test button', 'info');
-  </script>
-</body>
+    <div class="section">
+      <h2>Instructions</h2>
+      <ol>
+        <li>Open DevTools (F12) → Network tab</li>
+        <li>Click one of the test buttons below</li>
+        <li>In the Network tab, click on the request</li>
+        <li>
+          Check the "Request Headers" section for <code>x-operation-id</code>
+        </li>
+      </ol>
+    </div>
+
+    <div class="section">
+      <h2>Test Buttons</h2>
+      <button id="testWithOpId">✅ Test WITH Operation ID</button>
+      <button id="testWithoutOpId">❌ Test WITHOUT Operation ID</button>
+      <button id="testWithMiddleware">
+        🔧 Test WITH Operation ID + Middleware
+      </button>
+      <button id="testPost">📤 Test POST with Operation ID</button>
+    </div>
+
+    <div class="section">
+      <h2>Output</h2>
+      <pre id="output">Ready! Click a button to start testing...</pre>
+    </div>
+
+    <script type="module">
+      // Import directly from source for development
+      import { FetchClient } from "../src/index.ts";
+
+      const output = document.getElementById("output");
+
+      function log(message, type = "info") {
+        const timestamp = new Date().toLocaleTimeString();
+        const className =
+          type === "error" ? "error" : type === "success" ? "success" : "info";
+        output.innerHTML += `\n<span class="${className}">[${timestamp}] ${message}</span>`;
+        output.scrollTop = output.scrollHeight;
+      }
+
+      function clearOutput() {
+        output.textContent = "";
+      }
+
+      // Test 1: With Operation ID
+      document
+        .getElementById("testWithOpId")
+        .addEventListener("click", async () => {
+          clearOutput();
+          log("🚀 Testing GET request WITH operation ID...", "info");
+
+          const client = new FetchClient();
+
+          try {
+            log("Request URL: https://httpbin.org/headers");
+            log("Operation ID: browser-test-123", "info");
+            log("Expected header: x-operation-id: browser-test-123", "info");
+
+            const response = await client.get(
+              "https://httpbin.org/headers",
+              {},
+              { operationId: "browser-test-123" },
+            );
+
+            if (response.ok) {
+              log("✅ Request successful!", "success");
+              log("\nServer received headers:");
+              log(JSON.stringify(response.data, null, 2));
+
+              // Check if our header was received
+              if (response.data?.headers?.["X-Operation-Id"]) {
+                log(
+                  "\n✅ SUCCESS! x-operation-id header was sent and received!",
+                  "success",
+                );
+              } else {
+                log(
+                  "\n❌ WARNING: x-operation-id header NOT found in server response",
+                  "error",
+                );
+                log("Check DevTools Network tab → Request Headers", "info");
+              }
+            } else {
+              log("❌ Request failed: " + response.statusText, "error");
+            }
+          } catch (error) {
+            log("❌ Error: " + error.message, "error");
+          }
+        });
+
+      // Test 2: Without Operation ID
+      document
+        .getElementById("testWithoutOpId")
+        .addEventListener("click", async () => {
+          clearOutput();
+          log("🚀 Testing GET request WITHOUT operation ID...", "info");
+
+          const client = new FetchClient();
+
+          try {
+            log("Request URL: https://httpbin.org/headers");
+            log("No operation ID provided", "info");
+
+            const response = await client.get("https://httpbin.org/headers");
+
+            if (response.ok) {
+              log("✅ Request successful!", "success");
+              log("\nServer received headers:");
+              log(JSON.stringify(response.data, null, 2));
+
+              if (response.data?.headers?.["X-Operation-Id"]) {
+                log(
+                  "\n❌ UNEXPECTED: x-operation-id header found when it should NOT be there",
+                  "error",
+                );
+              } else {
+                log(
+                  "\n✅ CORRECT: No x-operation-id header (as expected)",
+                  "success",
+                );
+              }
+            }
+          } catch (error) {
+            log("❌ Error: " + error.message, "error");
+          }
+        });
+
+      // Test 3: With Middleware
+      document
+        .getElementById("testWithMiddleware")
+        .addEventListener("click", async () => {
+          clearOutput();
+          log("🚀 Testing with middleware AND operation ID...", "info");
+
+          const client = new FetchClient();
+
+          // Add middleware that logs and adds another header
+          client.use(async (request, next) => {
+            log(
+              "📋 Middleware intercept - headers before modification:",
+              "info",
+            );
+            log(JSON.stringify(request.headers, null, 2));
+
+            request.headers = {
+              ...request.headers,
+              "X-Custom-Middleware": "middleware-was-here",
+            };
+
+            log("📋 Middleware - headers after adding custom header:", "info");
+            log(JSON.stringify(request.headers, null, 2));
+
+            return next(request);
+          });
+
+          try {
+            log("Request URL: https://httpbin.org/headers");
+            log("Operation ID: middleware-test-456", "info");
+
+            const response = await client.get(
+              "https://httpbin.org/headers",
+              {},
+              { operationId: "middleware-test-456" },
+            );
+
+            if (response.ok) {
+              log("✅ Request successful!", "success");
+              log("\nServer received headers:");
+              log(JSON.stringify(response.data, null, 2));
+
+              const hasOpId = response.data?.headers?.["X-Operation-Id"];
+              const hasCustom = response.data?.headers?.["X-Custom-Middleware"];
+
+              if (hasOpId && hasCustom) {
+                log(
+                  "\n✅ SUCCESS! Both operation ID and middleware headers present!",
+                  "success",
+                );
+              } else if (!hasOpId) {
+                log("\n❌ WARNING: x-operation-id header MISSING", "error");
+              } else if (!hasCustom) {
+                log(
+                  "\n❌ WARNING: x-custom-middleware header MISSING",
+                  "error",
+                );
+              }
+            }
+          } catch (error) {
+            log("❌ Error: " + error.message, "error");
+          }
+        });
+
+      // Test 4: POST with Operation ID
+      document
+        .getElementById("testPost")
+        .addEventListener("click", async () => {
+          clearOutput();
+          log("🚀 Testing POST request with operation ID...", "info");
+
+          const client = new FetchClient();
+
+          try {
+            log("Request URL: https://httpbin.org/post");
+            log("Operation ID: post-test-789", "info");
+            log('Body: { test: "data" }', "info");
+
+            const response = await client.post(
+              "https://httpbin.org/post",
+              { test: "data" },
+              {},
+              { operationId: "post-test-789" },
+            );
+
+            if (response.ok) {
+              log("✅ Request successful!", "success");
+              log("\nServer received headers:");
+              log(JSON.stringify(response.data?.headers, null, 2));
+
+              if (response.data?.headers?.["X-Operation-Id"]) {
+                log(
+                  "\n✅ SUCCESS! x-operation-id header present in POST!",
+                  "success",
+                );
+              } else {
+                log("\n❌ WARNING: x-operation-id header NOT found", "error");
+              }
+            }
+          } catch (error) {
+            log("❌ Error: " + error.message, "error");
+          }
+        });
+
+      log("✨ Test page loaded successfully!", "success");
+      log("Open DevTools Network tab and click a test button", "info");
+    </script>
+  </body>
 </html>
