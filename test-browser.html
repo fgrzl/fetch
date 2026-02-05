@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Operation ID Test</title>
+</head>
+<body>
+  <h1>Operation ID Test</h1>
+  <button id="testBtn">Test Request with Operation ID</button>
+  <button id="testNoOpBtn">Test Request without Operation ID</button>
+  <pre id="output"></pre>
+
+  <script type="module">
+    // Import the client (adjust path based on your build output)
+    import { FetchClient } from './dist/index.js';
+
+    const output = document.getElementById('output');
+    const client = new FetchClient();
+
+    // Add middleware to log what's being sent
+    client.use(async (request, next) => {
+      output.textContent += '\n\nMiddleware sees headers:\n' + JSON.stringify(request.headers, null, 2);
+      return next(request);
+    });
+
+    document.getElementById('testBtn').addEventListener('click', async () => {
+      output.textContent = 'Testing with operation ID...';
+      
+      try {
+        // Use a test endpoint (you can use httpbin.org or your own)
+        const response = await client.get(
+          'https://httpbin.org/headers',
+          {},
+          { operationId: 'browser-test-123' }
+        );
+        
+        output.textContent += '\n\nResponse:\n' + JSON.stringify(response.data, null, 2);
+      } catch (error) {
+        output.textContent += '\n\nError: ' + error.message;
+      }
+    });
+
+    document.getElementById('testNoOpBtn').addEventListener('click', async () => {
+      output.textContent = 'Testing without operation ID...';
+      
+      try {
+        const response = await client.get('https://httpbin.org/headers');
+        output.textContent += '\n\nResponse:\n' + JSON.stringify(response.data, null, 2);
+      } catch (error) {
+        output.textContent += '\n\nError: ' + error.message;
+      }
+    });
+
+    output.textContent = 'Ready! Open DevTools Network tab and click the buttons.\nCheck the request headers in DevTools.';
+  </script>
+</body>
+</html>

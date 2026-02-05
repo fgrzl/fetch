@@ -35,7 +35,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pre-built middleware stacks for common use cases
 - Excellent TypeScript support with full type safety
 - Zero dependencies
-- Modern build system with tsup
+- Modern build system with Vite
 - Comprehensive test suite (99.43% coverage)
 - Detailed documentation with examples
 

@@ -103,9 +103,7 @@
     "@typescript-eslint/utils": "^8.39.1"
   },
   "scripts": {
-    "build": "tsup",
-    "build:esm": "tsup --format esm",
-    "build:cjs": "tsup --format cjs",
+    "build": "vite build",
     "clean": "rimraf dist",
     "prepublishOnly": "npm run clean && npm run build",
     "fmt": "prettier --write .",
@@ -130,7 +128,8 @@
     "jsdom": "^28.0.0",
     "prettier": "^3.8.1",
     "rimraf": "^6.1.2",
-    "tsup": "^8.5.1",
+    "vite": "^5.2.0",
+    "vite-plugin-dts": "^4.0.2",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0",
     "vitest": "^4.0.18"
