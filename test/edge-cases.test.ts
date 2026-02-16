@@ -14,7 +14,7 @@ import { addProductionStack } from '../src/middleware';
 
 // Mock fetch
 const mockFetch = vi.fn();
-global.fetch = mockFetch;
+globalThis.fetch = mockFetch;
 
 describe('Edge Cases and Error Handling', () => {
   beforeEach(() => {
@@ -548,7 +548,7 @@ describe('Edge Cases and Error Handling', () => {
       expect(response.ok).toBe(true);
       expect(response.data).toEqual({ modified: true });
 
-      const [, options] = mockFetch.mock.calls[0];
+      const [, options] = mockFetch.mock.calls[0] ?? [];
       expect(options?.headers?.['X-Modified']).toBe('true');
     });
   });
