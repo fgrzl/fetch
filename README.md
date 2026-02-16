@@ -5,16 +5,19 @@
 A tiny, TypeScript-first wrapper around `fetch` that adds typed responses and composable middleware.
 
 ## What
+
 - Lightweight HTTP client built on the browser `fetch` API.
 - Returns a consistent response shape (`ok`, `data`, `error`).
 - Built-in, optional middleware: auth, retry, cache, logging, CSRF, rate-limit.
 
 ## Why
+
 - Removes repetitive request boilerplate (base URLs, headers, retries).
 - Keeps runtime small and TypeScript-friendly.
 - Compose only the middleware you need — zero-config defaults when useful.
 
 ## How
+
 1. Install
 
 ```bash
@@ -34,38 +37,45 @@ if (res.ok) console.log(res.data);
 ## Examples
 
 ### Set base URL
+
 ```ts
-api.setBaseUrl('https://api.example.com');
-await api.get('/users');
+api.setBaseUrl("https://api.example.com");
+await api.get("/users");
 ```
 
 ### POST with JSON
+
 ```ts
-const created = await api.post('/users', { name: 'Ava' });
+const created = await api.post("/users", { name: "Ava" });
 ```
 
 ### Typed response
+
 ```ts
-interface User { id: number; name: string }
-const r = await api.get<User>('/me');
+interface User {
+  id: number;
+  name: string;
+}
+const r = await api.get<User>("/me");
 if (r.ok) r.data.name;
 ```
 
 ### Add authentication middleware
+
 ```ts
-import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
-const authed = addAuthentication(api, { tokenProvider: () => localStorage.getItem('token') || '' });
-await authed.get('/private');
+import { addAuthentication } from "@fgrzl/fetch/middleware/authentication";
+const authed = addAuthentication(api, {
+  tokenProvider: () => localStorage.getItem("token") || "",
+});
+await authed.get("/private");
 ```
 
 ### Cancel / timeout
+
 ```ts
 const c = new AbortController();
-api.get('/data', {}, { signal: c.signal, timeout: 5000 });
+api.get("/data", {}, { signal: c.signal, timeout: 5000 });
 c.abort();
 ```
 
 Docs: `docs/getting-started.md`
-## License
-
-MIT
