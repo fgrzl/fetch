@@ -99,9 +99,6 @@
     "CONTRIBUTING.md"
   ],
   "sideEffects": false,
-  "overrides": {
-    "@typescript-eslint/utils": "^8.39.1"
-  },
   "scripts": {
     "build": "npm run build:unmin && npm run build:min",
     "build:unmin": "cross-env MIN=false vite build",
@@ -118,14 +115,12 @@
     "test:coverage": "vitest run --coverage"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.2",
+    "ajv": "^8.18.0",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.3.2",
-    "@typescript-eslint/eslint-plugin": "^8.56.1",
-    "@typescript-eslint/parser": "^8.56.1",
     "@vitest/coverage-v8": "^4.0.18",
-    "eslint": "^9.16.0",
+    "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-vitest": "^0.5.4",
     "jiti": "^2.6.1",
     "jsdom": "^28.1.0",
     "prettier": "^3.8.1",
