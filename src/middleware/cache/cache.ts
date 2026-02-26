@@ -65,7 +65,9 @@ export class MemoryStorage implements CacheStorage {
 function headersToCacheKeyPart(
   headers: Headers | Record<string, string> | string[][] | undefined,
 ): string {
-  if (!headers) return '';
+  if (!headers) {
+    return '';
+  }
   if (headers instanceof Headers) {
     const entries: string[] = [];
     headers.forEach((value, key) => {
