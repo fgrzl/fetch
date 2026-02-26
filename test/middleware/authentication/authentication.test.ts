@@ -195,6 +195,38 @@ describe('Authentication Middleware', () => {
         }),
       );
     });
+
+    it('should return synthetic 401 when requireToken and token is empty', async () => {
+      const client = new FetchClient();
+      const authClient = addAuthentication(client, {
+        tokenProvider: () => '',
+        requireToken: true,
+      });
+
+      const response = await authClient.get('https://api.example.com/users');
+
+      expect(response.ok).toBe(false);
+      expect(response.status).toBe(401);
+      expect(response.error?.message).toContain('no token provided');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('should return synthetic 401 when requireToken and tokenProvider throws', async () => {
+      const client = new FetchClient();
+      const authClient = addAuthentication(client, {
+        tokenProvider: () => {
+          throw new Error('Token fetch failed');
+        },
+        requireToken: true,
+      });
+
+      const response = await authClient.get('https://api.example.com/users');
+
+      expect(response.ok).toBe(false);
+      expect(response.status).toBe(401);
+      expect(response.error?.message).toContain('Token fetch failed');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
   });
 
   describe('createAuthenticationMiddleware (Direct API)', () => {

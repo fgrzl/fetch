@@ -2,8 +2,25 @@
  * @fileoverview Authentication middleware implementation.
  */
 
+import type { FetchResponse } from '../../client/types';
 import type { FetchMiddleware } from '../../client/fetch-client';
 import type { AuthenticationOptions } from './types';
+
+/** Synthetic 401 response when requireToken is set and token is missing or provider throws. */
+function syntheticUnauthorized(
+  url: string,
+  message: string,
+): FetchResponse<null> {
+  return {
+    data: null,
+    status: 401,
+    statusText: 'Unauthorized',
+    headers: new Headers(),
+    url,
+    ok: false,
+    error: { message },
+  };
+}
 
 /**
  * Checks if a URL should skip authentication based on configured patterns.
@@ -72,6 +89,7 @@ export function createAuthenticationMiddleware(
     tokenType = 'Bearer',
     skipPatterns = [],
     includePatterns,
+    requireToken = false,
   } = options;
 
   return async (request, next) => {
@@ -93,8 +111,14 @@ export function createAuthenticationMiddleware(
       // Get auth token (may be async)
       const token = await tokenProvider();
 
-      // Skip if no token available
+      // No token: either fail fast (requireToken) or send without auth (often causes 401)
       if (!token) {
+        if (requireToken) {
+          return syntheticUnauthorized(
+            url,
+            'Authentication required (no token provided)',
+          );
+        }
         return next(request);
       }
 
@@ -109,9 +133,16 @@ export function createAuthenticationMiddleware(
       };
 
       return next(modifiedRequest);
-    } catch {
-      // If token provider fails, proceed without auth
-      // This ensures network requests don't fail due to auth issues
+    } catch (error) {
+      // Token provider threw (e.g. refresh failed, storage error)
+      if (requireToken) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Authentication failed (token provider error)';
+        return syntheticUnauthorized(url, message);
+      }
+      // Legacy: proceed without auth, which usually results in a 401 from the server
       return next(request);
     }
   };

@@ -74,6 +74,25 @@ export interface AuthenticationOptions {
    * ```
    */
   includePatterns?: (RegExp | string)[];
+
+  /**
+   * When true, fail fast with a synthetic 401 when the token is missing or
+   * tokenProvider throws, instead of sending the request without auth.
+   * Reduces unnecessary 401s from the server and lets onUnauthorized run
+   * without a round-trip.
+   *
+   * Default: false (proceed without auth when token missing, which often
+   * causes a real 401 from the server).
+   *
+   * @example
+   * ```typescript
+   * addAuthentication(client, {
+   *   tokenProvider: () => getToken(),
+   *   requireToken: true, // no request sent when token missing
+   * });
+   * ```
+   */
+  requireToken?: boolean;
 }
 
 // Ensure this file is treated as a module

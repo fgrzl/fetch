@@ -59,12 +59,34 @@ export class MemoryStorage implements CacheStorage {
 }
 
 /**
+ * Serialize headers for cache key so different auth/headers get different keys.
+ * Headers objects stringify to "{}", so we must iterate to include Authorization etc.
+ */
+function headersToCacheKeyPart(
+  headers: Headers | Record<string, string> | string[][] | undefined,
+): string {
+  if (!headers) return '';
+  if (headers instanceof Headers) {
+    const entries: string[] = [];
+    headers.forEach((value, key) => {
+      entries.push(`${key}:${value}`);
+    });
+    return entries.sort().join('|');
+  }
+  if (Array.isArray(headers)) {
+    const entries = headers.map(([k, v]) => `${k}:${v}`).sort();
+    return entries.join('|');
+  }
+  return JSON.stringify(headers);
+}
+
+/**
  * Default cache key generator.
  */
 const defaultKeyGenerator: CacheKeyGenerator = (request) => {
   const url = request.url || '';
   const method = request.method || 'GET';
-  const headers = request.headers ? JSON.stringify(request.headers) : '';
+  const headers = headersToCacheKeyPart(request.headers);
   return `${method}:${url}:${headers}`;
 };
 

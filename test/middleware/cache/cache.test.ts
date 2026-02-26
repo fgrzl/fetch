@@ -144,6 +144,22 @@ describe('Cache Middleware', () => {
       expect(mockFetch).toHaveBeenCalledTimes(1); // Only one call due to same URL
     });
 
+    it('should use different cache keys for different auth headers (default key generator)', async () => {
+      const client = new FetchClient();
+      const cachedClient = addCache(client);
+
+      await cachedClient.request('https://api.example.com/users', {
+        method: 'GET',
+        headers: { Authorization: 'Bearer tokenA' },
+      });
+      await cachedClient.request('https://api.example.com/users', {
+        method: 'GET',
+        headers: { Authorization: 'Bearer tokenB' },
+      });
+
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
     it('should handle stale-while-revalidate', async () => {
       vi.useFakeTimers();
 
