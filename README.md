@@ -78,4 +78,4 @@ api.get("/data", {}, { signal: c.signal, timeout: 5000 });
 c.abort();
 ```
 
-Docs: `docs/getting-started.md`
+Documentation: **[docs/](docs/README.md)** — [getting started](docs/getting-started.md), [architecture](docs/architecture.md), [middleware](docs/middleware.md)
