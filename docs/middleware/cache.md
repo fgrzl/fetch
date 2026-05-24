@@ -7,7 +7,7 @@ Provides intelligent response caching with TTL (Time To Live) support for improv
 ### Simple Caching
 
 ```ts
-import { addCache } from "@fgrzl/fetch";
+import { addCache } from '@fgrzl/fetch';
 
 // Cache responses for 5 minutes
 const cachedClient = addCache(client, {
@@ -21,7 +21,7 @@ const cachedClient = addCache(client);
 ### Advanced Configuration
 
 ```ts
-import { addCache, createCacheMiddleware } from "@fgrzl/fetch";
+import { addCache, createCacheMiddleware } from '@fgrzl/fetch';
 
 // Custom cache configuration
 const cachedClient = addCache(client, {
@@ -29,7 +29,7 @@ const cachedClient = addCache(client, {
   maxSize: 1000, // Maximum 1000 cached responses
   keyGenerator: (request) => `${request.method}-${request.url}`,
   shouldCache: (response) =>
-    response.status === 200 && response.method === "GET",
+    response.status === 200 && response.method === 'GET',
 });
 
 // Factory approach for advanced control
@@ -44,7 +44,7 @@ client.use(cacheMiddleware);
 
 ```ts
 // Using custom storage backend
-import { addCache } from "@fgrzl/fetch";
+import { addCache } from '@fgrzl/fetch';
 
 class RedisCache implements CacheStorage {
   async get(key: string): Promise<CacheEntry | undefined> {
@@ -110,12 +110,12 @@ type CacheKeyGenerator = (request: RequestInit & { url: string }) => string;
 const userClient = addCache(new FetchClient(), {
   ttl: 2 * 60 * 1000, // 2 minutes
   shouldCache: (response) =>
-    response.method === "GET" &&
-    response.url?.includes("/api/users") &&
+    response.method === 'GET' &&
+    response.url?.includes('/api/users') &&
     response.status === 200,
 });
 
-const userData = await userClient.get("/api/users/123");
+const userData = await userClient.get('/api/users/123');
 // Subsequent calls within 2 minutes will be served from cache
 ```
 
@@ -129,23 +129,23 @@ const client = addCache(new FetchClient());
 await client.cache.clear();
 
 // Clear specific entry (if you have access to the cache instance)
-await client.cache.delete("GET-/api/users/123");
+await client.cache.delete('GET-/api/users/123');
 ```
 
 ### Per-Request Cache Control
 
 ```ts
 // Skip cache for specific requests
-const response = await cachedClient.get("/api/fresh-data", {
+const response = await cachedClient.get('/api/fresh-data', {
   headers: {
-    "Cache-Control": "no-cache", // Will bypass cache
+    'Cache-Control': 'no-cache', // Will bypass cache
   },
 });
 
 // Force cache refresh
-const response = await cachedClient.get("/api/data", {
+const response = await cachedClient.get('/api/data', {
   headers: {
-    "Cache-Control": "max-age=0", // Will refresh cache
+    'Cache-Control': 'max-age=0', // Will refresh cache
   },
 });
 ```
@@ -160,8 +160,8 @@ const smartClient = addCache(client, {
   keyGenerator: (req) => `${req.method}-${req.url}`,
   shouldCache: (response) => response.status < 400,
   ttl: (request) => {
-    if (request.url?.includes("/api/config")) return 30 * 60 * 1000; // 30 min
-    if (request.url?.includes("/api/users")) return 5 * 60 * 1000; // 5 min
+    if (request.url?.includes('/api/config')) return 30 * 60 * 1000; // 30 min
+    if (request.url?.includes('/api/users')) return 5 * 60 * 1000; // 5 min
     return 60 * 1000; // 1 min default
   },
 });
@@ -173,10 +173,10 @@ const smartClient = addCache(client, {
 // Only cache successful GET requests
 const conditionalClient = addCache(client, {
   shouldCache: (response) =>
-    response.method === "GET" &&
+    response.method === 'GET' &&
     response.status >= 200 &&
     response.status < 300 &&
-    !response.url?.includes("?nocache=true"),
+    !response.url?.includes('?nocache=true'),
 });
 ```
 

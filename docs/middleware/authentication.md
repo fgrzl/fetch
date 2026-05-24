@@ -7,22 +7,22 @@ Automatically adds authentication headers to requests using bearer tokens or cus
 ### Simple Bearer Token
 
 ```ts
-import { addAuthentication } from "@fgrzl/fetch";
+import { addAuthentication } from '@fgrzl/fetch';
 
 // Static token
 const authClient = addAuthentication(client, {
-  tokenProvider: () => "your-bearer-token",
+  tokenProvider: () => 'your-bearer-token',
 });
 
 // Dynamic token from localStorage
 const authClient = addAuthentication(client, {
-  tokenProvider: () => localStorage.getItem("auth-token") || "",
+  tokenProvider: () => localStorage.getItem('auth-token') || '',
 });
 
 // With custom header name
 const authClient = addAuthentication(client, {
   tokenProvider: () => getApiKey(),
-  headerName: "X-API-Key",
+  headerName: 'X-API-Key',
 });
 ```
 
@@ -32,25 +32,25 @@ const authClient = addAuthentication(client, {
 // Custom authorization header
 const authClient = addAuthentication(client, {
   tokenProvider: () => `Bearer ${getToken()}`,
-  headerName: "Authorization", // Default
+  headerName: 'Authorization', // Default
 });
 
 // API Key authentication
 const authClient = addAuthentication(client, {
   tokenProvider: () => process.env.API_KEY,
-  headerName: "X-API-Key",
+  headerName: 'X-API-Key',
 });
 ```
 
 ### Advanced Usage
 
 ```ts
-import { createAuthenticationMiddleware } from "@fgrzl/fetch";
+import { createAuthenticationMiddleware } from '@fgrzl/fetch';
 
 // Skip authentication for certain endpoints
 const authClient = addAuthentication(client, {
   tokenProvider: () => getToken(),
-  skipPatterns: ["/public", /^\/health/],
+  skipPatterns: ['/public', /^\/health/],
 });
 
 // Advanced factory usage
@@ -59,7 +59,7 @@ const authMiddleware = createAuthenticationMiddleware({
     const token = await refreshTokenIfNeeded();
     return token;
   },
-  headerName: "Authorization",
+  headerName: 'Authorization',
 });
 
 client.use(authMiddleware);
@@ -88,7 +88,7 @@ type AuthTokenProvider = () => string | Promise<string>;
 ### React Integration
 
 ```tsx
-import { addAuthentication } from "@fgrzl/fetch";
+import { addAuthentication } from '@fgrzl/fetch';
 
 function createAuthenticatedClient(getToken: () => string) {
   return addAuthentication(new FetchClient(), {
@@ -98,7 +98,7 @@ function createAuthenticatedClient(getToken: () => string) {
 
 // In your React app
 const apiClient = createAuthenticatedClient(
-  () => localStorage.getItem("authToken") || "",
+  () => localStorage.getItem('authToken') || '',
 );
 ```
 
@@ -106,11 +106,11 @@ const apiClient = createAuthenticatedClient(
 
 ```ts
 // pages/api/proxy.ts
-import { addAuthentication } from "@fgrzl/fetch";
+import { addAuthentication } from '@fgrzl/fetch';
 
 const authenticatedClient = addAuthentication(new FetchClient(), {
   tokenProvider: () => process.env.SERVICE_API_KEY!,
-  headerName: "X-Service-Key",
+  headerName: 'X-Service-Key',
 });
 ```
 

@@ -15,6 +15,26 @@ export type FetchMiddleware = (
   ) => Promise<FetchResponse<unknown>>,
 ) => Promise<FetchResponse<unknown>>;
 
+function headersToObject(headers?: HeadersInit): Record<string, string> {
+  if (!headers) {
+    return {};
+  }
+
+  if (headers instanceof Headers) {
+    const result: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      result[key] = value;
+    });
+    return result;
+  }
+
+  if (Array.isArray(headers)) {
+    return Object.fromEntries(headers);
+  }
+
+  return { ...headers };
+}
+
 /**
  * Enhanced HTTP client with intercept middleware architecture.
  *
@@ -136,7 +156,7 @@ export class FetchClient {
     // Add operation ID header if provided
     if (options?.operationId) {
       init.headers = {
-        ...init.headers,
+        ...headersToObject(init.headers),
         'x-operation-id': options.operationId,
       };
     }
@@ -508,7 +528,7 @@ export class FetchClient {
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
-      ...(headers ?? {}),
+      ...headers,
     };
 
     return this.request<T>(
@@ -540,7 +560,7 @@ export class FetchClient {
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
-      ...(headers ?? {}),
+      ...headers,
     };
 
     return this.request<T>(
@@ -572,7 +592,7 @@ export class FetchClient {
   ): Promise<FetchResponse<T>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
-      ...(headers ?? {}),
+      ...headers,
     };
 
     return this.request<T>(

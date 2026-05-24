@@ -102,4 +102,3 @@ export interface RateLimitOptions {
 }
 
 // Ensure this file is treated as a module
-export {};

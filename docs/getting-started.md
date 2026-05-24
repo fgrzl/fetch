@@ -13,9 +13,9 @@ npm install @fgrzl/fetch
 The fastest way to make an API call:
 
 ```typescript
-import api from "@fgrzl/fetch";
+import api from '@fgrzl/fetch';
 
-const response = await api.get("/api/users");
+const response = await api.get('/api/users');
 console.log(response.data);
 ```
 
@@ -32,8 +32,8 @@ That's it! The default client includes:
 ### GET with Query Parameters
 
 ```typescript
-const users = await api.get("/api/users", {
-  status: "active",
+const users = await api.get('/api/users', {
+  status: 'active',
   limit: 10,
 });
 // → GET /api/users?status=active&limit=10
@@ -42,19 +42,19 @@ const users = await api.get("/api/users", {
 ### POST with Data
 
 ```typescript
-const newUser = await api.post("/api/users", {
-  name: "John Doe",
-  email: "john@example.com",
+const newUser = await api.post('/api/users', {
+  name: 'John Doe',
+  email: 'john@example.com',
 });
 ```
 
 ### Error Handling
 
 ```typescript
-const response = await api.get("/api/users");
+const response = await api.get('/api/users');
 
 if (response.ok) {
-  console.log("Success:", response.data);
+  console.log('Success:', response.data);
 } else {
   console.error(`Error ${response.status}:`, response.error?.message);
 }
@@ -69,7 +69,7 @@ interface User {
   email: string;
 }
 
-const response = await api.get<User[]>("/api/users");
+const response = await api.get<User[]>('/api/users');
 if (response.ok) {
   // response.data is now typed as User[]
   response.data.forEach((user) => console.log(user.name));
@@ -83,21 +83,21 @@ if (response.ok) {
 When working with a specific API, set a base URL to avoid repeating the domain:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 // Create a client for your API
 const apiClient = new FetchClient({
-  baseUrl: "https://api.example.com",
+  baseUrl: 'https://api.example.com',
 });
 
 // Now all relative URLs are prefixed automatically
-const users = await apiClient.get("/users"); // → GET https://api.example.com/users
-const posts = await apiClient.get("/posts?page=1"); // → GET https://api.example.com/posts?page=1
+const users = await apiClient.get('/users'); // → GET https://api.example.com/users
+const posts = await apiClient.get('/posts?page=1'); // → GET https://api.example.com/posts?page=1
 
 // Create new resources
-const newPost = await apiClient.post("/posts", {
-  title: "Hello World",
-  content: "My first post!",
+const newPost = await apiClient.post('/posts', {
+  title: 'Hello World',
+  content: 'My first post!',
 }); // → POST https://api.example.com/posts
 ```
 
@@ -106,12 +106,12 @@ const newPost = await apiClient.post("/posts", {
 Create different clients for different services:
 
 ```typescript
-const userAPI = new FetchClient({ baseUrl: "https://users.api.com" });
-const paymentAPI = new FetchClient({ baseUrl: "https://payments.api.com" });
+const userAPI = new FetchClient({ baseUrl: 'https://users.api.com' });
+const paymentAPI = new FetchClient({ baseUrl: 'https://payments.api.com' });
 
 // Each client manages its own base URL
-const user = await userAPI.get("/profile"); // → users.api.com
-const invoice = await paymentAPI.get("/invoices/123"); // → payments.api.com
+const user = await userAPI.get('/profile'); // → users.api.com
+const invoice = await paymentAPI.get('/invoices/123'); // → payments.api.com
 ```
 
 ### Dynamic Base URL Updates
@@ -119,28 +119,28 @@ const invoice = await paymentAPI.get("/invoices/123"); // → payments.api.com
 Need to change the base URL after creating a client? Use `setBaseUrl()`:
 
 ```typescript
-import { FetchClient, addProductionStack } from "@fgrzl/fetch";
+import { FetchClient, addProductionStack } from '@fgrzl/fetch';
 
 // Start with a client
 const client = new FetchClient();
 
 // Set base URL dynamically
-client.setBaseUrl("https://api.example.com");
-await client.get("/users"); // → GET https://api.example.com/users
+client.setBaseUrl('https://api.example.com');
+await client.get('/users'); // → GET https://api.example.com/users
 
 // Update to a different environment
-client.setBaseUrl("https://staging-api.example.com");
-await client.get("/users"); // → GET https://staging-api.example.com/users
+client.setBaseUrl('https://staging-api.example.com');
+await client.get('/users'); // → GET https://staging-api.example.com/users
 
 // Works great with middleware stacks
 const prodClient = addProductionStack(new FetchClient(), {
   auth: { tokenProvider: () => getAuthToken() },
   retry: { maxRetries: 3 },
-  logging: { level: "info" },
+  logging: { level: 'info' },
 }).setBaseUrl(process.env.API_BASE_URL!); // Method chaining!
 
 // Now you can use it
-await prodClient.get("/users");
+await prodClient.get('/users');
 ```
 
 ### Environment-Based Setup
@@ -150,9 +150,9 @@ Perfect for different deployment environments:
 ```typescript
 // Environment-aware setup
 const client = addProductionStack(new FetchClient()).setBaseUrl(
-  process.env.NODE_ENV === "production"
-    ? "https://api.mycompany.com"
-    : "http://localhost:3000/api",
+  process.env.NODE_ENV === 'production'
+    ? 'https://api.mycompany.com'
+    : 'http://localhost:3000/api',
 );
 ```
 

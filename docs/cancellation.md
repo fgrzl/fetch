@@ -28,14 +28,14 @@ Learn how to cancel requests and set timeouts to handle slow or unresponsive end
 Cancel requests programmatically using `AbortController`:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 const client = new FetchClient();
 const controller = new AbortController();
 
 // Start a request
 const request = client.get(
-  "/api/slow-endpoint",
+  '/api/slow-endpoint',
   {},
   { signal: controller.signal },
 );
@@ -48,7 +48,7 @@ setTimeout(() => {
 // Handle the cancellation
 const response = await request;
 if (!response.ok && response.status === 0) {
-  console.log("Request was cancelled");
+  console.log('Request was cancelled');
 }
 ```
 
@@ -81,37 +81,37 @@ cancelBtn.addEventListener("click", () => {
 
 ```typescript
 // GET
-await client.get("/api/users", {}, { signal: controller.signal });
+await client.get('/api/users', {}, { signal: controller.signal });
 
 // POST
 await client.post(
-  "/api/users",
-  { name: "John" },
+  '/api/users',
+  { name: 'John' },
   {},
   { signal: controller.signal },
 );
 
 // PUT
 await client.put(
-  "/api/users/1",
-  { name: "Jane" },
+  '/api/users/1',
+  { name: 'Jane' },
   {},
   { signal: controller.signal },
 );
 
 // PATCH
 await client.patch(
-  "/api/users/1",
-  { email: "new@example.com" },
+  '/api/users/1',
+  { email: 'new@example.com' },
   {},
   { signal: controller.signal },
 );
 
 // DELETE
-await client.del("/api/users/1", {}, { signal: controller.signal });
+await client.del('/api/users/1', {}, { signal: controller.signal });
 
 // HEAD
-await client.head("/api/resource", {}, { signal: controller.signal });
+await client.head('/api/resource', {}, { signal: controller.signal });
 ```
 
 ## Timeout Configuration
@@ -122,12 +122,12 @@ Set a default timeout for all requests:
 
 ```typescript
 const client = new FetchClient({
-  baseUrl: "https://api.example.com",
+  baseUrl: 'https://api.example.com',
   timeout: 5000, // 5 seconds
 });
 
 // All requests will timeout after 5 seconds
-const response = await client.get("/api/users");
+const response = await client.get('/api/users');
 ```
 
 ### Per-Request Timeout
@@ -138,13 +138,13 @@ Override the global timeout for specific requests:
 const client = new FetchClient({ timeout: 10000 }); // 10 second default
 
 // Fast endpoint - use shorter timeout
-const quick = await client.get("/api/quick", {}, { timeout: 1000 });
+const quick = await client.get('/api/quick', {}, { timeout: 1000 });
 
 // Slow endpoint - use longer timeout
-const slow = await client.get("/api/slow-report", {}, { timeout: 30000 });
+const slow = await client.get('/api/slow-report', {}, { timeout: 30000 });
 
 // No timeout for this specific request
-const noTimeout = await client.get("/api/streaming", {}, { timeout: 0 });
+const noTimeout = await client.get('/api/streaming', {}, { timeout: 0 });
 ```
 
 ### Handling Timeouts
@@ -152,11 +152,11 @@ const noTimeout = await client.get("/api/streaming", {}, { timeout: 0 });
 Timeouts are treated like aborted requests:
 
 ```typescript
-const response = await client.get("/api/slow", {}, { timeout: 2000 });
+const response = await client.get('/api/slow', {}, { timeout: 2000 });
 
 if (!response.ok) {
-  if (response.status === 0 && response.statusText === "Request Aborted") {
-    console.error("Request timed out");
+  if (response.status === 0 && response.statusText === 'Request Aborted') {
+    console.error('Request timed out');
     // Retry logic, show error message, etc.
   }
 }
@@ -170,7 +170,7 @@ You can use both AbortController and timeout together:
 const controller = new AbortController();
 
 const response = await client.get(
-  "/api/data",
+  '/api/data',
   {},
   {
     signal: controller.signal, // Manual cancellation
@@ -190,20 +190,20 @@ const controller = new AbortController();
 
 try {
   const response = await client.get(
-    "/api/data",
+    '/api/data',
     {},
     { signal: controller.signal },
   );
 
   if (!response.ok) {
     if (response.status === 0) {
-      console.log("Request was cancelled or timed out");
+      console.log('Request was cancelled or timed out');
       return;
     }
-    console.error("Request failed:", response.error?.message);
+    console.error('Request failed:', response.error?.message);
   }
 } catch (error) {
-  console.error("Unexpected error:", error);
+  console.error('Unexpected error:', error);
 }
 ```
 
@@ -215,10 +215,10 @@ const client = new FetchClient({
 });
 
 // Shorter timeout for health checks
-await client.get("/health", {}, { timeout: 2000 });
+await client.get('/health', {}, { timeout: 2000 });
 
 // Longer timeout for file uploads
-await client.post("/api/upload", largeFile, {}, { timeout: 60000 });
+await client.post('/api/upload', largeFile, {}, { timeout: 60000 });
 ```
 
 ### 3. Clean Up Controllers
@@ -234,7 +234,7 @@ class DataService {
     this.controller = new AbortController();
 
     const response = await client.get(
-      "/api/data",
+      '/api/data',
       {},
       { signal: this.controller.signal },
     );
@@ -260,12 +260,12 @@ showLoading();
 
 // Set up timeout with warning
 timeoutId = setTimeout(() => {
-  showWarning("Request is taking longer than expected...");
+  showWarning('Request is taking longer than expected...');
 }, 5000);
 
 try {
   const response = await client.get(
-    "/api/data",
+    '/api/data',
     {},
     {
       signal: controller.signal,
@@ -274,7 +274,7 @@ try {
   );
 
   if (response.ok) {
-    showSuccess("Data loaded");
+    showSuccess('Data loaded');
   }
 } finally {
   clearTimeout(timeoutId);
@@ -302,7 +302,7 @@ async function fetchWithRetry(url: string, maxRetries = 3) {
     return response;
   }
 
-  throw new Error("Max retries exceeded");
+  throw new Error('Max retries exceeded');
 }
 ```
 

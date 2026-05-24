@@ -7,13 +7,13 @@ This guide covers advanced configuration options for @fgrzl/fetch.
 When you need more control than the default client provides:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 const client = new FetchClient({
   // Base configuration
-  credentials: "same-origin", // Default: "same-origin"
+  credentials: 'same-origin', // Default: "same-origin"
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 ```
@@ -23,20 +23,20 @@ const client = new FetchClient({
 Set a base URL to simplify API calls and avoid repeating the full domain in every request:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 // Configure a base URL for your API
 const apiClient = new FetchClient({
-  baseUrl: "https://api.example.com",
+  baseUrl: 'https://api.example.com',
 });
 
 // All relative URLs are automatically prefixed
-await apiClient.get("/users"); // → GET https://api.example.com/users
-await apiClient.post("/users", userData); // → POST https://api.example.com/users
-await apiClient.get("/posts?page=1"); // → GET https://api.example.com/posts?page=1
+await apiClient.get('/users'); // → GET https://api.example.com/users
+await apiClient.post('/users', userData); // → POST https://api.example.com/users
+await apiClient.get('/posts?page=1'); // → GET https://api.example.com/posts?page=1
 
 // Absolute URLs are used as-is (baseUrl is ignored)
-await apiClient.get("https://cdn.example.com/images/avatar.png");
+await apiClient.get('https://cdn.example.com/images/avatar.png');
 // → GET https://cdn.example.com/images/avatar.png
 ```
 
@@ -47,12 +47,12 @@ Perfect for handling different environments:
 ```typescript
 const getApiUrl = () => {
   switch (process.env.NODE_ENV) {
-    case "production":
-      return "https://api.myapp.com";
-    case "staging":
-      return "https://api-staging.myapp.com";
+    case 'production':
+      return 'https://api.myapp.com';
+    case 'staging':
+      return 'https://api-staging.myapp.com';
     default:
-      return "http://localhost:3001";
+      return 'http://localhost:3001';
   }
 };
 
@@ -61,7 +61,7 @@ const client = new FetchClient({
 });
 
 // Same code works across all environments
-const users = await client.get("/api/users");
+const users = await client.get('/api/users');
 ```
 
 ### API Versioning
@@ -70,16 +70,16 @@ Use base URLs for API version management:
 
 ```typescript
 const v1Client = new FetchClient({
-  baseUrl: "https://api.example.com/v1",
+  baseUrl: 'https://api.example.com/v1',
 });
 
 const v2Client = new FetchClient({
-  baseUrl: "https://api.example.com/v2",
+  baseUrl: 'https://api.example.com/v2',
 });
 
 // Easy to maintain different API versions
-const legacyUsers = await v1Client.get("/users"); // → /v1/users
-const modernUsers = await v2Client.get("/users"); // → /v2/users
+const legacyUsers = await v1Client.get('/users'); // → /v1/users
+const modernUsers = await v2Client.get('/users'); // → /v2/users
 ```
 
 ### Microservices Architecture
@@ -88,21 +88,21 @@ Create dedicated clients for different services:
 
 ```typescript
 const userService = new FetchClient({
-  baseUrl: "https://users.api.example.com",
+  baseUrl: 'https://users.api.example.com',
 });
 
 const orderService = new FetchClient({
-  baseUrl: "https://orders.api.example.com",
+  baseUrl: 'https://orders.api.example.com',
 });
 
 const notificationService = new FetchClient({
-  baseUrl: "https://notifications.api.example.com",
+  baseUrl: 'https://notifications.api.example.com',
 });
 
 // Clean service boundaries
 const user = await userService.get(`/users/${userId}`);
 const orders = await orderService.get(`/orders?userId=${userId}`);
-await notificationService.post("/send", { userId, message });
+await notificationService.post('/send', { userId, message });
 ```
 
 ### Backward Compatibility
@@ -112,13 +112,13 @@ Base URL is optional - existing code continues to work unchanged:
 ```typescript
 // Without base URL (existing behavior)
 const client = new FetchClient();
-await client.get("/api/users"); // → GET /api/users
-await client.get("https://api.com/users"); // → GET https://api.com/users
+await client.get('/api/users'); // → GET /api/users
+await client.get('https://api.com/users'); // → GET https://api.com/users
 
 // With base URL (new behavior)
-const apiClient = new FetchClient({ baseUrl: "https://api.example.com" });
-await apiClient.get("/users"); // → GET https://api.example.com/users
-await apiClient.get("https://other.com"); // → GET https://other.com (absolute URL)
+const apiClient = new FetchClient({ baseUrl: 'https://api.example.com' });
+await apiClient.get('/users'); // → GET https://api.example.com/users
+await apiClient.get('https://other.com'); // → GET https://other.com (absolute URL)
 ```
 
 ## Authentication Setup
@@ -126,15 +126,15 @@ await apiClient.get("https://other.com"); // → GET https://other.com (absolute
 ### Token-Based Authentication
 
 ```typescript
-import { FetchClient, addAuthentication } from "@fgrzl/fetch";
+import { FetchClient, addAuthentication } from '@fgrzl/fetch';
 
 const client = new FetchClient();
 const authClient = addAuthentication(client, {
-  tokenProvider: () => localStorage.getItem("auth-token") || "",
+  tokenProvider: () => localStorage.getItem('auth-token') || '',
 });
 
 // All requests now include Authorization header
-const profile = await authClient.get("/api/profile");
+const profile = await authClient.get('/api/profile');
 ```
 
 ### JWT with Refresh
@@ -142,12 +142,12 @@ const profile = await authClient.get("/api/profile");
 ```typescript
 const authClient = addAuthentication(client, {
   tokenProvider: async () => {
-    let token = localStorage.getItem("jwt-token");
+    let token = localStorage.getItem('jwt-token');
 
     // Check if token is expired and refresh if needed
     if (isTokenExpired(token)) {
       token = await refreshToken();
-      localStorage.setItem("jwt-token", token);
+      localStorage.setItem('jwt-token', token);
     }
 
     return token;
@@ -160,8 +160,8 @@ const authClient = addAuthentication(client, {
 ```typescript
 const authClient = addAuthentication(client, {
   tokenProvider: () => getApiKey(),
-  authScheme: "ApiKey", // Default: "Bearer"
-  headerName: "X-API-Key", // Default: "Authorization"
+  authScheme: 'ApiKey', // Default: "Bearer"
+  headerName: 'X-API-Key', // Default: "Authorization"
 });
 ```
 
@@ -172,7 +172,7 @@ const authClient = addAuthentication(client, {
 Ready-to-use configuration for production applications:
 
 ```typescript
-import { addProductionStack } from "@fgrzl/fetch";
+import { addProductionStack } from '@fgrzl/fetch';
 
 const prodClient = addProductionStack(new FetchClient(), {
   auth: {
@@ -184,10 +184,10 @@ const prodClient = addProductionStack(new FetchClient(), {
   },
   cache: {
     ttl: 5 * 60 * 1000, // 5 minutes
-    methods: ["GET"],
+    methods: ['GET'],
   },
   logging: {
-    level: "info",
+    level: 'info',
   },
   rateLimit: {
     maxRequests: 100,
@@ -201,11 +201,11 @@ const prodClient = addProductionStack(new FetchClient(), {
 Optimized for local development with verbose logging:
 
 ```typescript
-import { addDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from '@fgrzl/fetch';
 
 const devClient = addDevelopmentStack(new FetchClient(), {
   auth: {
-    tokenProvider: () => "dev-token",
+    tokenProvider: () => 'dev-token',
   },
 });
 ```
@@ -215,7 +215,7 @@ const devClient = addDevelopmentStack(new FetchClient(), {
 Minimal configuration with just authentication and retry:
 
 ```typescript
-import { addBasicStack } from "@fgrzl/fetch";
+import { addBasicStack } from '@fgrzl/fetch';
 
 const basicClient = addBasicStack(new FetchClient(), {
   auth: {
@@ -229,34 +229,34 @@ const basicClient = addBasicStack(new FetchClient(), {
 ### CSRF Protection
 
 ```typescript
-import { addCSRF } from "@fgrzl/fetch";
+import { addCSRF } from '@fgrzl/fetch';
 
 // Default: reads XSRF-TOKEN cookie, adds X-XSRF-TOKEN header
 const csrfClient = addCSRF(client);
 
 // Custom configuration
 const customCsrfClient = addCSRF(client, {
-  cookieName: "csrf-token",
-  headerName: "X-CSRF-Token",
-  skipPatterns: ["/api/public/*"],
+  cookieName: 'csrf-token',
+  headerName: 'X-CSRF-Token',
+  skipPatterns: ['/api/public/*'],
 });
 ```
 
 ### Authorization Handling
 
 ```typescript
-import { addAuthorization } from "@fgrzl/fetch";
+import { addAuthorization } from '@fgrzl/fetch';
 
 const authzClient = addAuthorization(client, {
   onUnauthorized: (response) => {
     // Clear stored tokens
-    localStorage.removeItem("auth-token");
+    localStorage.removeItem('auth-token');
     // Redirect to login
-    window.location.href = "/login";
+    window.location.href = '/login';
   },
   onForbidden: (response) => {
     // Show access denied message
-    showNotification("Access denied", "error");
+    showNotification('Access denied', 'error');
   },
   statusCodes: [401, 403], // Handle both 401 and 403
 });
@@ -265,11 +265,11 @@ const authzClient = addAuthorization(client, {
 ### Caching
 
 ```typescript
-import { addCache } from "@fgrzl/fetch";
+import { addCache } from '@fgrzl/fetch';
 
 const cachedClient = addCache(client, {
   ttl: 10 * 60 * 1000, // 10 minutes
-  methods: ["GET", "HEAD"],
+  methods: ['GET', 'HEAD'],
   keyGenerator: (method, url) => `${method}:${url}`,
   storage: new Map(), // Default: in-memory Map
 });
@@ -278,12 +278,12 @@ const cachedClient = addCache(client, {
 ### Retry Logic
 
 ```typescript
-import { addRetry } from "@fgrzl/fetch";
+import { addRetry } from '@fgrzl/fetch';
 
 const retryClient = addRetry(client, {
   maxRetries: 3,
   delay: 1000,
-  backoff: "exponential", // "fixed" | "linear" | "exponential"
+  backoff: 'exponential', // "fixed" | "linear" | "exponential"
   retryOn: [429, 502, 503, 504], // Which status codes to retry
   onRetry: (attempt, response) => {
     console.log(`Retry attempt ${attempt} for ${response.status}`);
@@ -294,10 +294,10 @@ const retryClient = addRetry(client, {
 ### Logging
 
 ```typescript
-import { addLogging } from "@fgrzl/fetch";
+import { addLogging } from '@fgrzl/fetch';
 
 const loggedClient = addLogging(client, {
-  level: "info", // "debug" | "info" | "warn" | "error"
+  level: 'info', // "debug" | "info" | "warn" | "error"
   includeRequestHeaders: true,
   includeResponseHeaders: false,
   includeRequestBody: false,
@@ -309,12 +309,12 @@ const loggedClient = addLogging(client, {
 ### Rate Limiting
 
 ```typescript
-import { addRateLimit } from "@fgrzl/fetch";
+import { addRateLimit } from '@fgrzl/fetch';
 
 const limitedClient = addRateLimit(client, {
   maxRequests: 100,
   windowMs: 60 * 1000, // 100 requests per minute
-  algorithm: "token-bucket", // "fixed-window" | "sliding-window" | "token-bucket"
+  algorithm: 'token-bucket', // "fixed-window" | "sliding-window" | "token-bucket"
   onLimitReached: (retryAfter) => {
     console.log(`Rate limit reached, retry after ${retryAfter}ms`);
   },
@@ -327,15 +327,15 @@ const limitedClient = addRateLimit(client, {
 
 ```typescript
 const prodConfig = {
-  credentials: "same-origin" as const,
+  credentials: 'same-origin' as const,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 };
 
 const prodClient = addProductionStack(new FetchClient(prodConfig), {
   auth: { tokenProvider: () => getSecureToken() },
-  logging: { level: "error" }, // Minimal logging in production
+  logging: { level: 'error' }, // Minimal logging in production
   cache: { ttl: 15 * 60 * 1000 }, // Longer cache in production
 });
 ```
@@ -344,11 +344,11 @@ const prodClient = addProductionStack(new FetchClient(prodConfig), {
 
 ```typescript
 const devConfig = {
-  credentials: "omit" as const, // No cookies in dev
+  credentials: 'omit' as const, // No cookies in dev
 };
 
 const devClient = addDevelopmentStack(new FetchClient(devConfig), {
-  auth: { tokenProvider: () => "dev-token" },
+  auth: { tokenProvider: () => 'dev-token' },
 });
 ```
 

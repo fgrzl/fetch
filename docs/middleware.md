@@ -22,18 +22,18 @@ import {
   addProductionStack,
   addDevelopmentStack,
   addBasicStack,
-} from "@fgrzl/fetch";
+} from '@fgrzl/fetch';
 
 // Production: auth + cache + retry + rate limiting + logging
 const prodClient = addProductionStack(client, {
   auth: { tokenProvider: () => getToken() },
   cache: { ttl: 5 * 60 * 1000 },
-  logging: { level: "info" },
+  logging: { level: 'info' },
 });
 
 // Development: auth + retry + comprehensive logging
 const devClient = addDevelopmentStack(client, {
-  auth: { tokenProvider: () => "dev-token" },
+  auth: { tokenProvider: () => 'dev-token' },
 });
 
 // Basic: just auth + retry
@@ -45,20 +45,20 @@ const basicClient = addBasicStack(client, {
 const apiClient = addProductionStack(new FetchClient(), {
   auth: { tokenProvider: () => getToken() },
   retry: { maxRetries: 3 },
-  logging: { level: "info" },
+  logging: { level: 'info' },
 }).setBaseUrl(process.env.API_BASE_URL!);
 ```
 
 ## Quick Start
 
 ```ts
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 import {
   addAuthentication,
   addAuthorization,
   addRetry,
   addLogging,
-} from "@fgrzl/fetch";
+} from '@fgrzl/fetch';
 
 const client = new FetchClient();
 
@@ -67,15 +67,15 @@ const apiClient = addLogging(
   addRetry(
     addAuthorization(
       addAuthentication(client, {
-        tokenProvider: () => localStorage.getItem("token") || "",
+        tokenProvider: () => localStorage.getItem('token') || '',
       }),
     ),
   ),
-  { level: "info" },
+  { level: 'info' },
 );
 
 // Now use the enhanced client
-const users = await apiClient.get("/api/users");
+const users = await apiClient.get('/api/users');
 ```
 
 ### Alternative: Step-by-Step Composition
@@ -86,12 +86,12 @@ You can also apply middleware step by step for better readability:
 // Step-by-step composition (client is mutated in place)
 const client = new FetchClient();
 addAuthentication(client, {
-  tokenProvider: () => localStorage.getItem("token") || "",
+  tokenProvider: () => localStorage.getItem('token') || '',
 });
 addAuthorization(client);
 addRetry(client);
-addLogging(client, { level: "info" });
+addLogging(client, { level: 'info' });
 
 // Use the enhanced client
-const users = await client.get("/api/users");
+const users = await client.get('/api/users');
 ```

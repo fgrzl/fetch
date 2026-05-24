@@ -18,10 +18,10 @@ The main `index.ts` follows a carefully designed discovery pattern:
 ### 🎯 Level 1: Pre-configured Client (80% of users)
 
 ```typescript
-import api from "@fgrzl/fetch";
+import api from '@fgrzl/fetch';
 
 // Just works - no configuration needed!
-const users = await api.get("/api/users");
+const users = await api.get('/api/users');
 ```
 
 **What:** Default export with production-ready middleware stack  
@@ -31,7 +31,7 @@ const users = await api.get("/api/users");
 ### 🎯 Level 2: Custom Client Creation (15% of users)
 
 ```typescript
-import { FetchClient, addAuthentication } from "@fgrzl/fetch";
+import { FetchClient, addAuthentication } from '@fgrzl/fetch';
 
 const client = new FetchClient(config);
 const authClient = addAuthentication(client, options);
@@ -44,7 +44,7 @@ const authClient = addAuthentication(client, options);
 ### 🎯 Level 3: TypeScript Integration
 
 ```typescript
-import type { FetchClientConfig, AuthenticationOptions } from "@fgrzl/fetch";
+import type { FetchClientConfig, AuthenticationOptions } from '@fgrzl/fetch';
 ```
 
 **What:** Type definitions for configuration objects  
@@ -54,7 +54,7 @@ import type { FetchClientConfig, AuthenticationOptions } from "@fgrzl/fetch";
 ### 🎯 Level 4: Advanced Error Handling
 
 ```typescript
-import { HttpError, NetworkError } from "@fgrzl/fetch";
+import { HttpError, NetworkError } from '@fgrzl/fetch';
 ```
 
 **What:** Error classes for sophisticated error handling  
@@ -103,15 +103,15 @@ Modern applications often work with multiple APIs and services. Base URLs provid
 ```typescript
 // Service-specific clients
 const userService = new FetchClient({
-  baseUrl: "https://users.api.myapp.com",
+  baseUrl: 'https://users.api.myapp.com',
 });
 
 const orderService = new FetchClient({
-  baseUrl: "https://orders.api.myapp.com",
+  baseUrl: 'https://orders.api.myapp.com',
 });
 
 const paymentService = new FetchClient({
-  baseUrl: "https://payments.api.myapp.com",
+  baseUrl: 'https://payments.api.myapp.com',
 });
 
 // Each service has its own error handling and middleware
@@ -126,9 +126,9 @@ Base URLs enable clean environment management:
 ```typescript
 const createApiClient = (environment: string) => {
   const baseUrls = {
-    development: "http://localhost:3001",
-    staging: "https://api-staging.myapp.com",
-    production: "https://api.myapp.com",
+    development: 'http://localhost:3001',
+    staging: 'https://api-staging.myapp.com',
+    production: 'https://api.myapp.com',
   };
 
   return new FetchClient({
@@ -147,11 +147,11 @@ Use base URLs to manage API versions cleanly:
 ```typescript
 // Version-specific clients
 const apiV1 = new FetchClient({
-  baseUrl: "https://api.myapp.com/v1",
+  baseUrl: 'https://api.myapp.com/v1',
 });
 
 const apiV2 = new FetchClient({
-  baseUrl: "https://api.myapp.com/v2",
+  baseUrl: 'https://api.myapp.com/v2',
 });
 
 // Gradual migration strategy
@@ -184,10 +184,10 @@ export const notificationService = addRetry(
 );
 
 // Usage throughout the application
-import { userService, notificationService } from "./services/api";
+import { userService, notificationService } from './services/api';
 
 const user = await userService.get(`/users/${userId}`);
-await notificationService.post("/send", { userId, message });
+await notificationService.post('/send', { userId, message });
 ```
 
 ## Error Handling Strategy
@@ -197,7 +197,7 @@ await notificationService.post("/send", { userId, message });
 Instead of throwing exceptions for HTTP errors, we return structured responses:
 
 ```typescript
-const response = await api.get("/api/users");
+const response = await api.get('/api/users');
 
 if (response.ok) {
   // Success path - response.data is available
@@ -252,7 +252,7 @@ interface User {
   name: string;
 }
 
-const response = await api.get<User[]>("/api/users");
+const response = await api.get<User[]>('/api/users');
 // response.data is typed as User[] | null
 ```
 
@@ -263,7 +263,7 @@ TypeScript ensures middleware configuration is correct:
 ```typescript
 const authClient = addAuthentication(client, {
   tokenProvider: () => getToken(), // Must return string | Promise<string>
-  authScheme: "Bearer", // Only valid auth schemes allowed
+  authScheme: 'Bearer', // Only valid auth schemes allowed
 });
 ```
 
@@ -274,7 +274,7 @@ Middleware functions are fully typed to prevent composition errors:
 ```typescript
 // This would be a TypeScript error:
 const invalid = addAuthentication(
-  addCache(client, { ttl: "5 minutes" }), // ❌ ttl must be number
+  addCache(client, { ttl: '5 minutes' }), // ❌ ttl must be number
 );
 ```
 
@@ -286,7 +286,7 @@ The export structure enables optimal bundle sizes:
 
 ```typescript
 // Only includes the authentication middleware
-import { addAuthentication } from "@fgrzl/fetch";
+import { addAuthentication } from '@fgrzl/fetch';
 ```
 
 ### Middleware Overhead
@@ -309,11 +309,11 @@ import { addAuthentication } from "@fgrzl/fetch";
 Each middleware is independently testable:
 
 ```typescript
-describe("Authentication Middleware", () => {
-  it("adds authorization header", async () => {
+describe('Authentication Middleware', () => {
+  it('adds authorization header', async () => {
     const mockClient = new FetchClient();
     const authClient = addAuthentication(mockClient, {
-      tokenProvider: () => "test-token",
+      tokenProvider: () => 'test-token',
     });
 
     // Test that requests include the header
@@ -339,7 +339,7 @@ Built-in support for test mocks:
 global.fetch = vi.fn();
 
 // All clients use the mocked fetch
-const response = await api.get("/test");
+const response = await api.get('/test');
 expect(fetch).toHaveBeenCalledWith(/* ... */);
 ```
 

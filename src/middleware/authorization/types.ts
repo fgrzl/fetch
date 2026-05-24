@@ -111,4 +111,3 @@ export interface AuthorizationOptions {
 }
 
 // Ensure this file is treated as a module
-export {};

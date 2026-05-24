@@ -20,7 +20,7 @@ interface CreateUserRequest {
 }
 
 // GET request with typed response
-const response = await api.get<User[]>("/api/users");
+const response = await api.get<User[]>('/api/users');
 if (response.ok) {
   // response.data is typed as User[] | null
   response.data?.forEach((user) => {
@@ -30,9 +30,9 @@ if (response.ok) {
 }
 
 // POST request with typed request and response
-const createResponse = await api.post<User, CreateUserRequest>("/api/users", {
-  name: "John",
-  email: "john@example.com",
+const createResponse = await api.post<User, CreateUserRequest>('/api/users', {
+  name: 'John',
+  email: 'john@example.com',
 });
 ```
 
@@ -46,33 +46,33 @@ import type {
   AuthenticationOptions,
   RetryOptions,
   CacheOptions,
-} from "@fgrzl/fetch";
+} from '@fgrzl/fetch';
 
 const clientConfig: FetchClientOptions = {
-  baseUrl: "https://api.example.com", // ✅ Typed as string | undefined
-  credentials: "same-origin", // ✅ Only valid values allowed
+  baseUrl: 'https://api.example.com', // ✅ Typed as string | undefined
+  credentials: 'same-origin', // ✅ Only valid values allowed
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 };
 
 // Environment-specific base URL configuration
 const getClientConfig = (env: string): FetchClientOptions => ({
   baseUrl:
-    env === "production" ? "https://api.myapp.com" : "http://localhost:3001",
-  credentials: env === "development" ? "include" : "same-origin",
+    env === 'production' ? 'https://api.myapp.com' : 'http://localhost:3001',
+  credentials: env === 'development' ? 'include' : 'same-origin',
 });
 
 const authConfig: AuthenticationOptions = {
   tokenProvider: () => getToken(), // ✅ Must return string | Promise<string>
-  authScheme: "Bearer", // ✅ Only valid auth schemes
-  headerName: "Authorization", // ✅ Optional, defaults to "Authorization"
+  authScheme: 'Bearer', // ✅ Only valid auth schemes
+  headerName: 'Authorization', // ✅ Optional, defaults to "Authorization"
 };
 
 const retryConfig: RetryOptions = {
   maxRetries: 3, // ✅ Must be number
   delay: 1000, // ✅ Must be number
-  backoff: "exponential", // ✅ Only "fixed" | "linear" | "exponential"
+  backoff: 'exponential', // ✅ Only "fixed" | "linear" | "exponential"
 };
 ```
 
@@ -86,7 +86,7 @@ import {
   addAuthentication,
   addRetry,
   addLogging,
-} from "@fgrzl/fetch";
+} from '@fgrzl/fetch';
 
 // ✅ Correct composition
 const client = addLogging(
@@ -96,7 +96,7 @@ const client = addLogging(
     }),
     { maxRetries: 3 },
   ),
-  { level: "info" },
+  { level: 'info' },
 );
 
 // ❌ TypeScript would catch configuration errors:
@@ -110,7 +110,7 @@ const invalidClient = addAuthentication(new FetchClient(), {
 Create type-safe custom middleware:
 
 ```typescript
-import type { FetchMiddleware, FetchClient } from "@fgrzl/fetch";
+import type { FetchMiddleware, FetchClient } from '@fgrzl/fetch';
 
 interface MetricsOptions {
   endpoint: string;
@@ -159,8 +159,8 @@ function useMetrics(client: FetchClient, options: MetricsOptions): FetchClient {
 
 // ✅ TypeScript ensures correct usage
 const metricsClient = useMetrics(client, {
-  endpoint: "https://metrics.example.com",
-  apiKey: "key",
+  endpoint: 'https://metrics.example.com',
+  apiKey: 'key',
   sampleRate: 0.1,
 });
 ```
@@ -170,8 +170,8 @@ const metricsClient = useMetrics(client, {
 Type-safe error handling:
 
 ```typescript
-import type { FetchResponse } from "@fgrzl/fetch";
-import { HttpError, NetworkError } from "@fgrzl/fetch";
+import type { FetchResponse } from '@fgrzl/fetch';
+import { HttpError, NetworkError } from '@fgrzl/fetch';
 
 interface ApiError {
   code: string;
@@ -200,7 +200,7 @@ async function fetchUser(id: number): Promise<User | null> {
       const apiError = response.data as ApiError;
       throw new Error(`Invalid request: ${apiError.message}`);
     case 401:
-      throw new Error("Authentication required");
+      throw new Error('Authentication required');
     default:
       throw new Error(`API error: ${response.status}`);
   }
@@ -212,13 +212,13 @@ try {
   if (user) {
     console.log(user.name); // ✅ TypeScript knows user is User
   } else {
-    console.log("User not found");
+    console.log('User not found');
   }
 } catch (error) {
   if (error instanceof NetworkError) {
-    console.error("Network error:", error.message);
+    console.error('Network error:', error.message);
   } else {
-    console.error("API error:", error.message);
+    console.error('API error:', error.message);
   }
 }
 ```
@@ -243,7 +243,7 @@ async function typedApiCall<T>(url: string): Promise<T> {
   if (response.data?.success) {
     return response.data.data; // ✅ TypeScript knows this is T
   } else {
-    throw new Error(response.data?.error ?? "Unknown API error");
+    throw new Error(response.data?.error ?? 'Unknown API error');
   }
 }
 
@@ -254,18 +254,18 @@ interface Product {
   price: number;
 }
 
-const product = await typedApiCall<Product>("/api/products/1");
+const product = await typedApiCall<Product>('/api/products/1');
 console.log(product.name); // ✅ Fully typed
 ```
 
 ### Conditional Types for Middleware
 
 ```typescript
-type MiddlewareConfig<T extends string> = T extends "auth"
+type MiddlewareConfig<T extends string> = T extends 'auth'
   ? AuthenticationOptions
-  : T extends "retry"
+  : T extends 'retry'
     ? RetryOptions
-    : T extends "cache"
+    : T extends 'cache'
       ? CacheOptions
       : never;
 
@@ -276,11 +276,11 @@ function createTypedClient<T extends string>(
   const client = new FetchClient();
 
   switch (type) {
-    case "auth":
+    case 'auth':
       return addAuthentication(client, config as AuthenticationOptions);
-    case "retry":
+    case 'retry':
       return addRetry(client, config as RetryOptions);
-    case "cache":
+    case 'cache':
       return addCache(client, config as CacheOptions);
     default:
       return client;
@@ -288,7 +288,7 @@ function createTypedClient<T extends string>(
 }
 
 // ✅ TypeScript infers correct config type
-const authClient = createTypedClient("auth", {
+const authClient = createTypedClient('auth', {
   tokenProvider: () => getToken(), // ✅ Knows this should be AuthenticationOptions
 });
 ```
@@ -339,7 +339,7 @@ function isErrorResponse<T>(
 }
 
 // Usage
-const response = await api.get<User>("/api/user");
+const response = await api.get<User>('/api/user');
 
 if (isSuccessResponse(response)) {
   // TypeScript knows response.data is User (not User | null)
@@ -358,10 +358,10 @@ type ResponseData<T> = T extends FetchResponse<infer U> ? U : never;
 
 // Create a type for API endpoints
 interface ApiEndpoints {
-  "/api/users": User[];
-  "/api/users/:id": User;
-  "/api/products": Product[];
-  "/api/orders": Order[];
+  '/api/users': User[];
+  '/api/users/:id': User;
+  '/api/products': Product[];
+  '/api/orders': Order[];
 }
 
 // Type-safe API client
@@ -383,7 +383,7 @@ class TypedApiClient {
 const typedApi = new TypedApiClient();
 
 // ✅ TypeScript knows the return type
-const users = await typedApi.get("/api/users");
+const users = await typedApi.get('/api/users');
 if (users.ok) {
   // users.data is typed as User[] | null
 }

@@ -47,9 +47,10 @@ git checkout -b feature/your-feature-name
 # Make your changes...
 
 # Run the development commands
-npm run dev          # Watch mode for development
+npm run dev          # Start the demo playground with Vite+
 npm run test:watch   # Watch tests
-npm run lint         # Check code style
+npm run check        # Format, lint, and type-check with Vite+
+npm run bench        # Run benchmarks
 ```
 
 ### 3. Quality Checks
@@ -58,9 +59,9 @@ Before submitting, ensure your code passes:
 
 ```bash
 npm run test:coverage  # All tests with coverage
-npm run lint:check     # ESLint checks
-npm run format:check   # Prettier formatting
-npm run build          # TypeScript compilation
+npm run bench          # Benchmarks
+npm run check          # Format, lint, and TypeScript checks
+npm run build          # Library build
 ```
 
 ### 4. Commit Guidelines
@@ -80,32 +81,35 @@ chore: update dependencies
 ### Test Structure
 
 ```
-test/
-├── unit/                 # Unit tests
-├── integration/          # Integration tests
+tests/
+├── client/              # Client tests
+├── middleware/          # Middleware tests
 ├── edge-cases.test.ts   # Edge cases and error scenarios
 └── test-utils.ts        # Testing utilities
+
+bench/
+└── *.bench.ts           # Vitest benchmarks
 ```
 
 ### Writing Tests
 
 ```typescript
-import { describe, it, expect } from "vitest";
-import { FetchClient } from "../src";
+import { describe, it, expect } from 'vite-plus/test';
+import { FetchClient } from '../src';
 
-describe("Feature Name", () => {
-  it("should handle expected case", async () => {
+describe('Feature Name', () => {
+  it('should handle expected case', async () => {
     // Arrange
     const client = new FetchClient();
 
     // Act
-    const result = await client.get("/test");
+    const result = await client.get('/test');
 
     // Assert
     expect(result.ok).toBe(true);
   });
 
-  it("should handle error case", async () => {
+  it('should handle error case', async () => {
     // Test error scenarios
   });
 });
@@ -128,8 +132,8 @@ describe("Feature Name", () => {
 
 ### Code Style
 
-- Use Prettier for formatting (configured in `.prettierrc`)
-- Follow ESLint rules (configured in `eslint.config.ts`)
+- Use Oxfmt through Vite+ (configured in `vite.config.ts`)
+- Follow Oxlint rules through Vite+ (configured in `vite.config.ts`)
 - Use meaningful variable names
 - Keep functions focused and testable
 
@@ -172,7 +176,7 @@ src/middleware/my-feature/
 ├── my-feature.ts      # Implementation
 └── types.ts           # TypeScript types
 
-test/middleware/
+tests/middleware/
 └── my-feature.test.ts # Tests
 
 docs/middleware/
@@ -211,7 +215,8 @@ docs/
 ### 1. Before Submitting
 
 - [ ] Tests pass (`npm test`)
-- [ ] Linting passes (`npm run lint:check`)
+- [ ] Vite+ checks pass (`npm run check`)
+- [ ] Benchmarks pass (`npm run bench`)
 - [ ] Build succeeds (`npm run build`)
 - [ ] Documentation updated if needed
 - [ ] CHANGELOG.md updated (for significant changes)
@@ -297,23 +302,23 @@ Include:
 
 ```bash
 # Development
-npm run dev              # Watch mode
+npm run dev              # Start the demo playground
 npm run test:watch       # Watch tests
 
 # Quality
 npm run test             # Run all tests
 npm run test:coverage    # Tests with coverage
-npm run lint             # Fix linting issues
+npm run bench            # Run benchmarks
+npm run check            # Format, lint, and type-check
+npm run typecheck        # Check TypeScript types
+npm run lint             # Check linting issues
 npm run lint:check       # Check linting only
-npm run format           # Fix formatting
-npm run format:check     # Check formatting only
+npm run fmt              # Fix formatting
+npm run fmt:check        # Check formatting only
 
 # Building
 npm run build            # Production build
 npm run clean            # Clean build artifacts
-
-# Documentation
-npm run docs:serve       # Serve docs locally
 ```
 
 ## 🏆 Recognition

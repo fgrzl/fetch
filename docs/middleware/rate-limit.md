@@ -7,7 +7,7 @@ Implements client-side rate limiting using token bucket algorithm to prevent ove
 ### Simple Rate Limiting
 
 ```ts
-import { addRateLimit } from "@fgrzl/fetch";
+import { addRateLimit } from '@fgrzl/fetch';
 
 // Allow 100 requests per minute
 const rateLimitedClient = addRateLimit(client, {
@@ -22,14 +22,14 @@ const rateLimitedClient = addRateLimit(client);
 ### Advanced Configuration
 
 ```ts
-import { addRateLimit, createRateLimitMiddleware } from "@fgrzl/fetch";
+import { addRateLimit, createRateLimitMiddleware } from '@fgrzl/fetch';
 
 // Custom rate limiting with different strategies
 const rateLimitedClient = addRateLimit(client, {
   requestsPerWindow: 1000,
   windowMs: 60 * 1000, // 1 minute window
-  algorithm: "token-bucket", // or 'sliding-window'
-  skipPatterns: ["/health", "/ping"],
+  algorithm: 'token-bucket', // or 'sliding-window'
+  skipPatterns: ['/health', '/ping'],
   onRateLimited: (retryAfter) => {
     console.warn(`Rate limited. Retry after ${retryAfter}ms`);
   },
@@ -49,9 +49,9 @@ client.use(rateLimitMiddleware);
 // Different limits for different endpoints
 const smartRateLimitedClient = addRateLimit(client, {
   keyGenerator: (request) => {
-    if (request.url?.includes("/api/search")) return "search";
-    if (request.url?.includes("/api/upload")) return "upload";
-    return "default";
+    if (request.url?.includes('/api/search')) return 'search';
+    if (request.url?.includes('/api/upload')) return 'upload';
+    return 'default';
   },
   limits: {
     search: { requestsPerWindow: 10, windowMs: 60 * 1000 }, // 10/min for search
@@ -74,7 +74,7 @@ interface RateLimitOptions {
   storage?: RateLimitStorage; // Custom storage for distributed rate limiting
 }
 
-type RateLimitAlgorithm = "token-bucket" | "sliding-window" | "fixed-window";
+type RateLimitAlgorithm = 'token-bucket' | 'sliding-window' | 'fixed-window';
 
 interface RateLimitStorage {
   get(key: string): Promise<RateLimitEntry | undefined>;
@@ -97,7 +97,7 @@ const githubClient = addRateLimit(new FetchClient(), {
 });
 
 // Use the client normally - rate limiting is automatic
-const repos = await githubClient.get("/user/repos");
+const repos = await githubClient.get('/user/repos');
 ```
 
 ### Different Limits per Operation
@@ -106,10 +106,10 @@ const repos = await githubClient.get("/user/repos");
 // Different rate limits for read vs write operations
 const apiClient = addRateLimit(client, {
   keyGenerator: (request) => {
-    const isWrite = ["POST", "PUT", "PATCH", "DELETE"].includes(
-      request.method || "GET",
+    const isWrite = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(
+      request.method || 'GET',
     );
-    return isWrite ? "write" : "read";
+    return isWrite ? 'write' : 'read';
   },
   limits: {
     read: { requestsPerWindow: 1000, windowMs: 60 * 1000 }, // 1000/min reads
@@ -147,7 +147,7 @@ const distributedClient = addRateLimit(client, {
 ```ts
 // Allows burst traffic up to bucket size, then steady rate
 const burstClient = addRateLimit(client, {
-  algorithm: "token-bucket",
+  algorithm: 'token-bucket',
   requestsPerWindow: 100, // Bucket size
   windowMs: 60 * 1000, // Refill rate (100 tokens per minute)
   burstSize: 20, // Allow 20 requests immediately
@@ -159,7 +159,7 @@ const burstClient = addRateLimit(client, {
 ```ts
 // Smooth rate limiting over a sliding time window
 const smoothClient = addRateLimit(client, {
-  algorithm: "sliding-window",
+  algorithm: 'sliding-window',
   requestsPerWindow: 100,
   windowMs: 60 * 1000,
 });
@@ -170,7 +170,7 @@ const smoothClient = addRateLimit(client, {
 ```ts
 // Simple fixed-window rate limiting
 const simpleClient = addRateLimit(client, {
-  algorithm: "fixed-window",
+  algorithm: 'fixed-window',
   requestsPerWindow: 100,
   windowMs: 60 * 1000, // Resets every minute
 });
@@ -191,11 +191,11 @@ const rateLimitedClient = addRateLimit(client, {
 });
 
 try {
-  const response = await rateLimitedClient.get("/api/data");
+  const response = await rateLimitedClient.get('/api/data');
 } catch (error) {
-  if (error.message.includes("Rate limit exceeded")) {
+  if (error.message.includes('Rate limit exceeded')) {
     // Handle rate limit error
-    const retryAfter = parseInt(error.message.match(/(\d+)ms/)?.[1] || "60000");
+    const retryAfter = parseInt(error.message.match(/(\d+)ms/)?.[1] || '60000');
     setTimeout(() => {
       // Retry the request
     }, retryAfter);
@@ -219,7 +219,7 @@ const resilientClient = addRateLimit(client, {
 ### Combined with Retry Middleware
 
 ```ts
-import { addRateLimit, addRetry } from "@fgrzl/fetch";
+import { addRateLimit, addRetry } from '@fgrzl/fetch';
 
 // Rate limiting with intelligent retries
 const resilientClient = addRetry(
@@ -242,7 +242,7 @@ const resilientClient = addRetry(
 const pollingClient = addRateLimit(client, {
   requestsPerWindow: 60, // Once per second
   windowMs: 60 * 1000,
-  keyGenerator: () => "polling", // Single rate limit for all polling
+  keyGenerator: () => 'polling', // Single rate limit for all polling
   onRateLimited: (retryAfter) => {
     console.log(`Polling rate limited, slowing down by ${retryAfter}ms`);
   },
@@ -251,10 +251,10 @@ const pollingClient = addRateLimit(client, {
 // Polling loop
 setInterval(async () => {
   try {
-    const updates = await pollingClient.get("/api/updates");
+    const updates = await pollingClient.get('/api/updates');
     handleUpdates(updates.data);
   } catch (error) {
-    console.error("Polling failed:", error);
+    console.error('Polling failed:', error);
   }
 }, 1000);
 ```

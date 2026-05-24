@@ -11,7 +11,7 @@ client.use(async (request, next) => {
   // 1. Modify request before sending
   request.headers = {
     ...request.headers,
-    "X-Custom-Header": "value",
+    'X-Custom-Header': 'value',
   };
 
   // 2. Call next middleware/make request

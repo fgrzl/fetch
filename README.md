@@ -27,10 +27,10 @@ npm install @fgrzl/fetch
 2. Quick example
 
 ```ts
-import api from "@fgrzl/fetch";
+import api from '@fgrzl/fetch';
 
-api.setBaseUrl("https://api.example.com");
-const res = await api.get<{ id: number; name: string }>("/users");
+api.setBaseUrl('https://api.example.com');
+const res = await api.get<{ id: number; name: string }>('/users');
 if (res.ok) console.log(res.data);
 ```
 
@@ -39,14 +39,14 @@ if (res.ok) console.log(res.data);
 ### Set base URL
 
 ```ts
-api.setBaseUrl("https://api.example.com");
-await api.get("/users");
+api.setBaseUrl('https://api.example.com');
+await api.get('/users');
 ```
 
 ### POST with JSON
 
 ```ts
-const created = await api.post("/users", { name: "Ava" });
+const created = await api.post('/users', { name: 'Ava' });
 ```
 
 ### Typed response
@@ -56,25 +56,25 @@ interface User {
   id: number;
   name: string;
 }
-const r = await api.get<User>("/me");
+const r = await api.get<User>('/me');
 if (r.ok) r.data.name;
 ```
 
 ### Add authentication middleware
 
 ```ts
-import { addAuthentication } from "@fgrzl/fetch/middleware/authentication";
+import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
 const authed = addAuthentication(api, {
-  tokenProvider: () => localStorage.getItem("token") || "",
+  tokenProvider: () => localStorage.getItem('token') || '',
 });
-await authed.get("/private");
+await authed.get('/private');
 ```
 
 ### Cancel / timeout
 
 ```ts
 const c = new AbortController();
-api.get("/data", {}, { signal: c.signal, timeout: 5000 });
+api.get('/data', {}, { signal: c.signal, timeout: 5000 });
 c.abort();
 ```
 

@@ -16,13 +16,13 @@ Operation IDs are useful for:
 Pass an `operationId` in the request options:
 
 ```typescript
-import api from "@fgrzl/fetch";
+import api from '@fgrzl/fetch';
 
 // Generate a unique operation ID
 const operationId = crypto.randomUUID();
 
 // The x-operation-id header is automatically added
-await api.get("/api/users", {}, { operationId });
+await api.get('/api/users', {}, { operationId });
 ```
 
 ## With All HTTP Methods
@@ -30,30 +30,30 @@ await api.get("/api/users", {}, { operationId });
 Operation ID works with all HTTP methods:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 const client = new FetchClient();
 const opId = crypto.randomUUID();
 
 // GET request
-await client.get("/api/users", {}, { operationId: opId });
+await client.get('/api/users', {}, { operationId: opId });
 
 // POST request
-await client.post("/api/users", { name: "John" }, {}, { operationId: opId });
+await client.post('/api/users', { name: 'John' }, {}, { operationId: opId });
 
 // PUT request
-await client.put("/api/users/1", { name: "Jane" }, {}, { operationId: opId });
+await client.put('/api/users/1', { name: 'Jane' }, {}, { operationId: opId });
 
 // PATCH request
 await client.patch(
-  "/api/users/1",
-  { email: "new@example.com" },
+  '/api/users/1',
+  { email: 'new@example.com' },
   {},
   { operationId: opId },
 );
 
 // DELETE request
-await client.del("/api/users/1", {}, { operationId: opId });
+await client.del('/api/users/1', {}, { operationId: opId });
 ```
 
 ## Request Context Propagation
@@ -61,19 +61,19 @@ await client.del("/api/users/1", {}, { operationId: opId });
 Use operation IDs to propagate context through your application:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 // In your API route handler
 export async function handleRequest(req: Request) {
   // Extract operation ID from incoming request
-  const operationId = req.headers.get("x-request-id") || crypto.randomUUID();
+  const operationId = req.headers.get('x-request-id') || crypto.randomUUID();
 
   const client = new FetchClient();
 
   // Propagate to downstream services
-  const userData = await client.get("/api/users", {}, { operationId });
+  const userData = await client.get('/api/users', {}, { operationId });
 
-  const ordersData = await client.get("/api/orders", {}, { operationId });
+  const ordersData = await client.get('/api/orders', {}, { operationId });
 
   // All requests will have the same operation ID for correlation
   return Response.json({ users: userData, orders: ordersData });
@@ -105,7 +105,7 @@ await client.post('/api/order', { cartId: '...' }, {}, { operationId });
 Create middleware to automatically add operation IDs to all requests:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 const client = new FetchClient();
 
@@ -113,14 +113,14 @@ const client = new FetchClient();
 client.use((request, next) => {
   request.headers = {
     ...request.headers,
-    "x-operation-id": crypto.randomUUID(),
+    'x-operation-id': crypto.randomUUID(),
   };
   return next(request);
 });
 
 // Now all requests automatically get an operation ID
-await client.get("/api/users");
-await client.post("/api/logs", { message: "test" });
+await client.get('/api/users');
+await client.post('/api/logs', { message: 'test' });
 ```
 
 ## Custom Header Name
@@ -134,7 +134,7 @@ client.use((request, next) => {
   // Use your custom header name
   request.headers = {
     ...request.headers,
-    "x-trace-id": crypto.randomUUID(), // or 'x-correlation-id', etc.
+    'x-trace-id': crypto.randomUUID(), // or 'x-correlation-id', etc.
   };
   return next(request);
 });
@@ -145,16 +145,16 @@ client.use((request, next) => {
 Operation ID works seamlessly with other request options:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 const client = new FetchClient();
 const controller = new AbortController();
 
 await client.get(
-  "/api/users",
+  '/api/users',
   {},
   {
-    operationId: "my-operation",
+    operationId: 'my-operation',
     signal: controller.signal, // Cancellation
     timeout: 5000, // Timeout
   },
@@ -166,16 +166,16 @@ await client.get(
 The `operationId` option is fully typed through the `RequestOptions` interface:
 
 ```typescript
-import type { RequestOptions } from "@fgrzl/fetch";
+import type { RequestOptions } from '@fgrzl/fetch';
 
 // TypeScript knows about operationId
 const options: RequestOptions = {
-  operationId: "trace-123",
+  operationId: 'trace-123',
   signal: abortController.signal,
   timeout: 3000,
 };
 
-await client.get("/api/data", {}, options);
+await client.get('/api/data', {}, options);
 ```
 
 ## Best Practices
@@ -189,36 +189,36 @@ await client.get("/api/data", {}, options);
 ## Example: Complete Trace Flow
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 async function processUserCheckout(userId: string) {
   const client = new FetchClient();
   const operationId = `checkout-${userId}-${Date.now()}`;
 
-  console.log("Starting checkout:", operationId);
+  console.log('Starting checkout:', operationId);
 
   try {
     // All requests share the same operation ID
     const cart = await client.get(`/api/cart/${userId}`, {}, { operationId });
 
     const payment = await client.post(
-      "/api/payment",
+      '/api/payment',
       { cartId: cart.data?.id },
       {},
       { operationId },
     );
 
     const order = await client.post(
-      "/api/order",
+      '/api/order',
       { paymentId: payment.data?.id },
       {},
       { operationId },
     );
 
-    console.log("Checkout completed:", operationId, order.data);
+    console.log('Checkout completed:', operationId, order.data);
     return order;
   } catch (error) {
-    console.error("Checkout failed:", operationId, error);
+    console.error('Checkout failed:', operationId, error);
     throw error;
   }
 }

@@ -7,11 +7,11 @@ Comprehensive error handling strategies for robust applications.
 @fgrzl/fetch uses response-based error handling instead of throwing exceptions for HTTP errors:
 
 ```typescript
-const response = await api.get("/api/users");
+const response = await api.get('/api/users');
 
 if (response.ok) {
   // Success path
-  console.log("Users:", response.data);
+  console.log('Users:', response.data);
   // response.data is typed based on generic parameter
 } else {
   // Error path
@@ -25,19 +25,19 @@ if (response.ok) {
 For cases where you need exception-based handling, @fgrzl/fetch provides error classes:
 
 ```typescript
-import { HttpError, NetworkError, FetchError } from "@fgrzl/fetch";
+import { HttpError, NetworkError, FetchError } from '@fgrzl/fetch';
 
 try {
-  const response = await api.get("/api/users");
+  const response = await api.get('/api/users');
   // Note: HTTP errors don't throw by default
 } catch (error) {
   if (error instanceof NetworkError) {
     // Network connectivity issues
-    console.error("Network failed:", error.message);
+    console.error('Network failed:', error.message);
     showOfflineMessage();
   } else if (error instanceof FetchError) {
     // Other fetch-related errors
-    console.error("Request failed:", error.message);
+    console.error('Request failed:', error.message);
   }
 }
 ```
@@ -81,7 +81,7 @@ interface User {
   name: string;
 }
 
-const response = await api.get<User[]>("/api/users");
+const response = await api.get<User[]>('/api/users');
 
 if (response.ok) {
   // TypeScript knows response.data is User[] | null
@@ -90,13 +90,13 @@ if (response.ok) {
   // TypeScript knows response.error exists
   switch (response.status) {
     case 404:
-      console.log("Users not found");
+      console.log('Users not found');
       break;
     case 401:
       redirectToLogin();
       break;
     case 500:
-      console.error("Server error:", response.error?.message);
+      console.error('Server error:', response.error?.message);
       break;
   }
 }
@@ -107,22 +107,22 @@ if (response.ok) {
 Set up global error handling with middleware:
 
 ```typescript
-import { addAuthorization, addLogging } from "@fgrzl/fetch";
+import { addAuthorization, addLogging } from '@fgrzl/fetch';
 
 const client = addLogging(
   addAuthorization(new FetchClient(), {
     onUnauthorized: () => {
       // Global 401 handling
-      localStorage.removeItem("auth-token");
-      window.location.href = "/login";
+      localStorage.removeItem('auth-token');
+      window.location.href = '/login';
     },
     onForbidden: () => {
       // Global 403 handling
-      showNotification("Access denied", "error");
+      showNotification('Access denied', 'error');
     },
   }),
   {
-    level: "error", // Log all errors
+    level: 'error', // Log all errors
   },
 );
 ```
@@ -130,7 +130,7 @@ const client = addLogging(
 ### Retry with Error Handling
 
 ```typescript
-import { addRetry } from "@fgrzl/fetch";
+import { addRetry } from '@fgrzl/fetch';
 
 const retryClient = addRetry(client, {
   maxRetries: 3,
@@ -140,7 +140,7 @@ const retryClient = addRetry(client, {
 
     if (response.status === 429) {
       // Rate limited - extract retry-after header
-      const retryAfter = response.headers.get("retry-after");
+      const retryAfter = response.headers.get('retry-after');
       console.log(`Rate limited, retry after ${retryAfter}s`);
     }
   },
@@ -154,10 +154,10 @@ const retryClient = addRetry(client, {
 All errors include the original request context:
 
 ```typescript
-const response = await api.post("/api/users", userData);
+const response = await api.post('/api/users', userData);
 
 if (!response.ok) {
-  console.error("Failed to create user:", {
+  console.error('Failed to create user:', {
     status: response.status,
     statusText: response.statusText,
     url: response.url,
@@ -171,7 +171,7 @@ if (!response.ok) {
 Enable verbose error logging in development:
 
 ```typescript
-import { addDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from '@fgrzl/fetch';
 
 const devClient = addDevelopmentStack(new FetchClient(), {
   auth: { tokenProvider: () => getDevToken() },
@@ -191,7 +191,7 @@ const timeoutId = setTimeout(() => controller.abort(), 5000);
 
 try {
   const response = await api.get(
-    "/api/slow-endpoint",
+    '/api/slow-endpoint',
     {},
     {
       signal: controller.signal,
@@ -203,8 +203,8 @@ try {
     console.log(response.data);
   }
 } catch (error) {
-  if (error.name === "AbortError") {
-    console.log("Request timed out");
+  if (error.name === 'AbortError') {
+    console.log('Request timed out');
   }
 }
 ```
@@ -213,7 +213,7 @@ try {
 
 ```typescript
 try {
-  const response = await api.get("/api/health");
+  const response = await api.get('/api/health');
 } catch (error) {
   if (error instanceof NetworkError) {
     // Could be offline
@@ -221,7 +221,7 @@ try {
       showOfflineIndicator();
     } else {
       // Network error but browser thinks we're online
-      console.error("Network error:", error.message);
+      console.error('Network error:', error.message);
     }
   }
 }
@@ -258,16 +258,16 @@ client.useResponseMiddleware(async (response) => {
 ### Mocking Errors
 
 ```typescript
-import { vi } from "vitest";
+import { vi } from 'vitest';
 
 // Mock network error
-global.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+global.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'));
 
 // Mock HTTP error
 global.fetch = vi.fn().mockResolvedValue(
-  new Response(JSON.stringify({ error: "Not found" }), {
+  new Response(JSON.stringify({ error: 'Not found' }), {
     status: 404,
-    statusText: "Not Found",
+    statusText: 'Not Found',
   }),
 );
 ```
@@ -275,21 +275,21 @@ global.fetch = vi.fn().mockResolvedValue(
 ### Testing Error Handling
 
 ```typescript
-describe("Error Handling", () => {
-  it("handles 404 responses gracefully", async () => {
+describe('Error Handling', () => {
+  it('handles 404 responses gracefully', async () => {
     mockFetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
 
-    const response = await api.get("/api/nonexistent");
+    const response = await api.get('/api/nonexistent');
 
     expect(response.ok).toBe(false);
     expect(response.status).toBe(404);
     expect(response.data).toBeNull();
   });
 
-  it("handles network errors", async () => {
-    mockFetch.mockRejectedValueOnce(new TypeError("Failed to fetch"));
+  it('handles network errors', async () => {
+    mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
 
-    await expect(api.get("/api/test")).rejects.toThrow(NetworkError);
+    await expect(api.get('/api/test')).rejects.toThrow(NetworkError);
   });
 });
 ```

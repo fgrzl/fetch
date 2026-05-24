@@ -7,7 +7,7 @@ Automatically handles HTTP 401 Unauthorized and 403 Forbidden responses with int
 ### Smart Defaults (Zero Config)
 
 ```ts
-import { addAuthorization } from "@fgrzl/fetch";
+import { addAuthorization } from '@fgrzl/fetch';
 
 // ✨ Ultimate simplicity - redirects to '/login?return_url=current-page' on 401
 const authClient = addAuthorization(client);
@@ -19,15 +19,15 @@ const authClient = addAuthorization(client);
 // Custom redirect path
 addAuthorization(client, {
   redirectConfig: {
-    redirectPath: "/signin", // Default: "/login"
-    returnUrlParam: "redirect_to", // Default: "return_url"
+    redirectPath: '/signin', // Default: "/login"
+    returnUrlParam: 'redirect_to', // Default: "return_url"
   },
 });
 
 // Disable return URL if not needed
 addAuthorization(client, {
   redirectConfig: {
-    redirectPath: "/login",
+    redirectPath: '/login',
     includeReturnUrl: false, // Default: true
   },
 });
@@ -35,7 +35,7 @@ addAuthorization(client, {
 // Works with existing query parameters
 addAuthorization(client, {
   redirectConfig: {
-    redirectPath: "/login?theme=dark&lang=en",
+    redirectPath: '/login?theme=dark&lang=en',
     // Results in: /login?theme=dark&lang=en&return_url=current-page
   },
 });
@@ -49,8 +49,8 @@ For complete control over unauthorized responses:
 // Custom handler (overrides smart defaults)
 addAuthorization(client, {
   onUnauthorized: (response, request) => {
-    localStorage.removeItem("auth-token");
-    window.location.href = "/login";
+    localStorage.removeItem('auth-token');
+    window.location.href = '/login';
   },
 });
 
@@ -68,14 +68,14 @@ addAuthorization(client, {
 ```ts
 // Skip authorization for certain endpoints
 addAuthorization(client, {
-  skipPatterns: ["/login", "/register", /^\/public\//],
+  skipPatterns: ['/login', '/register', /^\/public\//],
 });
 
 // Advanced usage with factory
-import { createAuthorizationMiddleware } from "@fgrzl/fetch";
+import { createAuthorizationMiddleware } from '@fgrzl/fetch';
 
 const authMiddleware = createAuthorizationMiddleware({
-  redirectConfig: { redirectPath: "/signin" },
+  redirectConfig: { redirectPath: '/signin' },
 });
 client.use(authMiddleware);
 ```
@@ -108,7 +108,7 @@ type UnauthorizedHandler = (
 ### React Router
 
 ```tsx
-import { addAuthorization } from "@fgrzl/fetch";
+import { addAuthorization } from '@fgrzl/fetch';
 
 // Smart defaults work perfectly with React Router
 const apiClient = addAuthorization(new FetchClient());
@@ -119,11 +119,11 @@ function LoginPage() {
 
   const handleLogin = async () => {
     await login();
-    const returnUrl = searchParams.get("return_url");
+    const returnUrl = searchParams.get('return_url');
     if (returnUrl) {
       window.location.href = decodeURIComponent(returnUrl);
     } else {
-      navigate("/dashboard");
+      navigate('/dashboard');
     }
   };
 }
@@ -142,7 +142,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (returnUrl) {
     res.redirect(decodeURIComponent(returnUrl));
   } else {
-    res.redirect("/dashboard");
+    res.redirect('/dashboard');
   }
 }
 ```

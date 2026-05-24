@@ -45,7 +45,7 @@ npm install -D typescript
 **Problem:**
 
 ```typescript
-import api from "@fgrzl/fetch"; // ❌ Error: Module has no default export
+import api from '@fgrzl/fetch'; // ❌ Error: Module has no default export
 ```
 
 **Solution:** Check your module system configuration:
@@ -63,7 +63,7 @@ import api from "@fgrzl/fetch"; // ❌ Error: Module has no default export
 Or use named imports:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 const api = new FetchClient();
 ```
 
@@ -72,13 +72,13 @@ const api = new FetchClient();
 **Problem:**
 
 ```typescript
-import { addAuthentication } from "@fgrzl/fetch/middleware"; // ❌ Not found
+import { addAuthentication } from '@fgrzl/fetch/middleware'; // ❌ Not found
 ```
 
 **Solution:** Import from main module:
 
 ```typescript
-import { addAuthentication } from "@fgrzl/fetch"; // ✅ Correct
+import { addAuthentication } from '@fgrzl/fetch'; // ✅ Correct
 ```
 
 ## Runtime Issues
@@ -99,7 +99,7 @@ import { addAuthentication } from "@fgrzl/fetch"; // ✅ Correct
 
 ```typescript
 // Debug: Check if cookie exists
-document.cookie.split(";").forEach((cookie) => {
+document.cookie.split(';').forEach((cookie) => {
   console.log(cookie.trim());
 });
 
@@ -113,7 +113,7 @@ const csrfClient = addCSRF(client, {
   tokenProvider: () => {
     // Get token from meta tag
     const metaTag = document.querySelector('meta[name="csrf-token"]');
-    return metaTag?.getAttribute("content") || "";
+    return metaTag?.getAttribute('content') || '';
   },
 });
 ```
@@ -123,8 +123,8 @@ const csrfClient = addCSRF(client, {
 ```typescript
 // Ensure cookies are accessible to your domain
 const csrfClient = addCSRF(client, {
-  cookieName: "XSRF-TOKEN", // Verify exact name
-  skipPatterns: ["/api/auth/*"], // Skip for login endpoints
+  cookieName: 'XSRF-TOKEN', // Verify exact name
+  skipPatterns: ['/api/auth/*'], // Skip for login endpoints
 });
 ```
 
@@ -144,9 +144,9 @@ const csrfClient = addCSRF(client, {
 ```typescript
 const authClient = addAuthentication(client, {
   tokenProvider: () => {
-    const token = localStorage.getItem("auth-token");
-    console.log("Token:", token); // Debug log
-    return token || "";
+    const token = localStorage.getItem('auth-token');
+    console.log('Token:', token); // Debug log
+    return token || '';
   },
 });
 ```
@@ -155,14 +155,14 @@ const authClient = addAuthentication(client, {
 
 ```typescript
 // Verify token is stored correctly
-console.log("Stored token:", localStorage.getItem("auth-token"));
+console.log('Stored token:', localStorage.getItem('auth-token'));
 
 // Check for async token retrieval
 const authClient = addAuthentication(client, {
   tokenProvider: async () => {
     const token = await getTokenFromSecureStorage();
     if (!token) {
-      throw new Error("No authentication token available");
+      throw new Error('No authentication token available');
     }
     return token;
   },
@@ -175,8 +175,8 @@ const authClient = addAuthentication(client, {
 // If API uses different auth header
 const authClient = addAuthentication(client, {
   tokenProvider: () => getApiKey(),
-  headerName: "X-API-Key",
-  authScheme: "ApiKey",
+  headerName: 'X-API-Key',
+  authScheme: 'ApiKey',
 });
 ```
 
@@ -199,7 +199,7 @@ const timeoutId = setTimeout(() => controller.abort(), 10000);
 
 try {
   const response = await api.get(
-    "/api/data",
+    '/api/data',
     {},
     {
       signal: controller.signal,
@@ -207,8 +207,8 @@ try {
   );
   clearTimeout(timeoutId);
 } catch (error) {
-  if (error.name === "AbortError") {
-    console.log("Request timed out");
+  if (error.name === 'AbortError') {
+    console.log('Request timed out');
   }
 }
 ```
@@ -217,16 +217,16 @@ try {
 
 ```typescript
 // Debug network issues
-const response = await api.get("/api/health");
+const response = await api.get('/api/health');
 if (!response.ok) {
-  console.log("API health check failed:", response.status);
+  console.log('API health check failed:', response.status);
 }
 ```
 
 3. **Enable debug logging:**
 
 ```typescript
-import { addDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from '@fgrzl/fetch';
 
 const debugClient = addDevelopmentStack(client, {
   auth: { tokenProvider: () => getToken() },
@@ -262,12 +262,12 @@ Access-Control-Allow-Credentials: true
 ```typescript
 // For cookie-based auth
 const client = new FetchClient({
-  credentials: "include", // Send cookies cross-origin
+  credentials: 'include', // Send cookies cross-origin
 });
 
 // For token-only auth
 const client = new FetchClient({
-  credentials: "omit", // Don't send cookies
+  credentials: 'omit', // Don't send cookies
 });
 ```
 
@@ -306,34 +306,34 @@ export default defineConfig({
 
 ```typescript
 // ✅ Correct formats
-const client1 = new FetchClient({ baseUrl: "https://api.example.com" });
-const client2 = new FetchClient({ baseUrl: "https://api.example.com/" }); // Trailing slash OK
+const client1 = new FetchClient({ baseUrl: 'https://api.example.com' });
+const client2 = new FetchClient({ baseUrl: 'https://api.example.com/' }); // Trailing slash OK
 
 // ❌ Invalid formats
-const badClient = new FetchClient({ baseUrl: "api.example.com" }); // Missing protocol
+const badClient = new FetchClient({ baseUrl: 'api.example.com' }); // Missing protocol
 ```
 
 2. **Verify URL resolution:**
 
 ```typescript
-const client = new FetchClient({ baseUrl: "https://api.example.com" });
+const client = new FetchClient({ baseUrl: 'https://api.example.com' });
 
 // These should work:
-await client.get("/users"); // → https://api.example.com/users
-await client.get("users"); // → https://api.example.com/users
-await client.get("https://other-api.com/data"); // → https://other-api.com/data (absolute)
+await client.get('/users'); // → https://api.example.com/users
+await client.get('users'); // → https://api.example.com/users
+await client.get('https://other-api.com/data'); // → https://other-api.com/data (absolute)
 
 // Debug URL resolution
-console.log("Making request to:", "/users");
-const response = await client.get("/users");
+console.log('Making request to:', '/users');
+const response = await client.get('/users');
 ```
 
 3. **Environment-specific debugging:**
 
 ```typescript
 const getBaseUrl = () => {
-  const baseUrl = process.env.API_BASE_URL || "http://localhost:3001";
-  console.log("Using base URL:", baseUrl);
+  const baseUrl = process.env.API_BASE_URL || 'http://localhost:3001';
+  console.log('Using base URL:', baseUrl);
   return baseUrl;
 };
 
@@ -345,10 +345,10 @@ const client = new FetchClient({ baseUrl: getBaseUrl() });
 ```typescript
 // If you expect base URL to be used but it's not:
 // ❌ This will NOT use base URL (absolute URL)
-await client.get("http://localhost:3000/api/users");
+await client.get('http://localhost:3000/api/users');
 
 // ✅ This WILL use base URL (relative URL)
-await client.get("/api/users");
+await client.get('/api/users');
 ```
 
 ## Middleware Issues
@@ -393,7 +393,7 @@ const limitedClient = addRateLimit(client, {
 const retryClient = addRetry(client, {
   maxRetries: 3,
   delay: 1000,
-  backoff: "exponential",
+  backoff: 'exponential',
   retryOn: [429], // Retry rate limit errors
 });
 ```
@@ -412,7 +412,7 @@ const retryClient = addRetry(client, {
 // Enable caching for GET requests
 const cachedClient = addCache(client, {
   ttl: 5 * 60 * 1000, // 5 minutes
-  methods: ["GET", "HEAD"],
+  methods: ['GET', 'HEAD'],
 });
 ```
 
@@ -421,7 +421,7 @@ const cachedClient = addCache(client, {
 ```typescript
 // Reduce logging in production
 const prodClient = addLogging(client, {
-  level: "error", // Only log errors
+  level: 'error', // Only log errors
   includeRequestBody: false,
   includeResponseBody: false,
 });
@@ -431,8 +431,8 @@ const prodClient = addLogging(client, {
 
 ```typescript
 // Add timing logs
-const response = await api.get("/api/data");
-console.log("Request duration:", response.timing?.duration);
+const response = await api.get('/api/data');
+console.log('Request duration:', response.timing?.duration);
 ```
 
 ### Memory Leaks
@@ -483,15 +483,15 @@ function cleanup() {
 1. **Environment-specific configuration:**
 
 ```typescript
-const isProd = process.env.NODE_ENV === "production";
+const isProd = process.env.NODE_ENV === 'production';
 
 const client = isProd
   ? addProductionStack(new FetchClient(), {
       auth: { tokenProvider: () => getSecureToken() },
-      logging: { level: "error" },
+      logging: { level: 'error' },
     })
   : addDevelopmentStack(new FetchClient(), {
-      auth: { tokenProvider: () => "dev-token" },
+      auth: { tokenProvider: () => 'dev-token' },
     });
 ```
 
@@ -510,7 +510,7 @@ const client = isProd
 ### Enable Debug Logging
 
 ```typescript
-import { addDevelopmentStack } from "@fgrzl/fetch";
+import { addDevelopmentStack } from '@fgrzl/fetch';
 
 const debugClient = addDevelopmentStack(new FetchClient(), {
   auth: { tokenProvider: () => getToken() },
@@ -526,11 +526,11 @@ const debugClient = addDevelopmentStack(new FetchClient(), {
 When reporting issues, create a minimal example:
 
 ```typescript
-import { FetchClient } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
 // Minimal reproduction of the issue
 const client = new FetchClient();
-const response = await client.get("https://api.example.com/test");
+const response = await client.get('https://api.example.com/test');
 console.log({ ok: response.ok, status: response.status });
 ```
 

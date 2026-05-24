@@ -4,36 +4,36 @@ TypeScript-first HTTP client built on the browser **`fetch`** API with composabl
 
 ## Start here
 
-| Document | Description |
-|----------|-------------|
+| Document                              | Description                       |
+| ------------------------------------- | --------------------------------- |
 | [Getting started](getting-started.md) | Install, base URL, first requests |
-| [Architecture](architecture.md) | Client shape, middleware pipeline |
-| [Configuration](configuration.md) | Client options and defaults |
+| [Architecture](architecture.md)       | Client shape, middleware pipeline |
+| [Configuration](configuration.md)     | Client options and defaults       |
 
 ## Guides
 
-| Document | Description |
-|----------|-------------|
-| [Middleware](middleware.md) | Overview of built-in middleware |
-| [Error handling](error-handling.md) | `ok`, `data`, `error` response model |
-| [Cancellation](cancellation.md) | AbortSignal and timeouts |
-| [TypeScript](typescript.md) | Typing patterns |
-| [Operation ID](operation-id.md) | Correlation helpers |
-| [Export structure](export-structure.md) | Package exports |
-| [Troubleshooting](troubleshooting.md) | Common issues |
+| Document                                | Description                          |
+| --------------------------------------- | ------------------------------------ |
+| [Middleware](middleware.md)             | Overview of built-in middleware      |
+| [Error handling](error-handling.md)     | `ok`, `data`, `error` response model |
+| [Cancellation](cancellation.md)         | AbortSignal and timeouts             |
+| [TypeScript](typescript.md)             | Typing patterns                      |
+| [Operation ID](operation-id.md)         | Correlation helpers                  |
+| [Export structure](export-structure.md) | Package exports                      |
+| [Troubleshooting](troubleshooting.md)   | Common issues                        |
 
 ## Middleware reference
 
-| Document | Description |
-|----------|-------------|
-| [Authentication](middleware/authentication.md) | Bearer tokens |
-| [Authorization](middleware/authorization.md) | Authz headers |
-| [Retry](middleware/retry.md) | Retries and backoff |
-| [Cache](middleware/cache.md) | Response caching |
-| [Logging](middleware/logging.md) | Request/response logs |
-| [Rate limit](middleware/rate-limit.md) | Client-side throttling |
-| [CSRF](middleware/csrf.md) | CSRF tokens |
-| [Custom](middleware/custom.md) | Write your own |
+| Document                                       | Description            |
+| ---------------------------------------------- | ---------------------- |
+| [Authentication](middleware/authentication.md) | Bearer tokens          |
+| [Authorization](middleware/authorization.md)   | Authz headers          |
+| [Retry](middleware/retry.md)                   | Retries and backoff    |
+| [Cache](middleware/cache.md)                   | Response caching       |
+| [Logging](middleware/logging.md)               | Request/response logs  |
+| [Rate limit](middleware/rate-limit.md)         | Client-side throttling |
+| [CSRF](middleware/csrf.md)                     | CSRF tokens            |
+| [Custom](middleware/custom.md)                 | Write your own         |
 
 ## Related
 

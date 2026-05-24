@@ -5,18 +5,18 @@ Automatically includes CSRF tokens in requests for secure APIs.
 ## Usage
 
 ```ts
-import { addCSRF, createCSRFMiddleware } from "@fgrzl/fetch";
+import { addCSRF, createCSRFMiddleware } from '@fgrzl/fetch';
 
 // Simple usage
 addCSRF(client, {
-  cookieName: "XSRF-TOKEN", // Industry standard
-  headerName: "X-XSRF-TOKEN", // HTTP header convention
+  cookieName: 'XSRF-TOKEN', // Industry standard
+  headerName: 'X-XSRF-TOKEN', // HTTP header convention
 });
 
 // Advanced usage with factory
 const CSRFMiddleware = createCSRFMiddleware({
-  cookieName: "XSRF-TOKEN",
-  headerName: "X-XSRF-TOKEN",
+  cookieName: 'XSRF-TOKEN',
+  headerName: 'X-XSRF-TOKEN',
 });
 client.use(CSRFMiddleware);
 ```
