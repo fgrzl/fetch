@@ -317,8 +317,12 @@ export class FetchClient {
       return null;
     }
 
-    if (contentType.includes('application/json')) {
-      return res.json();
+    if (
+      contentType.includes('application/json') ||
+      contentType.includes('+json')
+    ) {
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
     }
 
     if (contentType.includes('text/')) {

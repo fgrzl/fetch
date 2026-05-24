@@ -39,6 +39,45 @@ describe('FetchClient', () => {
     expect(result.ok).toBe(true);
   });
 
+  it('should treat empty JSON responses as null instead of parse failures', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response('', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await client.get('/api/users');
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toBeNull();
+  });
+
+  it('should parse +json media types as JSON', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ type: 'about:blank', title: 'Bad Request' }), {
+        status: 400,
+        statusText: 'Bad Request',
+        headers: { 'content-type': 'application/problem+json' },
+      }),
+    );
+
+    const result = await client.get('/api/users');
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error('Expected failed response');
+    }
+    expect(result.error.body).toEqual({
+      type: 'about:blank',
+      title: 'Bad Request',
+    });
+  });
+
   it('should make POST requests with JSON body', async () => {
     const client = new FetchClient();
 
