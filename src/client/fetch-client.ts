@@ -2,7 +2,15 @@
  * @fileoverview Enhanced fetch client with intercept middleware architecture.
  */
 
-import type { FetchResponse, FetchClientOptions } from './types';
+import type {
+  FetchResponse,
+  FetchClientOptions,
+  FetchFailureResponse,
+  FetchResponseError,
+  FetchSuccessResponse,
+  RequestOptions,
+} from './types';
+import { appendQueryParams, type QueryParams } from './query';
 
 /**
  * Intercept middleware type that allows full control over request/response cycle.
@@ -12,8 +20,8 @@ export type FetchMiddleware = (
   request: RequestInit & { url?: string },
   next: (
     modifiedRequest?: RequestInit & { url?: string },
-  ) => Promise<FetchResponse<unknown>>,
-) => Promise<FetchResponse<unknown>>;
+  ) => Promise<FetchResponse<unknown, unknown>>,
+) => Promise<FetchResponse<unknown, unknown>>;
 
 function headersToObject(headers?: HeadersInit): Record<string, string> {
   if (!headers) {
@@ -39,11 +47,11 @@ function headersToObject(headers?: HeadersInit): Record<string, string> {
  * Enhanced HTTP client with intercept middleware architecture.
  *
  * Features:
- * - 🎯 Smart defaults (JSON content-type, same-origin credentials)
- * - 🔧 Powerful middleware system for cross-cutting concerns
- * - 🛡️ Consistent error handling (never throws, always returns response)
- * - 📦 TypeScript-first with full type inference
- * - 🚀 Modern async/await API
+ * - Small fetch wrapper with JSON defaults and same-origin credentials
+ * - Composable middleware for cross-cutting concerns
+ * - Response-based handling for HTTP, network, abort, parse, and URL failures
+ * - TypeScript-first response narrowing with `ok`
+ * - Modern async/await API
  *
  * @example Basic usage:
  * ```typescript
@@ -110,8 +118,8 @@ export class FetchClient {
    *
    * @example Chain with middleware:
    * ```typescript
-   * const client = addProductionStack(new FetchClient())
-   *   .setBaseUrl(process.env.API_BASE_URL);
+   * const client = new FetchClient().setBaseUrl(process.env.API_BASE_URL);
+   * addRetry(client, { maxRetries: 2 });
    * ```
    */
   setBaseUrl(baseUrl?: string): this {
@@ -119,17 +127,28 @@ export class FetchClient {
     return this;
   }
 
-  async request<T = unknown>(
+  async request<T = unknown, E = unknown>(
     url: string,
     init: RequestInit = {},
-    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
-  ): Promise<FetchResponse<T>> {
-    // Resolve URL against baseUrl if relative
-    const resolvedUrl = this.resolveUrl(url);
+    options?: RequestOptions,
+  ): Promise<FetchResponse<T, E>> {
+    const resolved = this.tryResolveUrl(url);
+    if (!resolved.ok) {
+      return this.createFailureResponse<E>({
+        url,
+        status: 0,
+        statusText: 'Invalid URL',
+        message: resolved.message,
+        cause: resolved.cause,
+      });
+    }
+
+    const resolvedUrl = resolved.url;
 
     // Handle timeout and signal
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let timeoutController: AbortController | undefined;
+    let removeAbortListener: (() => void) | undefined;
     let effectiveSignal = options?.signal || init.signal;
 
     // Create timeout if specified (request-level timeout takes precedence)
@@ -139,10 +158,21 @@ export class FetchClient {
 
       // If user provided a signal, we need to combine them
       if (effectiveSignal) {
-        // Listen to user's signal and propagate abort
-        effectiveSignal.addEventListener('abort', () => {
+        const sourceSignal = effectiveSignal;
+        const abortFromSource = () => {
           timeoutController?.abort();
-        });
+        };
+
+        if (sourceSignal.aborted) {
+          abortFromSource();
+        } else {
+          sourceSignal.addEventListener('abort', abortFromSource, {
+            once: true,
+          });
+          removeAbortListener = () => {
+            sourceSignal.removeEventListener('abort', abortFromSource);
+          };
+        }
       }
 
       effectiveSignal = timeoutController.signal;
@@ -161,49 +191,49 @@ export class FetchClient {
       };
     }
 
-    // Create the execution chain
-    let index = 0;
-
     const execute = async (
-      request?: RequestInit & { url?: string },
-    ): Promise<FetchResponse<unknown>> => {
-      // Use provided request or fall back to original
-      const currentRequest: RequestInit & { url?: string } = request || {
-        ...init,
-        url: resolvedUrl,
-        ...(effectiveSignal ? { signal: effectiveSignal } : {}),
-      };
-      const currentUrl = currentRequest.url || resolvedUrl;
+      middlewareIndex: number,
+      request: RequestInit & { url?: string },
+    ): Promise<FetchResponse<unknown, unknown>> => {
+      const currentUrl = request.url || resolvedUrl;
 
-      if (index >= this.middlewares.length) {
+      if (middlewareIndex >= this.middlewares.length) {
         // Core fetch - end of middleware chain
-        const { url: _, ...requestInit } = currentRequest; // Remove url from request init
+        const { url: _, ...requestInit } = request; // Remove url from request init
         return this.coreFetch(requestInit, currentUrl);
       }
 
-      const middleware = this.middlewares[index++];
+      const middleware = this.middlewares[middlewareIndex];
       if (!middleware) {
-        const { url: _, ...requestInit } = currentRequest;
+        const { url: _, ...requestInit } = request;
         return this.coreFetch(requestInit, currentUrl);
       }
-      return middleware(currentRequest, execute);
+
+      return middleware(request, (modifiedRequest = request) =>
+        execute(middlewareIndex + 1, modifiedRequest),
+      );
     };
 
     try {
-      const result = await execute();
-      return result as FetchResponse<T>;
+      const result = await execute(0, {
+        ...init,
+        url: resolvedUrl,
+        ...(effectiveSignal ? { signal: effectiveSignal } : {}),
+      });
+      return result as FetchResponse<T, E>;
     } finally {
       // Clean up timeout
       if (timeoutId !== undefined) {
         clearTimeout(timeoutId);
       }
+      removeAbortListener?.();
     }
   }
 
   private async coreFetch(
     request: RequestInit,
     url: string,
-  ): Promise<FetchResponse<unknown>> {
+  ): Promise<FetchResponse<unknown, unknown>> {
     try {
       const finalInit = {
         credentials: this.credentials,
@@ -220,62 +250,72 @@ export class FetchClient {
       }
 
       const response = await fetch(url, finalInit);
-      const data = await this.parseResponse(response);
 
-      return {
-        data: response.ok ? data : null,
+      let data: unknown;
+      try {
+        data = await this.parseResponse(response);
+      } catch (error) {
+        return this.createFailureResponse({
+          url: response.url || url,
+          status: response.status,
+          statusText: response.statusText || 'Parse Error',
+          headers: response.headers,
+          message: 'Failed to parse response body',
+          cause: error,
+        });
+      }
+
+      if (response.ok) {
+        return this.createSuccessResponse({
+          data,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          url: response.url || url,
+        });
+      }
+
+      return this.createFailureResponse({
+        url: response.url || url,
         status: response.status,
         statusText: response.statusText,
         headers: response.headers,
-        url: response.url,
-        ok: response.ok,
-        ...(response.ok
-          ? {}
-          : {
-              error: {
-                message: response.statusText,
-                body: data,
-              },
-            }),
-      };
+        message: response.statusText || `HTTP ${response.status}`,
+        body: data,
+      });
     } catch (error) {
       // Handle AbortError (from timeout or manual cancellation)
       if (error instanceof Error && error.name === 'AbortError') {
-        return {
-          data: null,
+        return this.createFailureResponse({
+          url,
           status: 0,
           statusText: 'Request Aborted',
-          headers: new Headers(),
-          url,
-          ok: false,
-          error: {
-            message: 'Request was aborted',
-            body: error,
-          },
-        };
+          message: 'Request was aborted',
+          cause: error,
+        });
       }
 
-      // Handle network errors
-      if (error instanceof TypeError && error.message.includes('fetch')) {
-        return {
-          data: null,
-          status: 0,
-          statusText: 'Network Error',
-          headers: new Headers(),
-          url,
-          ok: false,
-          error: {
-            message: 'Failed to fetch',
-            body: error,
-          },
-        };
-      }
-      throw error;
+      return this.createFailureResponse({
+        url,
+        status: 0,
+        statusText: 'Network Error',
+        message:
+          error instanceof Error
+            ? error.message
+            : typeof error === 'string'
+              ? error
+              : 'Failed to fetch',
+        cause: error,
+      });
     }
   }
 
   private async parseResponse(res: Response): Promise<unknown> {
     const contentType = res.headers.get('content-type') || '';
+
+    if (!res.body) {
+      return null;
+    }
 
     if (contentType.includes('application/json')) {
       return res.json();
@@ -294,52 +334,17 @@ export class FetchClient {
       return res.blob();
     }
 
-    if (res.body) {
-      const text = await res.text();
-      return text || null;
-    }
-
-    return null;
+    const text = await res.text();
+    return text || null;
   }
 
   // Helper method to build URL with query parameters
-  private buildUrlWithParams(
-    url: string,
-    params?: Record<string, string | number | boolean | undefined>,
-  ): string {
+  private buildUrlWithParams(url: string, params?: QueryParams): string {
     if (!params) {
       return url;
     }
 
-    // Resolve the URL first (handles baseUrl if needed)
-    const resolvedUrl = this.resolveUrl(url);
-
-    // If the resolved URL is still relative (no base URL configured),
-    // manually build query parameters
-    if (
-      !resolvedUrl.startsWith('http://') &&
-      !resolvedUrl.startsWith('https://') &&
-      !resolvedUrl.startsWith('//')
-    ) {
-      const searchParams = new URLSearchParams();
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          searchParams.set(key, String(value));
-        }
-      });
-      const queryString = searchParams.toString();
-      return queryString ? `${resolvedUrl}?${queryString}` : resolvedUrl;
-    }
-
-    // For absolute URLs, use URL constructor
-    const urlObj = new URL(resolvedUrl);
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        urlObj.searchParams.set(key, String(value));
-      }
-    });
-
-    return urlObj.toString();
+    return appendQueryParams(this.resolveUrl(url), params);
   }
 
   /**
@@ -358,22 +363,110 @@ export class FetchClient {
       return url;
     }
 
-    // If no base URL is configured, return the relative URL as-is (backward compatibility)
+    // Relative URLs are valid for browser-origin requests without a configured base.
     if (!this.baseUrl) {
       return url;
     }
 
-    // Resolve relative URL with base URL
+    const baseUrl = new URL(this.baseUrl);
+    const resolvedUrl = new URL(url, baseUrl);
+    return resolvedUrl.toString();
+  }
+
+  private tryResolveUrl(
+    url: string,
+  ):
+    | { ok: true; url: string }
+    | { ok: false; message: string; cause: unknown } {
     try {
-      const baseUrl = new URL(this.baseUrl);
-      const resolvedUrl = new URL(url, baseUrl);
-      return resolvedUrl.toString();
-    } catch {
-      throw new Error(
-        `Invalid URL: Unable to resolve "${url}" with baseUrl "${this.baseUrl}"`,
-      );
+      return { ok: true, url: this.resolveUrl(url) };
+    } catch (error) {
+      return {
+        ok: false,
+        message: `Invalid URL: Unable to resolve "${url}" with baseUrl "${this.baseUrl}"`,
+        cause: error,
+      };
     }
-  } // 🎯 PIT OF SUCCESS: Convenience methods with smart defaults
+  }
+
+  private createSuccessResponse<T>({
+    data,
+    status,
+    statusText,
+    headers,
+    url,
+  }: {
+    data: T;
+    status: number;
+    statusText: string;
+    headers: Headers;
+    url: string;
+  }): FetchSuccessResponse<T> {
+    return {
+      data,
+      status,
+      statusText,
+      headers,
+      url,
+      ok: true,
+      error: null,
+    };
+  }
+
+  private createFailureResponse<E = unknown>({
+    url,
+    status,
+    statusText,
+    headers = new Headers(),
+    message,
+    body,
+    cause,
+  }: {
+    url: string;
+    status: number;
+    statusText: string;
+    headers?: Headers;
+    message: string;
+    body?: E;
+    cause?: unknown;
+  }): FetchFailureResponse<E> {
+    const error: FetchResponseError<E> = {
+      message,
+      status,
+      statusText,
+      url,
+      ...(body !== undefined ? { body } : {}),
+      ...(cause !== undefined ? { cause } : {}),
+    };
+
+    return {
+      data: null,
+      status,
+      statusText,
+      headers,
+      url,
+      ok: false,
+      error,
+    };
+  }
+
+  private urlFailureResponse<T = unknown, E = unknown>(
+    url: string,
+    error: unknown,
+  ): FetchResponse<T, E> {
+    return this.createFailureResponse<E>({
+      url,
+      status: 0,
+      statusText: 'Invalid URL',
+      message:
+        error instanceof Error
+          ? error.message
+          : `Invalid URL: Unable to resolve "${url}"`,
+      cause: error,
+    });
+  }
+
+  // Convenience methods with JSON defaults.
 
   /**
    * HEAD request with query parameter support.
@@ -405,13 +498,19 @@ export class FetchClient {
    * controller.abort(); // Cancel the request
    * ```
    */
-  head<T = null>(
+  async head<T = null, E = unknown>(
     url: string,
-    params?: Record<string, string | number | boolean | undefined>,
-    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
-  ): Promise<FetchResponse<T>> {
-    const finalUrl = this.buildUrlWithParams(url, params);
-    return this.request<T>(finalUrl, { method: 'HEAD' }, options);
+    params?: QueryParams,
+    options?: RequestOptions,
+  ): Promise<FetchResponse<T, E>> {
+    let finalUrl: string;
+    try {
+      finalUrl = this.buildUrlWithParams(url, params);
+    } catch (error) {
+      return this.urlFailureResponse<T, E>(url, error);
+    }
+
+    return this.request<T, E>(finalUrl, { method: 'HEAD' }, options);
   }
 
   /**
@@ -437,7 +536,7 @@ export class FetchClient {
    */
   async headMetadata(
     url: string,
-    params?: Record<string, string | number | boolean | undefined>,
+    params?: QueryParams,
   ): Promise<
     FetchResponse<null> & {
       exists: boolean;
@@ -489,13 +588,19 @@ export class FetchClient {
    * const users = await client.get<User[]>('/api/users', {}, { timeout: 5000 });
    * ```
    */
-  get<T>(
+  async get<T = unknown, E = unknown>(
     url: string,
-    params?: Record<string, string | number | boolean | undefined>,
-    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
-  ): Promise<FetchResponse<T>> {
-    const finalUrl = this.buildUrlWithParams(url, params);
-    return this.request<T>(finalUrl, { method: 'GET' }, options);
+    params?: QueryParams,
+    options?: RequestOptions,
+  ): Promise<FetchResponse<T, E>> {
+    let finalUrl: string;
+    try {
+      finalUrl = this.buildUrlWithParams(url, params);
+    } catch (error) {
+      return this.urlFailureResponse<T, E>(url, error);
+    }
+
+    return this.request<T, E>(finalUrl, { method: 'GET' }, options);
   }
 
   /**
@@ -520,18 +625,18 @@ export class FetchClient {
    * controller.abort();
    * ```
    */
-  post<T>(
+  post<T = unknown, E = unknown>(
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
-    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
-  ): Promise<FetchResponse<T>> {
+    options?: RequestOptions,
+  ): Promise<FetchResponse<T, E>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
       ...headers,
     };
 
-    return this.request<T>(
+    return this.request<T, E>(
       url,
       {
         method: 'POST',
@@ -552,18 +657,18 @@ export class FetchClient {
    * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response
    */
-  put<T>(
+  put<T = unknown, E = unknown>(
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
-    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
-  ): Promise<FetchResponse<T>> {
+    options?: RequestOptions,
+  ): Promise<FetchResponse<T, E>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
       ...headers,
     };
 
-    return this.request<T>(
+    return this.request<T, E>(
       url,
       {
         method: 'PUT',
@@ -584,18 +689,18 @@ export class FetchClient {
    * @param options - Request options (signal, timeout)
    * @returns Promise resolving to typed response
    */
-  patch<T>(
+  patch<T = unknown, E = unknown>(
     url: string,
     body?: unknown,
     headers?: Record<string, string>,
-    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
-  ): Promise<FetchResponse<T>> {
+    options?: RequestOptions,
+  ): Promise<FetchResponse<T, E>> {
     const requestHeaders = {
       'Content-Type': 'application/json',
       ...headers,
     };
 
-    return this.request<T>(
+    return this.request<T, E>(
       url,
       {
         method: 'PATCH',
@@ -622,12 +727,18 @@ export class FetchClient {
    * if (result.ok) console.log('Deleted successfully');
    * ```
    */
-  del<T>(
+  async del<T = unknown, E = unknown>(
     url: string,
-    params?: Record<string, string | number | boolean | undefined>,
-    options?: { signal?: AbortSignal; timeout?: number; operationId?: string },
-  ): Promise<FetchResponse<T>> {
-    const finalUrl = this.buildUrlWithParams(url, params);
-    return this.request<T>(finalUrl, { method: 'DELETE' }, options);
+    params?: QueryParams,
+    options?: RequestOptions,
+  ): Promise<FetchResponse<T, E>> {
+    let finalUrl: string;
+    try {
+      finalUrl = this.buildUrlWithParams(url, params);
+    } catch (error) {
+      return this.urlFailureResponse<T, E>(url, error);
+    }
+
+    return this.request<T, E>(finalUrl, { method: 'DELETE' }, options);
   }
 }

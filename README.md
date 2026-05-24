@@ -2,80 +2,83 @@
 
 # @fgrzl/fetch
 
-A tiny, TypeScript-first wrapper around `fetch` that adds typed responses and composable middleware.
+An explicit TypeScript client built on `fetch`, with typed `ok` / `data` / `error` results and opt-in middleware.
 
-## What
+## Why Use It
 
-- Lightweight HTTP client built on the browser `fetch` API.
-- Returns a consistent response shape (`ok`, `data`, `error`).
-- Built-in, optional middleware: auth, retry, cache, logging, CSRF, rate-limit.
+- Requests resolve to typed result objects instead of throwing for HTTP or network failures.
+- The core API stays narrow: JSON requests, base URLs, cancellation, timeouts, and tracing headers.
+- Middleware is explicit: add auth, retry, caching, logging, CSRF, or local rate limits only where needed.
+- Importing the package creates no shared client and enables no behavior behind your back.
 
-## Why
+`@fgrzl/fetch` is built for applications that want explicit request flow, strong TypeScript narrowing, and modern `fetch` semantics without a large client abstraction sitting in the middle.
 
-- Removes repetitive request boilerplate (base URLs, headers, retries).
-- Keeps runtime small and TypeScript-friendly.
-- Compose only the middleware you need — zero-config defaults when useful.
-
-## How
-
-1. Install
+## Install
 
 ```bash
 npm install @fgrzl/fetch
 ```
 
-2. Quick example
+## Quick Start
 
 ```ts
-import api from '@fgrzl/fetch';
+import { FetchClient } from '@fgrzl/fetch';
 
-api.setBaseUrl('https://api.example.com');
-const res = await api.get<{ id: number; name: string }>('/users');
-if (res.ok) console.log(res.data);
-```
+const api = new FetchClient({ baseUrl: 'https://api.example.com' });
+const res = await api.get<{ id: number; name: string }>('/users/1');
 
-## Examples
-
-### Set base URL
-
-```ts
-api.setBaseUrl('https://api.example.com');
-await api.get('/users');
-```
-
-### POST with JSON
-
-```ts
-const created = await api.post('/users', { name: 'Ava' });
-```
-
-### Typed response
-
-```ts
-interface User {
-  id: number;
-  name: string;
+if (res.ok) {
+  console.log(res.data.name);
+} else {
+  console.error(res.status, res.error.message);
 }
-const r = await api.get<User>('/me');
-if (r.ok) r.data.name;
 ```
 
-### Add authentication middleware
+There is no configured global client and no middleware is installed by importing the package.
+
+## Design
+
+- Built on native `fetch`, not a parallel request stack.
+- Returns a discriminated response object by default.
+- Keeps exceptions opt-in through `throwOnError`.
+- Installs middleware per client instance, not globally.
+- Favors explicit behavior over hidden defaults and preset stacks.
+
+## Add Middleware
 
 ```ts
+import { FetchClient } from '@fgrzl/fetch';
 import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
-const authed = addAuthentication(api, {
+import { addRetry } from '@fgrzl/fetch/middleware/retry';
+
+const api = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+addAuthentication(api, {
   tokenProvider: () => localStorage.getItem('token') || '',
 });
-await authed.get('/private');
+
+addRetry(api, {
+  maxRetries: 2,
+  delay: 250,
+  backoff: 'exponential',
+});
 ```
 
-### Cancel / timeout
+Cache support is an opt-in TTL memoizer for safe repeated reads, not a replacement for HTTP cache policy or application data caching.
+
+## Opt Into Exceptions
 
 ```ts
-const c = new AbortController();
-api.get('/data', {}, { signal: c.signal, timeout: 5000 });
-c.abort();
+import { FetchClient, throwOnError } from '@fgrzl/fetch';
+
+const api = new FetchClient({ baseUrl: 'https://api.example.com' });
+const user = throwOnError(await api.get<User>('/users/1'));
 ```
 
-Documentation: **[docs/](docs/README.md)** — [getting started](docs/getting-started.md), [architecture](docs/architecture.md), [middleware](docs/middleware.md)
+## Documentation
+
+- [Getting started](docs/getting-started.md)
+- [Architecture](docs/architecture.md)
+- [Error handling](docs/error-handling.md)
+- [Middleware](docs/middleware.md)
+- [TypeScript](docs/typescript.md)

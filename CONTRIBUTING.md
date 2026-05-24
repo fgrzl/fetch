@@ -6,7 +6,7 @@ Thank you for your interest in contributing! This guide will help you get starte
 
 ### Prerequisites
 
-- Node.js 18+ and npm 9+
+- Node.js 24 and the npm version declared in `packageManager`
 - Git
 - Code editor (VS Code recommended)
 
@@ -141,19 +141,13 @@ describe('Feature Name', () => {
 
 ```typescript
 /**
- * Creates a new HTTP client with smart defaults.
+ * Creates the application's API client.
  *
  * @param config - Optional configuration
  * @returns Configured FetchClient instance
  */
-export function createClient(config?: ClientConfig): FetchClient {
-  const client = new FetchClient(config);
-
-  // Apply smart defaults
-  addCSRF(client);
-  addRetry(client);
-
-  return client;
+export function createClient(config?: FetchClientOptions): FetchClient {
+  return new FetchClient(config);
 }
 ```
 
@@ -187,7 +181,7 @@ docs/middleware/
 
 When modifying `FetchClient`:
 
-- Maintain backward compatibility
+- Keep the v2 result-object contract coherent
 - Add appropriate TypeScript types
 - Test integration with existing middleware
 - Update documentation

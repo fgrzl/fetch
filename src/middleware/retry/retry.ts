@@ -1,9 +1,8 @@
 /**
- * @fileoverview Retry middleware implementation with enhanced architecture.
+ * @fileoverview Retry middleware implementation.
  */
 
 import type { FetchMiddleware } from '../../client/fetch-client';
-import type { FetchResponse } from '../../client/types';
 import type { RetryOptions } from './types';
 
 /**
@@ -12,10 +11,12 @@ import type { RetryOptions } from './types';
 const defaultShouldRetry = (response: {
   status: number;
   ok: boolean;
+  statusText: string;
 }): boolean => {
-  // Network errors (status 0) or server errors (5xx)
+  // Retry transport failures, but respect caller-driven aborts.
   return (
-    response.status === 0 || (response.status >= 500 && response.status < 600)
+    (response.status === 0 && response.statusText !== 'Request Aborted') ||
+    (response.status >= 500 && response.status < 600)
   );
 };
 
@@ -53,16 +54,11 @@ const sleep = (ms: number): Promise<void> =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
 /**
- * Creates a retry middleware with smart defaults.
+ * Creates retry middleware with explicit configurable policy.
  *
- * 🎯 PIT OF SUCCESS: Works great with no config, customizable when needed.
- *
- * Features:
- * - ✅ Preserves full middleware chain on retries (unlike old implementation)
- * - ✅ Exponential backoff with jitter
- * - ✅ Smart retry conditions (network errors + 5xx)
- * - ✅ Configurable but sensible defaults
- * - ✅ Type-safe configuration
+ * Middleware registered after retry is invoked for every attempt. By default,
+ * retries apply to network failures and `5xx` responses with exponential
+ * backoff.
  *
  * @param options - Retry configuration (all optional)
  * @returns Middleware function
@@ -97,94 +93,30 @@ export function createRetryMiddleware(
   } = options;
 
   return async (request, next) => {
-    let lastResponse: FetchResponse<unknown>;
     let attempt = 0;
 
-    while (attempt <= maxRetries) {
-      try {
-        // Execute the request through the middleware chain
-        const response = await next(request);
+    while (true) {
+      const response = await next(request);
 
-        // If successful, return immediately
-        if (response.ok) {
-          return response;
-        }
-
-        // Check if we should retry this response with current attempt count
-        if (
-          !shouldRetry(
-            { status: response.status, ok: response.ok },
-            attempt + 1,
-          )
-        ) {
-          return response;
-        }
-
-        // If we've reached max retries, return the response
-        if (attempt >= maxRetries) {
-          return response;
-        }
-
-        // Store the failed response and increment attempt counter
-        lastResponse = response;
-        attempt++;
-
-        // Calculate delay for next attempt
-        const retryDelay = calculateDelay(attempt, delay, backoff, maxDelay);
-
-        // Call onRetry callback if provided
-        if (onRetry) {
-          onRetry(attempt, retryDelay, {
-            status: response.status,
-            statusText: response.statusText,
-          });
-        }
-
-        // Wait before retrying
-        await sleep(retryDelay);
-      } catch (error) {
-        // Handle unexpected errors - treat as network error (status 0)
-        const errorResponse: FetchResponse<unknown> = {
-          data: null,
-          status: 0,
-          statusText: 'Network Error',
-          headers: new Headers(),
-          url: request.url || '',
-          ok: false,
-          error: {
-            message: error instanceof Error ? error.message : 'Unknown error',
-            body: error,
-          },
-        };
-
-        // If shouldn't retry, return error immediately
-        if (!shouldRetry(errorResponse, attempt + 1)) {
-          return errorResponse;
-        }
-
-        // If we've reached max retries, return the error
-        if (attempt >= maxRetries) {
-          return errorResponse;
-        }
-
-        lastResponse = errorResponse;
-        attempt++;
-
-        // Calculate delay for next attempt
-        const retryDelay = calculateDelay(attempt, delay, backoff, maxDelay);
-
-        if (onRetry) {
-          onRetry(attempt, retryDelay, {
-            status: errorResponse.status,
-            statusText: errorResponse.statusText,
-          });
-        }
-
-        await sleep(retryDelay);
+      if (
+        response.ok ||
+        !shouldRetry(response, attempt + 1) ||
+        attempt >= maxRetries
+      ) {
+        return response;
       }
-    }
 
-    // Return the last response if we've exhausted all retries
-    return lastResponse!;
+      attempt++;
+      const retryDelay = calculateDelay(attempt, delay, backoff, maxDelay);
+
+      if (onRetry) {
+        onRetry(attempt, retryDelay, {
+          status: response.status,
+          statusText: response.statusText,
+        });
+      }
+
+      await sleep(retryDelay);
+    }
   };
 }

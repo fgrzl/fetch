@@ -2,10 +2,12 @@
  * @fileoverview Retry middleware types and configuration.
  */
 
+import type { FetchResponse } from '../../client/types';
+
 /**
- * Retry configuration options - optimized for "pit of success".
+ * Retry configuration options.
  *
- * Smart defaults:
+ * Defaults:
  * - 3 retries (4 total attempts)
  * - Exponential backoff starting at 1000ms
  * - Only retry on network errors and 5xx status codes
@@ -46,7 +48,7 @@ export interface RetryOptions {
    * @returns true if request should be retried
    */
   shouldRetry?: (
-    response: { status: number; ok: boolean },
+    response: FetchResponse<unknown, unknown>,
     attempt: number,
   ) => boolean;
 

@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe('Rate Limit Middleware', () => {
-  describe('addRateLimit (Pit of Success API)', () => {
+  describe('addRateLimit', () => {
     it('should allow requests within rate limit', async () => {
       const client = new FetchClient();
       const rateLimitedClient = addRateLimit(client, {
@@ -378,16 +378,15 @@ describe('Rate Limit Middleware', () => {
 
       const { addRetry } = await import('../../../src/middleware/retry');
 
-      // Test that rate limiting works correctly with retry middleware
-      // Rate limiting should only count external requests, not internal retries
-      const rateLimitedRetryClient = addRateLimit(
-        addRetry(client, {
-          maxRetries: 2,
-          delay: 10,
+      // Place the limiter outside retry so one admitted operation can retry.
+      const rateLimitedRetryClient = addRetry(
+        addRateLimit(client, {
+          maxRequests: 1,
+          windowMs: 1000,
         }),
         {
-          maxRequests: 1, // Allow only 1 external request to isolate the issue
-          windowMs: 1000,
+          maxRetries: 2,
+          delay: 10,
         },
       );
 
@@ -404,7 +403,7 @@ describe('Rate Limit Middleware', () => {
       expect(secondResponse.status).toBe(429);
 
       // Verify network calls: failed attempt + successful retry = 2 calls
-      // The rate limiter doesn't block the actual fetch attempts, just the middleware chain entry
+      // The outer limiter admits the operation; retry performs its fetch attempts.
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 

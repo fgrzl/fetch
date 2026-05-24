@@ -31,7 +31,7 @@ describe('Retry Middleware', () => {
     vi.useRealTimers();
   });
 
-  describe('addRetry (Pit of Success API)', () => {
+  describe('addRetry', () => {
     it('should add retry middleware with default options', async () => {
       const client = new FetchClient();
       const result = addRetry(client);
@@ -64,6 +64,28 @@ describe('Retry Middleware', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
       expect(result.data).toEqual({ success: true });
       expect(result.ok).toBe(true);
+    });
+
+    it('should re-run downstream middleware for each retry attempt', async () => {
+      const client = new FetchClient();
+      const downstream = vi.fn();
+      addRetry(client, { maxRetries: 1, delay: 10 });
+      client.use(async (request, next) => {
+        downstream();
+        return next(request);
+      });
+
+      mockFetch
+        .mockResolvedValueOnce(new Response('Server Error', { status: 500 }))
+        .mockResolvedValueOnce(new Response('{}', { status: 200 }));
+
+      const requestPromise = client.get('/api/test');
+      await vi.runAllTimersAsync();
+      const result = await requestPromise;
+
+      expect(result.ok).toBe(true);
+      expect(downstream).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
     it('should retry 5xx server errors', async () => {
@@ -150,6 +172,26 @@ describe('Retry Middleware', () => {
         statusText: 'Network Error',
       });
     });
+
+    it('should not retry aborted requests by default', async () => {
+      const client = new FetchClient();
+      const onRetry = vi.fn();
+
+      addRetry(client, { maxRetries: 2, delay: 10, onRetry });
+
+      mockFetch.mockImplementation(() => {
+        const error = new Error('Aborted');
+        error.name = 'AbortError';
+        return Promise.reject(error);
+      });
+
+      const result = await client.get('/api/test');
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(onRetry).not.toHaveBeenCalled();
+      expect(result.ok).toBe(false);
+      expect(result.statusText).toBe('Request Aborted');
+    });
   });
 
   describe('createRetryMiddleware (Direct API)', () => {
@@ -195,7 +237,10 @@ describe('Retry Middleware', () => {
       await client.get('/api/test');
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
-      expect(shouldRetry).toHaveBeenCalledWith({ status: 500, ok: false }, 1);
+      expect(shouldRetry).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 500, ok: false }),
+        1,
+      );
     });
   });
 
@@ -326,12 +371,30 @@ describe('Retry Middleware', () => {
           ok: false,
           error: {
             message: 'Network error',
-            body: expect.any(Error),
+            status: 0,
+            statusText: 'Network Error',
+            url: '/api/test',
+            cause: expect.any(Error),
           },
         },
         1,
       );
       expect(result.ok).toBe(false);
+    });
+
+    it('should propagate downstream middleware exceptions without retrying', async () => {
+      const client = new FetchClient();
+      const middlewareError = new Error('Middleware exploded');
+      const downstream = vi.fn();
+
+      client.use(createRetryMiddleware({ maxRetries: 2 })).use(async () => {
+        downstream();
+        throw middlewareError;
+      });
+
+      await expect(client.get('/api/test')).rejects.toBe(middlewareError);
+      expect(downstream).toHaveBeenCalledTimes(1);
+      expect(mockFetch).not.toHaveBeenCalled();
     });
 
     it('should handle shouldRetry function checking attempt number', async () => {
@@ -520,8 +583,8 @@ describe('Retry Middleware', () => {
       await vi.runAllTimersAsync();
       const result = await requestPromise;
 
-      expect(result.error?.message).toBe('Unknown error');
-      expect(result.error?.body).toBe('String error');
+      expect(result.error?.message).toBe('String error');
+      expect(result.error?.cause).toBe('String error');
       expect(result.status).toBe(0);
       expect(result.statusText).toBe('Network Error');
       expect(result.ok).toBe(false);

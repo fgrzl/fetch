@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { FetchError, HttpError, NetworkError } from '../../src/errors/index';
+import {
+  FetchError,
+  HttpError,
+  NetworkError,
+  errorFromResponse,
+  throwOnError,
+} from '../../src/errors/index';
+import type { FetchResponse } from '../../src/client/types';
 
 describe('Error Classes', () => {
   describe('FetchError', () => {
@@ -15,7 +22,7 @@ describe('Error Classes', () => {
 
     it('should create a FetchError with message and cause', () => {
       const cause = new Error('Root cause');
-      const error = new FetchError('Test error', cause);
+      const error = new FetchError('Test error', undefined, cause);
 
       expect(error).toBeInstanceOf(Error);
       expect(error).toBeInstanceOf(FetchError);
@@ -28,6 +35,12 @@ describe('Error Classes', () => {
       const error = new FetchError('Test error', undefined);
 
       expect(error.cause).toBeUndefined();
+    });
+
+    it('should store a URL when provided', () => {
+      const error = new FetchError('Test error', '/api/data');
+
+      expect(error.url).toBe('/api/data');
     });
   });
 
@@ -212,6 +225,123 @@ describe('Error Classes', () => {
       expect(httpErrors).toHaveLength(1);
       expect(networkErrors).toHaveLength(1);
       expect(fetchErrors).toHaveLength(3); // All inherit from FetchError
+    });
+  });
+
+  describe('response conversion helpers', () => {
+    it('should return data from successful responses', () => {
+      const response: FetchResponse<{ id: number }> = {
+        data: { id: 1 },
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers(),
+        url: '/api/user',
+        ok: true,
+        error: null,
+      };
+
+      expect(throwOnError(response)).toEqual({ id: 1 });
+    });
+
+    it('should convert HTTP failures to HttpError', () => {
+      const response: FetchResponse<unknown, { error: string }> = {
+        data: null,
+        status: 404,
+        statusText: 'Not Found',
+        headers: new Headers(),
+        url: '/api/missing',
+        ok: false,
+        error: {
+          message: 'Not Found',
+          status: 404,
+          statusText: 'Not Found',
+          url: '/api/missing',
+          body: { error: 'missing' },
+        },
+      };
+
+      const error = errorFromResponse(response);
+
+      expect(error).toBeInstanceOf(HttpError);
+      expect(error).toMatchObject({
+        status: 404,
+        statusText: 'Not Found',
+        body: { error: 'missing' },
+        url: '/api/missing',
+      });
+      expect(() => throwOnError(response)).toThrow(HttpError);
+    });
+
+    it('should convert transport failures to NetworkError', () => {
+      const cause = new Error('offline');
+      const response: FetchResponse<unknown> = {
+        data: null,
+        status: 0,
+        statusText: 'Network Error',
+        headers: new Headers(),
+        url: '/api/user',
+        ok: false,
+        error: {
+          message: 'offline',
+          status: 0,
+          statusText: 'Network Error',
+          url: '/api/user',
+          cause,
+        },
+      };
+
+      const error = errorFromResponse(response);
+
+      expect(error).toBeInstanceOf(NetworkError);
+      expect(error.message).toBe('Network error for /api/user: offline');
+      expect(error.cause).toBe(cause);
+      expect(() => throwOnError(response)).toThrow(NetworkError);
+    });
+
+    it('should convert aborted or invalid requests to FetchError', () => {
+      const response: FetchResponse<unknown> = {
+        data: null,
+        status: 0,
+        statusText: 'Request Aborted',
+        headers: new Headers(),
+        url: '/api/user',
+        ok: false,
+        error: {
+          message: 'Request was aborted',
+          status: 0,
+          statusText: 'Request Aborted',
+          url: '/api/user',
+        },
+      };
+
+      const error = errorFromResponse(response);
+
+      expect(error).toBeInstanceOf(FetchError);
+      expect(error).not.toBeInstanceOf(NetworkError);
+      expect(error).not.toBeInstanceOf(HttpError);
+    });
+
+    it('should convert successful-response parsing failures to FetchError', () => {
+      const response: FetchResponse<unknown> = {
+        data: null,
+        status: 200,
+        statusText: 'OK',
+        headers: new Headers(),
+        url: '/api/user',
+        ok: false,
+        error: {
+          message: 'Failed to parse response body',
+          status: 200,
+          statusText: 'OK',
+          url: '/api/user',
+        },
+      };
+
+      const error = errorFromResponse(response);
+
+      expect(error).toBeInstanceOf(FetchError);
+      expect(error).not.toBeInstanceOf(HttpError);
+      expect(error).not.toBeInstanceOf(NetworkError);
     });
   });
 });

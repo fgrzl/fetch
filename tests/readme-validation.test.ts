@@ -29,9 +29,9 @@ describe('README Examples Validation', () => {
     vi.clearAllMocks();
   });
 
-  it('should work with default import as shown in README', async () => {
-    // This tests the first example from README
-    const api = (await import('../src/index')).default;
+  it('should work with the named client shown in README', async () => {
+    const { FetchClient } = await import('../src/index');
+    const api = new FetchClient();
 
     const response = await api.get('/api/users');
     expect(response.ok).toBe(true);
@@ -40,7 +40,9 @@ describe('README Examples Validation', () => {
 
   it('should work with custom authentication as shown in README', async () => {
     // This tests the second example from README
-    const { FetchClient, addAuthentication } = await import('../src/index');
+    const { FetchClient } = await import('../src/index');
+    const { addAuthentication } =
+      await import('../src/middleware/authentication');
 
     const authClient = addAuthentication(new FetchClient(), {
       tokenProvider: () => 'test-token',
@@ -60,7 +62,7 @@ describe('README Examples Validation', () => {
   });
 
   it('should export all the middleware mentioned in docs', async () => {
-    const fetchLib = await import('../src/index');
+    const fetchLib = await import('../src/middleware');
 
     // Verify all middleware exports exist as documented
     expect(typeof fetchLib.addAuthentication).toBe('function');
@@ -70,11 +72,6 @@ describe('README Examples Validation', () => {
     expect(typeof fetchLib.addCache).toBe('function');
     expect(typeof fetchLib.addLogging).toBe('function');
     expect(typeof fetchLib.addRateLimit).toBe('function');
-
-    // Verify pre-built stacks
-    expect(typeof fetchLib.addProductionStack).toBe('function');
-    expect(typeof fetchLib.addDevelopmentStack).toBe('function');
-    expect(typeof fetchLib.addBasicStack).toBe('function');
   });
 
   it('should have correct TypeScript types as documented', async () => {

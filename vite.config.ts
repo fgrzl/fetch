@@ -2,7 +2,6 @@ import { defineConfig } from 'vite-plus';
 
 const libraryEntries = {
   index: 'src/index.ts',
-  'client/index': 'src/client/index.ts',
   'middleware/index': 'src/middleware/index.ts',
   'middleware/authentication/index': 'src/middleware/authentication/index.ts',
   'middleware/authorization/index': 'src/middleware/authorization/index.ts',
@@ -86,33 +85,20 @@ export default defineConfig({
     singleQuote: true,
     sortPackageJson: false,
   },
-  pack: [
-    {
-      entry: libraryEntries,
-      clean: true,
-      dts: {
-        sourcemap: true,
-      },
-      format: ['esm', 'cjs'],
-      outDir: 'dist',
-      platform: 'neutral',
+  pack: {
+    entry: libraryEntries,
+    clean: true,
+    dts: {
       sourcemap: true,
-      target: 'es2020',
-      treeshake: true,
     },
-    {
-      entry: {
-        'index.min': 'src/index.ts',
-      },
-      clean: false,
-      dts: false,
-      format: ['esm', 'cjs'],
-      minify: true,
-      outDir: 'dist',
-      platform: 'neutral',
-      sourcemap: true,
-      target: 'es2020',
-      treeshake: true,
+    format: ['esm', 'cjs'],
+    outDir: 'dist',
+    outputOptions: {
+      exports: 'named',
     },
-  ],
+    platform: 'neutral',
+    sourcemap: true,
+    target: 'es2020',
+    treeshake: true,
+  },
 });

@@ -3,8 +3,7 @@
  *
  * This test ensures that the middleware module properly exports:
  * 1. All middleware functions and creators
- * 2. Pre-built middleware stacks
- * 3. Types for TypeScript users
+ * 2. Types for TypeScript users
  */
 
 import {
@@ -87,7 +86,6 @@ describe('Middleware Module Exports', () => {
       const client = new FetchClient();
       const cacheClient = middleware.addCache(client, {
         ttl: 1000,
-        methods: ['GET'],
       });
 
       expect(cacheClient).toBeDefined();
@@ -181,51 +179,6 @@ describe('Middleware Module Exports', () => {
     });
   });
 
-  describe('Pre-built Stacks Exports', () => {
-    it('should export all middleware stacks', () => {
-      expect(middleware.addProductionStack).toBeDefined();
-      expect(middleware.addDevelopmentStack).toBeDefined();
-      expect(middleware.addBasicStack).toBeDefined();
-
-      expect(typeof middleware.addProductionStack).toBe('function');
-      expect(typeof middleware.addDevelopmentStack).toBe('function');
-      expect(typeof middleware.addBasicStack).toBeDefined();
-    });
-
-    it('should create functional production stack', async () => {
-      const client = new FetchClient();
-      const prodClient = middleware.addProductionStack(client, {
-        retry: { maxRetries: 1 },
-        cache: { ttl: 1000, methods: ['GET'] },
-        logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 },
-      });
-
-      await prodClient.get('/test');
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should create functional development stack', async () => {
-      const client = new FetchClient();
-      const devClient = middleware.addDevelopmentStack(client, {
-        auth: { tokenProvider: () => 'dev-token' },
-      });
-
-      await devClient.get('http://example.com/test');
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should create functional basic stack', async () => {
-      const client = new FetchClient();
-      const basicClient = middleware.addBasicStack(client, {
-        auth: { tokenProvider: () => 'basic-token' },
-      });
-
-      await basicClient.get('http://example.com/test');
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-  });
-
   describe('Middleware Composition', () => {
     it('should support chaining multiple middleware from exports', async () => {
       const client = new FetchClient();
@@ -269,7 +222,6 @@ describe('Middleware Module Exports', () => {
 
       const cacheOptions: middleware.CacheOptions = {
         ttl: 1000,
-        methods: ['GET'],
       };
       expect(cacheOptions.ttl).toBe(1000);
 

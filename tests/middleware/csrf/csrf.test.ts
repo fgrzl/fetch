@@ -33,7 +33,7 @@ beforeEach(() => {
 });
 
 describe('CSRF Middleware', () => {
-  describe('addCSRF (Pit of Success API)', () => {
+  describe('addCSRF', () => {
     it('should add CSRF token to POST requests from cookies', async () => {
       const client = new FetchClient();
       const csrfClient = addCSRF(client);

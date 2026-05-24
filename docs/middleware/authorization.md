@@ -1,100 +1,41 @@
 # Authorization Middleware
 
-Automatically handles HTTP 401 Unauthorized and 403 Forbidden responses with intelligent defaults for authentication flows.
+Authorization middleware observes selected failure responses and calls handlers supplied by the application. It never redirects, clears storage, or changes navigation by itself.
 
-## Quick Start
-
-### Smart Defaults (Zero Config)
+## Usage
 
 ```ts
-import { addAuthorization } from '@fgrzl/fetch';
+import { FetchClient } from '@fgrzl/fetch';
+import { addAuthorization } from '@fgrzl/fetch/middleware/authorization';
 
-// ✨ Ultimate simplicity - redirects to '/login?return_url=current-page' on 401
-const authClient = addAuthorization(client);
-```
+const client = new FetchClient();
 
-### Custom Configuration
-
-```ts
-// Custom redirect path
 addAuthorization(client, {
-  redirectConfig: {
-    redirectPath: '/signin', // Default: "/login"
-    returnUrlParam: 'redirect_to', // Default: "return_url"
-  },
-});
-
-// Disable return URL if not needed
-addAuthorization(client, {
-  redirectConfig: {
-    redirectPath: '/login',
-    includeReturnUrl: false, // Default: true
-  },
-});
-
-// Works with existing query parameters
-addAuthorization(client, {
-  redirectConfig: {
-    redirectPath: '/login?theme=dark&lang=en',
-    // Results in: /login?theme=dark&lang=en&return_url=current-page
-  },
-});
-```
-
-## Manual Handlers
-
-For complete control over unauthorized responses:
-
-```ts
-// Custom handler (overrides smart defaults)
-addAuthorization(client, {
-  onUnauthorized: (response, request) => {
+  onUnauthorized: () => {
     localStorage.removeItem('auth-token');
-    window.location.href = '/login';
+    window.location.assign('/login');
   },
-});
-
-// Handle both 401 and 403 responses
-addAuthorization(client, {
-  onForbidden: (response) => {
-    showAccessDeniedMessage();
-  },
-  statusCodes: [401, 403], // Default: [401]
 });
 ```
 
-## Advanced Configuration
+Handle forbidden responses explicitly:
 
 ```ts
-// Skip authorization for certain endpoints
 addAuthorization(client, {
-  skipPatterns: ['/login', '/register', /^\/public\//],
+  onUnauthorized: () => showLogin(),
+  onForbidden: () => showAccessDenied(),
+  statusCodes: [401, 403],
 });
-
-// Advanced usage with factory
-import { createAuthorizationMiddleware } from '@fgrzl/fetch';
-
-const authMiddleware = createAuthorizationMiddleware({
-  redirectConfig: { redirectPath: '/signin' },
-});
-client.use(authMiddleware);
 ```
 
-## Configuration Options
+## Options
 
 ```ts
 interface AuthorizationOptions {
   onUnauthorized?: UnauthorizedHandler;
-  redirectConfig?: RedirectAuthorizationConfig;
   onForbidden?: UnauthorizedHandler;
   skipPatterns?: (RegExp | string)[];
   statusCodes?: number[]; // Default: [401]
-}
-
-interface RedirectAuthorizationConfig {
-  redirectPath?: string; // Default: '/login'
-  returnUrlParam?: string; // Default: 'return_url'
-  includeReturnUrl?: boolean; // Default: true
 }
 
 type UnauthorizedHandler = (
@@ -103,62 +44,19 @@ type UnauthorizedHandler = (
 ) => void | Promise<void>;
 ```
 
-## Integration Examples
+For a custom status in `statusCodes`, `onUnauthorized` is used unless that status is `403` and `onForbidden` is configured.
 
-### React Router
-
-```tsx
-import { addAuthorization } from '@fgrzl/fetch';
-
-// Smart defaults work perfectly with React Router
-const apiClient = addAuthorization(new FetchClient());
-
-// After successful login, redirect back:
-function LoginPage() {
-  const [searchParams] = useSearchParams();
-
-  const handleLogin = async () => {
-    await login();
-    const returnUrl = searchParams.get('return_url');
-    if (returnUrl) {
-      window.location.href = decodeURIComponent(returnUrl);
-    } else {
-      navigate('/dashboard');
-    }
-  };
-}
-```
-
-### Next.js
+## Factory Form
 
 ```ts
-// Smart defaults work with Next.js
-const apiClient = addAuthorization(new FetchClient());
+import { createAuthorizationMiddleware } from '@fgrzl/fetch/middleware/authorization';
 
-// In your login API route:
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  // After authentication success...
-  const returnUrl = req.query.return_url as string;
-  if (returnUrl) {
-    res.redirect(decodeURIComponent(returnUrl));
-  } else {
-    res.redirect('/dashboard');
-  }
-}
+client.use(
+  createAuthorizationMiddleware({
+    onUnauthorized: () => refreshSession(),
+    skipPatterns: ['/login', /^\/public\//],
+  }),
+);
 ```
 
-## Priority Rules
-
-1. **Explicit handler wins**: `onUnauthorized` takes precedence over `redirectConfig`
-2. **Smart defaults**: No config needed - automatically redirects with return URL
-3. **Status codes**: Defaults to `[401]`, customize with `statusCodes` option
-
-## Best Practices
-
-1. **Use smart defaults** for most cases - they handle common auth flows
-2. **Validate return URLs** on your backend to prevent open redirect attacks
-3. **Clear auth tokens** before redirecting to prevent stale sessions
-4. **Use HTTPS** in production to protect return URL parameters
-5. **Test SSR compatibility** - middleware is server-side safe
-
-📖 **For complete examples and integration guides, see [Authorization Middleware](./authorization-middleware.md)**
+Handler exceptions are logged and do not replace the failed response returned by the request.

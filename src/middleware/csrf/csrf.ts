@@ -44,10 +44,10 @@ function shouldSkipCSRF(
 }
 
 /**
- * Creates CSRF protection middleware with smart defaults.
+ * Creates CSRF protection middleware.
  * Automatically adds CSRF tokens to state-changing requests.
  *
- * @param options - CSRF configuration options (all optional for "pit of success")
+ * @param options - CSRF configuration options
  * @returns CSRF middleware for use with FetchClient
  *
  * @example Basic usage (uses cookies automatically):
@@ -73,7 +73,7 @@ function shouldSkipCSRF(
 export function createCSRFMiddleware(
   options: CSRFOptions = {},
 ): FetchMiddleware {
-  // Smart defaults for "pit of success"
+  // Conventional cookie/header defaults.
   const {
     headerName = 'X-XSRF-TOKEN',
     cookieName = 'XSRF-TOKEN',

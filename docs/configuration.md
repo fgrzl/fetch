@@ -1,359 +1,88 @@
 # Configuration
 
-This guide covers advanced configuration options for @fgrzl/fetch.
+`FetchClient` has a small configuration surface.
 
-## Custom Client Creation
-
-When you need more control than the default client provides:
-
-```typescript
+```ts
 import { FetchClient } from '@fgrzl/fetch';
 
 const client = new FetchClient({
-  // Base configuration
-  credentials: 'same-origin', // Default: "same-origin"
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-```
-
-## Base URL Configuration
-
-Set a base URL to simplify API calls and avoid repeating the full domain in every request:
-
-```typescript
-import { FetchClient } from '@fgrzl/fetch';
-
-// Configure a base URL for your API
-const apiClient = new FetchClient({
   baseUrl: 'https://api.example.com',
-});
-
-// All relative URLs are automatically prefixed
-await apiClient.get('/users'); // → GET https://api.example.com/users
-await apiClient.post('/users', userData); // → POST https://api.example.com/users
-await apiClient.get('/posts?page=1'); // → GET https://api.example.com/posts?page=1
-
-// Absolute URLs are used as-is (baseUrl is ignored)
-await apiClient.get('https://cdn.example.com/images/avatar.png');
-// → GET https://cdn.example.com/images/avatar.png
-```
-
-### Environment-Specific Configuration
-
-Perfect for handling different environments:
-
-```typescript
-const getApiUrl = () => {
-  switch (process.env.NODE_ENV) {
-    case 'production':
-      return 'https://api.myapp.com';
-    case 'staging':
-      return 'https://api-staging.myapp.com';
-    default:
-      return 'http://localhost:3001';
-  }
-};
-
-const client = new FetchClient({
-  baseUrl: getApiUrl(),
-});
-
-// Same code works across all environments
-const users = await client.get('/api/users');
-```
-
-### API Versioning
-
-Use base URLs for API version management:
-
-```typescript
-const v1Client = new FetchClient({
-  baseUrl: 'https://api.example.com/v1',
-});
-
-const v2Client = new FetchClient({
-  baseUrl: 'https://api.example.com/v2',
-});
-
-// Easy to maintain different API versions
-const legacyUsers = await v1Client.get('/users'); // → /v1/users
-const modernUsers = await v2Client.get('/users'); // → /v2/users
-```
-
-### Microservices Architecture
-
-Create dedicated clients for different services:
-
-```typescript
-const userService = new FetchClient({
-  baseUrl: 'https://users.api.example.com',
-});
-
-const orderService = new FetchClient({
-  baseUrl: 'https://orders.api.example.com',
-});
-
-const notificationService = new FetchClient({
-  baseUrl: 'https://notifications.api.example.com',
-});
-
-// Clean service boundaries
-const user = await userService.get(`/users/${userId}`);
-const orders = await orderService.get(`/orders?userId=${userId}`);
-await notificationService.post('/send', { userId, message });
-```
-
-### Backward Compatibility
-
-Base URL is optional - existing code continues to work unchanged:
-
-```typescript
-// Without base URL (existing behavior)
-const client = new FetchClient();
-await client.get('/api/users'); // → GET /api/users
-await client.get('https://api.com/users'); // → GET https://api.com/users
-
-// With base URL (new behavior)
-const apiClient = new FetchClient({ baseUrl: 'https://api.example.com' });
-await apiClient.get('/users'); // → GET https://api.example.com/users
-await apiClient.get('https://other.com'); // → GET https://other.com (absolute URL)
-```
-
-## Authentication Setup
-
-### Token-Based Authentication
-
-```typescript
-import { FetchClient, addAuthentication } from '@fgrzl/fetch';
-
-const client = new FetchClient();
-const authClient = addAuthentication(client, {
-  tokenProvider: () => localStorage.getItem('auth-token') || '',
-});
-
-// All requests now include Authorization header
-const profile = await authClient.get('/api/profile');
-```
-
-### JWT with Refresh
-
-```typescript
-const authClient = addAuthentication(client, {
-  tokenProvider: async () => {
-    let token = localStorage.getItem('jwt-token');
-
-    // Check if token is expired and refresh if needed
-    if (isTokenExpired(token)) {
-      token = await refreshToken();
-      localStorage.setItem('jwt-token', token);
-    }
-
-    return token;
-  },
+  credentials: 'same-origin',
+  timeout: 5000,
 });
 ```
 
-### Custom Authorization Header
+## Options
 
-```typescript
-const authClient = addAuthentication(client, {
-  tokenProvider: () => getApiKey(),
-  authScheme: 'ApiKey', // Default: "Bearer"
-  headerName: 'X-API-Key', // Default: "Authorization"
-});
+```ts
+interface FetchClientOptions {
+  credentials?: RequestCredentials;
+  baseUrl?: string;
+  timeout?: number;
+}
 ```
 
-## Pre-Built Middleware Stacks
+- `credentials`: forwarded to `fetch`; defaults to `same-origin`.
+- `baseUrl`: used to resolve relative request URLs.
+- `timeout`: default request timeout in milliseconds. Use `0` or omit it for no default timeout.
 
-### Production Stack
+## Base URL
 
-Ready-to-use configuration for production applications:
+```ts
+const api = new FetchClient({ baseUrl: 'https://api.example.com' });
 
-```typescript
-import { addProductionStack } from '@fgrzl/fetch';
-
-const prodClient = addProductionStack(new FetchClient(), {
-  auth: {
-    tokenProvider: () => getAuthToken(),
-  },
-  retry: {
-    maxRetries: 3,
-    delay: 1000,
-  },
-  cache: {
-    ttl: 5 * 60 * 1000, // 5 minutes
-    methods: ['GET'],
-  },
-  logging: {
-    level: 'info',
-  },
-  rateLimit: {
-    maxRequests: 100,
-    windowMs: 60 * 1000, // 100 requests per minute
-  },
-});
+await api.get('/users'); // https://api.example.com/users
+await api.get('users'); // https://api.example.com/users
+await api.get('https://cdn.example.com/file.json'); // unchanged
 ```
 
-### Development Stack
+`setBaseUrl` updates an existing client:
 
-Optimized for local development with verbose logging:
-
-```typescript
-import { addDevelopmentStack } from '@fgrzl/fetch';
-
-const devClient = addDevelopmentStack(new FetchClient(), {
-  auth: {
-    tokenProvider: () => 'dev-token',
-  },
-});
+```ts
+api.setBaseUrl('https://staging-api.example.com');
 ```
 
-### Basic Stack
+Invalid base URL resolution returns a failed response rather than throwing.
 
-Minimal configuration with just authentication and retry:
+## Credentials
 
-```typescript
-import { addBasicStack } from '@fgrzl/fetch';
-
-const basicClient = addBasicStack(new FetchClient(), {
-  auth: {
-    tokenProvider: () => getToken(),
-  },
-});
+```ts
+const cookieClient = new FetchClient({ credentials: 'include' });
+const tokenOnlyClient = new FetchClient({ credentials: 'omit' });
 ```
 
-## Individual Middleware Configuration
+Use `include` for cross-origin cookie flows. Use `omit` for token-only clients that should not send cookies.
 
-### CSRF Protection
+## Timeouts
 
-```typescript
-import { addCSRF } from '@fgrzl/fetch';
+```ts
+const client = new FetchClient({ timeout: 10000 });
 
-// Default: reads XSRF-TOKEN cookie, adds X-XSRF-TOKEN header
-const csrfClient = addCSRF(client);
-
-// Custom configuration
-const customCsrfClient = addCSRF(client, {
-  cookieName: 'csrf-token',
-  headerName: 'X-CSRF-Token',
-  skipPatterns: ['/api/public/*'],
-});
+await client.get('/fast', {}, { timeout: 1000 });
+await client.get('/large-report', {}, { timeout: 30000 });
+await client.get('/no-timeout', {}, { timeout: 0 });
 ```
 
-### Authorization Handling
+Timeouts return `ok: false`, `status: 0`, and `statusText: 'Request Aborted'`.
 
-```typescript
-import { addAuthorization } from '@fgrzl/fetch';
+## Middleware Configuration
 
-const authzClient = addAuthorization(client, {
-  onUnauthorized: (response) => {
-    // Clear stored tokens
-    localStorage.removeItem('auth-token');
-    // Redirect to login
-    window.location.href = '/login';
-  },
-  onForbidden: (response) => {
-    // Show access denied message
-    showNotification('Access denied', 'error');
-  },
-  statusCodes: [401, 403], // Handle both 401 and 403
+Middleware is configured where it is added:
+
+```ts
+import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
+import { addRetry } from '@fgrzl/fetch/middleware/retry';
+
+addAuthentication(client, {
+  tokenProvider: () => getToken(),
+  tokenType: 'Bearer',
 });
-```
 
-### Caching
-
-```typescript
-import { addCache } from '@fgrzl/fetch';
-
-const cachedClient = addCache(client, {
-  ttl: 10 * 60 * 1000, // 10 minutes
-  methods: ['GET', 'HEAD'],
-  keyGenerator: (method, url) => `${method}:${url}`,
-  storage: new Map(), // Default: in-memory Map
-});
-```
-
-### Retry Logic
-
-```typescript
-import { addRetry } from '@fgrzl/fetch';
-
-const retryClient = addRetry(client, {
+addRetry(client, {
   maxRetries: 3,
-  delay: 1000,
-  backoff: 'exponential', // "fixed" | "linear" | "exponential"
-  retryOn: [429, 502, 503, 504], // Which status codes to retry
-  onRetry: (attempt, response) => {
-    console.log(`Retry attempt ${attempt} for ${response.status}`);
-  },
+  delay: 500,
+  backoff: 'exponential',
 });
 ```
 
-### Logging
-
-```typescript
-import { addLogging } from '@fgrzl/fetch';
-
-const loggedClient = addLogging(client, {
-  level: 'info', // "debug" | "info" | "warn" | "error"
-  includeRequestHeaders: true,
-  includeResponseHeaders: false,
-  includeRequestBody: false,
-  includeResponseBody: false,
-  logger: console, // Custom logger implementation
-});
-```
-
-### Rate Limiting
-
-```typescript
-import { addRateLimit } from '@fgrzl/fetch';
-
-const limitedClient = addRateLimit(client, {
-  maxRequests: 100,
-  windowMs: 60 * 1000, // 100 requests per minute
-  algorithm: 'token-bucket', // "fixed-window" | "sliding-window" | "token-bucket"
-  onLimitReached: (retryAfter) => {
-    console.log(`Rate limit reached, retry after ${retryAfter}ms`);
-  },
-});
-```
-
-## Environment-Specific Configuration
-
-### Production Configuration
-
-```typescript
-const prodConfig = {
-  credentials: 'same-origin' as const,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-};
-
-const prodClient = addProductionStack(new FetchClient(prodConfig), {
-  auth: { tokenProvider: () => getSecureToken() },
-  logging: { level: 'error' }, // Minimal logging in production
-  cache: { ttl: 15 * 60 * 1000 }, // Longer cache in production
-});
-```
-
-### Development Configuration
-
-```typescript
-const devConfig = {
-  credentials: 'omit' as const, // No cookies in dev
-};
-
-const devClient = addDevelopmentStack(new FetchClient(devConfig), {
-  auth: { tokenProvider: () => 'dev-token' },
-});
-```
-
-## Next Steps
-
-- [Middleware Guide](./middleware.md) - Deep dive into middleware system
-- [Error Handling](./error-handling.md) - Robust error management strategies
-- [TypeScript Guide](./typescript.md) - Advanced type-safe patterns
+See [middleware](./middleware.md) for the built-in modules.

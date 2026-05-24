@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 describe('Cache Middleware', () => {
-  describe('addCache (Pit of Success API)', () => {
+  describe('addCache', () => {
     it('should cache GET requests', async () => {
       const client = new FetchClient();
       const cachedClient = addCache(client);
@@ -40,6 +40,41 @@ describe('Cache Middleware', () => {
       const response2 = await cachedClient.get('https://api.example.com/users');
       expect(response2.data).toEqual({ data: 'test' });
       expect(mockFetch).toHaveBeenCalledTimes(1); // Still only 1 call
+    });
+
+    it('should return isolated cached payloads for later reads', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ nested: { value: 1 } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const client = new FetchClient();
+      const cachedClient = addCache(client);
+
+      const firstResponse = await cachedClient.get(
+        'https://api.example.com/users',
+      );
+
+      expect(firstResponse.ok).toBe(true);
+      if (!firstResponse.ok) {
+        throw new Error('Expected a successful response');
+      }
+
+      firstResponse.data.nested.value = 99;
+
+      const secondResponse = await cachedClient.get(
+        'https://api.example.com/users',
+      );
+
+      expect(secondResponse.ok).toBe(true);
+      if (!secondResponse.ok) {
+        throw new Error('Expected a successful response');
+      }
+
+      expect(secondResponse.data).toEqual({ nested: { value: 1 } });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it('should not cache POST requests by default', async () => {
@@ -82,25 +117,6 @@ describe('Cache Middleware', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
 
       vi.useRealTimers();
-    });
-
-    it('should cache custom methods when configured', async () => {
-      const client = new FetchClient();
-      const cachedClient = addCache(client, {
-        methods: ['GET', 'POST'],
-      });
-
-      // First POST
-      await cachedClient.post('https://api.example.com/search', {
-        query: 'test',
-      });
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-
-      // Second identical POST - should use cache
-      await cachedClient.post('https://api.example.com/search', {
-        query: 'test',
-      });
-      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it('should skip caching for URLs matching skip patterns', async () => {
@@ -250,7 +266,6 @@ describe('Cache Middleware', () => {
     it('should create middleware with custom options', async () => {
       const middleware = createCacheMiddleware({
         ttl: 2000,
-        methods: ['GET', 'HEAD'],
       });
 
       const client = new FetchClient();
@@ -300,23 +315,6 @@ describe('Cache Middleware', () => {
       expect(mockFetch).toHaveBeenCalledTimes(4); // All different requests
     });
 
-    it('should generate same key for identical requests', async () => {
-      const client = new FetchClient();
-      const cachedClient = addCache(client, {
-        methods: ['GET', 'POST'],
-      });
-
-      // Same POST requests
-      await cachedClient.post('https://api.example.com/search', {
-        query: 'test',
-      });
-      await cachedClient.post('https://api.example.com/search', {
-        query: 'test',
-      });
-
-      expect(mockFetch).toHaveBeenCalledTimes(1); // Should use cache
-    });
-
     it('should handle requests with no URL or method', async () => {
       const client = new FetchClient();
       const cachedClient = addCache(client);
@@ -364,16 +362,37 @@ describe('Cache Middleware', () => {
       expect(mockFetch).toHaveBeenCalledTimes(2);
     });
 
-    it('should handle network errors gracefully', async () => {
+    it('should return network errors as failed responses', async () => {
       mockFetch.mockRejectedValue(new Error('Network error'));
 
       const client = new FetchClient();
       const cachedClient = addCache(client);
 
-      await expect(
-        cachedClient.get('https://api.example.com/users'),
-      ).rejects.toThrow('Network error');
+      const response = await cachedClient.get('https://api.example.com/users');
+
+      expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
+      expect(response.status).toBe(0);
+      expect(response.error.message).toBe('Network error');
       expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should propagate downstream middleware exceptions once', async () => {
+      const error = new Error('Downstream failed');
+      const downstream = vi.fn();
+      const client = addCache(new FetchClient());
+      client.use(async () => {
+        downstream();
+        throw error;
+      });
+
+      await expect(client.get('https://api.example.com/users')).rejects.toBe(
+        error,
+      );
+      expect(downstream).toHaveBeenCalledTimes(1);
+      expect(mockFetch).not.toHaveBeenCalled();
     });
   });
 
@@ -531,6 +550,28 @@ describe('Cache Middleware', () => {
     });
 
     describe('MemoryStorage direct testing', () => {
+      it('should include array headers in default cache keys', async () => {
+        const client = addCache(new FetchClient(), { ttl: 1000 });
+
+        mockFetch.mockResolvedValue(
+          new Response(JSON.stringify({ data: 'array headers' }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.request('https://api.example.com/headers', {
+          method: 'GET',
+          headers: [['X-Test', 'one']],
+        });
+        await client.request('https://api.example.com/headers', {
+          method: 'GET',
+          headers: [['X-Test', 'one']],
+        });
+
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+      });
+
       it('should test MemoryStorage methods directly', async () => {
         vi.useFakeTimers();
 
@@ -542,6 +583,7 @@ describe('Cache Middleware', () => {
             status: 200,
             statusText: 'OK',
             headers: {},
+            url: 'https://api.example.com/test',
             data: 'test',
           },
           timestamp: Date.now(),
@@ -570,6 +612,7 @@ describe('Cache Middleware', () => {
             status: 200,
             statusText: 'OK',
             headers: {},
+            url: 'https://api.example.com/expired',
             data: 'expired',
           },
           timestamp: Date.now() - 2000,
@@ -598,6 +641,7 @@ describe('Cache Middleware', () => {
             status: 200,
             statusText: 'OK',
             headers: {},
+            url: 'https://api.example.com/fresh1',
             data: 'fresh1',
           },
           timestamp: Date.now(),
@@ -608,6 +652,7 @@ describe('Cache Middleware', () => {
             status: 200,
             statusText: 'OK',
             headers: {},
+            url: 'https://api.example.com/fresh2',
             data: 'fresh2',
           },
           timestamp: Date.now(),
@@ -652,28 +697,40 @@ describe('Cache Middleware', () => {
       expect(faultyStorage.set).toHaveBeenCalled();
     });
 
-    it('should re-throw network errors correctly', async () => {
+    it('should preserve network errors as failed responses', async () => {
       const networkError = new Error('Network request failed');
       mockFetch.mockRejectedValue(networkError);
 
       const client = new FetchClient();
       const cachedClient = addCache(client);
 
-      await expect(
-        cachedClient.get('https://api.example.com/users'),
-      ).rejects.toThrow('Network request failed');
+      const response = await cachedClient.get('https://api.example.com/users');
+
+      expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
+      expect(response.status).toBe(0);
+      expect(response.error.message).toBe('Network request failed');
+      expect(response.error.cause).toBe(networkError);
     });
 
-    it('should re-throw fetch errors correctly', async () => {
+    it('should preserve fetch errors as failed responses', async () => {
       const fetchError = new Error('fetch failed to connect');
       mockFetch.mockRejectedValue(fetchError);
 
       const client = new FetchClient();
       const cachedClient = addCache(client);
 
-      await expect(
-        cachedClient.get('https://api.example.com/users'),
-      ).rejects.toThrow('fetch failed to connect');
+      const response = await cachedClient.get('https://api.example.com/users');
+
+      expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
+      expect(response.status).toBe(0);
+      expect(response.error.message).toBe('fetch failed to connect');
+      expect(response.error.cause).toBe(fetchError);
     });
 
     it('should handle non-error-like objects in catch block', async () => {
@@ -741,6 +798,42 @@ describe('Cache Middleware', () => {
 
       // Should not throw error
       vi.useRealTimers();
+    });
+
+    it('should not cache a failed background refresh', async () => {
+      const storage: CacheStorage = {
+        get: vi.fn(),
+        getWithExpiry: vi.fn().mockResolvedValue({
+          entry: {
+            response: {
+              status: 200,
+              statusText: 'OK',
+              headers: {},
+              url: 'https://api.example.com/users',
+              data: { data: 'stale' },
+            },
+            timestamp: 0,
+            expiresAt: 0,
+          },
+          isExpired: true,
+        }),
+        set: vi.fn(),
+        delete: vi.fn(),
+        clear: vi.fn(),
+      };
+      const client = addCache(new FetchClient(), {
+        storage,
+        staleWhileRevalidate: true,
+      });
+      mockFetch.mockResolvedValueOnce(
+        new Response('Server Error', { status: 500 }),
+      );
+
+      const response = await client.get('https://api.example.com/users');
+      await new Promise((resolve) => setTimeout(resolve, 0));
+
+      expect(response.data).toEqual({ data: 'stale' });
+      expect(storage.set).not.toHaveBeenCalled();
     });
   });
 

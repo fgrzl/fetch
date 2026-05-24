@@ -5,7 +5,6 @@
  * - Network errors and error handling
  * - Different response content types
  * - Edge cases in middleware execution
- * - Production stack configurations without certain middleware
  */
 
 import {
@@ -17,7 +16,6 @@ import {
   afterEach,
 } from 'vite-plus/test';
 import { FetchClient } from '../src/client/fetch-client';
-import { addProductionStack } from '../src/middleware';
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -41,9 +39,12 @@ describe('Edge Cases and Error Handling', () => {
       const response = await client.get('http://example.com/api/test');
 
       expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
       expect(response.status).toBe(0);
       expect(response.statusText).toBe('Network Error');
-      expect(response.error?.message).toBe('Failed to fetch');
+      expect(response.error.message).toBe('Failed to fetch');
       expect(response.data).toBeNull();
     });
 
@@ -57,33 +58,52 @@ describe('Edge Cases and Error Handling', () => {
       const response = await client.get('http://example.com/api/test');
 
       expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
       expect(response.status).toBe(0);
       expect(response.statusText).toBe('Network Error');
-      expect(response.error?.message).toBe('Failed to fetch');
+      expect(response.error.message).toBe(
+        'Network request failed: fetch error',
+      );
     });
 
-    it('should re-throw non-fetch TypeErrors', async () => {
+    it('should return non-fetch TypeErrors as failed responses', async () => {
       // Mock fetch to throw a different kind of TypeError
       const customError = new TypeError('Some other error');
       mockFetch.mockRejectedValueOnce(customError);
 
       const client = new FetchClient();
 
-      await expect(client.get('http://example.com/api/test')).rejects.toThrow(
-        customError,
-      );
+      const response = await client.get('http://example.com/api/test');
+
+      expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
+      expect(response.status).toBe(0);
+      expect(response.statusText).toBe('Network Error');
+      expect(response.error.message).toBe('Some other error');
+      expect(response.error.cause).toBe(customError);
     });
 
-    it('should re-throw non-TypeError errors', async () => {
+    it('should return non-TypeError errors as failed responses', async () => {
       // Mock fetch to throw a non-TypeError
       const customError = new Error('Some other error');
       mockFetch.mockRejectedValueOnce(customError);
 
       const client = new FetchClient();
 
-      await expect(client.get('http://example.com/api/test')).rejects.toThrow(
-        customError,
-      );
+      const response = await client.get('http://example.com/api/test');
+
+      expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
+      expect(response.status).toBe(0);
+      expect(response.statusText).toBe('Network Error');
+      expect(response.error.message).toBe('Some other error');
+      expect(response.error.cause).toBe(customError);
     });
   });
 
@@ -253,6 +273,7 @@ describe('Edge Cases and Error Handling', () => {
           headers: new Headers(),
           url: 'http://example.com/intercepted',
           ok: true,
+          error: null,
         };
       });
 
@@ -260,118 +281,6 @@ describe('Edge Cases and Error Handling', () => {
 
       expect(response.data).toBe('intercepted');
       expect(mockFetch).not.toHaveBeenCalled();
-    });
-  });
-
-  describe('Production Stack Configurations', () => {
-    it('should work with production stack without auth middleware', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      );
-
-      const client = new FetchClient();
-      const prodClient = addProductionStack(client, {
-        // No auth provided - should skip auth middleware
-        cache: { ttl: 1000, methods: ['GET'] },
-        retry: { maxRetries: 1 },
-        logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 },
-      });
-
-      await prodClient.get('http://example.com/api/test');
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should work with production stack without cache middleware', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      );
-
-      const client = new FetchClient();
-      const prodClient = addProductionStack(client, {
-        auth: { tokenProvider: () => 'test-token' },
-        // cache: undefined - should skip cache middleware
-        retry: { maxRetries: 1 },
-        logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 },
-      });
-
-      await prodClient.get('http://example.com/api/test');
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should work with production stack without retry middleware', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      );
-
-      const client = new FetchClient();
-      const prodClient = addProductionStack(client, {
-        auth: { tokenProvider: () => 'test-token' },
-        cache: { ttl: 1000, methods: ['GET'] },
-        // retry: undefined - should skip retry middleware
-        logging: { level: 'error' },
-        rateLimit: { maxRequests: 10, windowMs: 1000 },
-      });
-
-      await prodClient.get('http://example.com/api/test');
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should work with production stack without rate limit middleware', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      );
-
-      const client = new FetchClient();
-      const prodClient = addProductionStack(client, {
-        auth: { tokenProvider: () => 'test-token' },
-        cache: { ttl: 1000, methods: ['GET'] },
-        retry: { maxRetries: 1 },
-        logging: { level: 'error' },
-        // rateLimit: undefined - should skip rate limit middleware
-      });
-
-      await prodClient.get('http://example.com/api/test');
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
-    });
-
-    it('should work with production stack without logging middleware', async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ success: true }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      );
-
-      const client = new FetchClient();
-      const prodClient = addProductionStack(client, {
-        auth: { tokenProvider: () => 'test-token' },
-        cache: { ttl: 1000, methods: ['GET'] },
-        retry: { maxRetries: 1 },
-        // logging: undefined - should skip logging middleware
-        rateLimit: { maxRequests: 10, windowMs: 1000 },
-      });
-
-      await prodClient.get('http://example.com/api/test');
-
-      expect(mockFetch).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -394,7 +303,7 @@ describe('Edge Cases and Error Handling', () => {
       const response = await client.head('http://example.com/api/resource');
 
       expect(response.ok).toBe(true);
-      expect(response.data).toBe(''); // HEAD responses with text content-type return empty string
+      expect(response.data).toBeNull();
       expect(mockFetch).toHaveBeenCalledWith(
         'http://example.com/api/resource',
         expect.objectContaining({ method: 'HEAD' }),

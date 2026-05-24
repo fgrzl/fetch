@@ -23,17 +23,17 @@ jobs:
         with:
           fetch-tags: true
 
-      - name: Setup Node
-        uses: actions/setup-node@v6
+      - name: Setup Vite+
+        uses: voidzero-dev/setup-vp@v1
         with:
-          node-version: 'lts/*'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: '24'
+          cache: true
 
       - name: Install Dependencies
-        run: npm ci
+        run: vp install
 
       - name: Build Library
-        run: npm run build
+        run: vp pack
 
       - name: Get Version from Package.json
         id: package-version

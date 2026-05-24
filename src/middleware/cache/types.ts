@@ -32,6 +32,7 @@ export interface CacheEntry {
     status: number;
     statusText: string;
     headers: Record<string, string>;
+    url: string;
     data: unknown;
   };
   timestamp: number;
@@ -39,9 +40,9 @@ export interface CacheEntry {
 }
 
 /**
- * Cache configuration options - optimized for "pit of success".
+ * Cache memoization configuration options.
  *
- * Smart defaults:
+ * Defaults:
  * - Only caches GET requests
  * - 5 minute default TTL
  * - Memory-based storage
@@ -53,12 +54,6 @@ export interface CacheOptions {
    * How long responses should be cached
    */
   ttl?: number;
-
-  /**
-   * HTTP methods to cache (default: ['GET'])
-   * Only these methods will be cached
-   */
-  methods?: string[];
 
   /**
    * Cache storage implementation (default: in-memory)

@@ -1,16 +1,17 @@
 {
   "name": "@fgrzl/fetch",
   "version": "2.0.0",
-  "description": "A modern, type-safe HTTP client with middleware support for CSRF protection and authentication",
+  "description": "Explicit TypeScript fetch client with typed result objects and opt-in middleware",
   "keywords": [
     "fetch",
     "typescript",
     "api",
     "http",
-    "client",
+    "http-client",
     "middleware",
-    "CSRF",
-    "auth",
+    "typed-results",
+    "abort",
+    "timeout",
     "type-safe"
   ],
   "homepage": "https://github.com/fgrzl/fetch#readme",
@@ -25,72 +26,116 @@
   "author": "smiggleworth",
   "type": "module",
   "packageManager": "npm@11.15.0",
+  "overrides": {
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.22",
+    "vitest": "npm:@voidzero-dev/vite-plus-test@0.1.22"
+  },
   "engines": {
     "node": ">=18.0.0"
   },
-  "main": "dist/index.js",
+  "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
-    "./min": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.min.js",
-      "require": "./dist/index.min.cjs"
-    },
-    "./client": {
-      "types": "./dist/client/index.d.ts",
-      "import": "./dist/client/index.js",
-      "require": "./dist/client/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./middleware": {
-      "types": "./dist/middleware/index.d.ts",
-      "import": "./dist/middleware/index.js",
-      "require": "./dist/middleware/index.cjs"
+      "import": {
+        "types": "./dist/middleware/index.d.ts",
+        "default": "./dist/middleware/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/index.d.cts",
+        "default": "./dist/middleware/index.cjs"
+      }
     },
     "./middleware/authentication": {
-      "types": "./dist/middleware/authentication/index.d.ts",
-      "import": "./dist/middleware/authentication/index.js",
-      "require": "./dist/middleware/authentication/index.cjs"
+      "import": {
+        "types": "./dist/middleware/authentication/index.d.ts",
+        "default": "./dist/middleware/authentication/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/authentication/index.d.cts",
+        "default": "./dist/middleware/authentication/index.cjs"
+      }
     },
     "./middleware/authorization": {
-      "types": "./dist/middleware/authorization/index.d.ts",
-      "import": "./dist/middleware/authorization/index.js",
-      "require": "./dist/middleware/authorization/index.cjs"
+      "import": {
+        "types": "./dist/middleware/authorization/index.d.ts",
+        "default": "./dist/middleware/authorization/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/authorization/index.d.cts",
+        "default": "./dist/middleware/authorization/index.cjs"
+      }
     },
     "./middleware/cache": {
-      "types": "./dist/middleware/cache/index.d.ts",
-      "import": "./dist/middleware/cache/index.js",
-      "require": "./dist/middleware/cache/index.cjs"
+      "import": {
+        "types": "./dist/middleware/cache/index.d.ts",
+        "default": "./dist/middleware/cache/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/cache/index.d.cts",
+        "default": "./dist/middleware/cache/index.cjs"
+      }
     },
     "./middleware/csrf": {
-      "types": "./dist/middleware/csrf/index.d.ts",
-      "import": "./dist/middleware/csrf/index.js",
-      "require": "./dist/middleware/csrf/index.cjs"
+      "import": {
+        "types": "./dist/middleware/csrf/index.d.ts",
+        "default": "./dist/middleware/csrf/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/csrf/index.d.cts",
+        "default": "./dist/middleware/csrf/index.cjs"
+      }
     },
     "./middleware/logging": {
-      "types": "./dist/middleware/logging/index.d.ts",
-      "import": "./dist/middleware/logging/index.js",
-      "require": "./dist/middleware/logging/index.cjs"
+      "import": {
+        "types": "./dist/middleware/logging/index.d.ts",
+        "default": "./dist/middleware/logging/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/logging/index.d.cts",
+        "default": "./dist/middleware/logging/index.cjs"
+      }
     },
     "./middleware/rate-limit": {
-      "types": "./dist/middleware/rate-limit/index.d.ts",
-      "import": "./dist/middleware/rate-limit/index.js",
-      "require": "./dist/middleware/rate-limit/index.cjs"
+      "import": {
+        "types": "./dist/middleware/rate-limit/index.d.ts",
+        "default": "./dist/middleware/rate-limit/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/rate-limit/index.d.cts",
+        "default": "./dist/middleware/rate-limit/index.cjs"
+      }
     },
     "./middleware/retry": {
-      "types": "./dist/middleware/retry/index.d.ts",
-      "import": "./dist/middleware/retry/index.js",
-      "require": "./dist/middleware/retry/index.cjs"
+      "import": {
+        "types": "./dist/middleware/retry/index.d.ts",
+        "default": "./dist/middleware/retry/index.js"
+      },
+      "require": {
+        "types": "./dist/middleware/retry/index.d.cts",
+        "default": "./dist/middleware/retry/index.cjs"
+      }
     },
     "./errors": {
-      "types": "./dist/errors/index.d.ts",
-      "import": "./dist/errors/index.js",
-      "require": "./dist/errors/index.cjs"
+      "import": {
+        "types": "./dist/errors/index.d.ts",
+        "default": "./dist/errors/index.js"
+      },
+      "require": {
+        "types": "./dist/errors/index.d.cts",
+        "default": "./dist/errors/index.cjs"
+      }
     }
   },
   "files": [
@@ -119,7 +164,7 @@
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "@vitest/coverage-v8": "4.1.7",
+    "@vitest/coverage-v8": "4.1.6",
     "jsdom": "^29.1.1",
     "rimraf": "^6.1.3",
     "typescript": "^6.0.3",

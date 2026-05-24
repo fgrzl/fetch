@@ -25,7 +25,7 @@ beforeEach(() => {
 });
 
 describe('Authentication Middleware', () => {
-  describe('addAuthentication (Pit of Success API)', () => {
+  describe('addAuthentication', () => {
     it('should add Bearer token to requests', async () => {
       const client = new FetchClient();
       const authClient = addAuthentication(client, {
@@ -39,6 +39,23 @@ describe('Authentication Middleware', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             authorization: 'Bearer test-token-123',
+          }),
+        }),
+      );
+    });
+
+    it('should authenticate relative request URLs', async () => {
+      const client = addAuthentication(new FetchClient(), {
+        tokenProvider: () => 'relative-token',
+      });
+
+      await client.get('/api/users');
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        '/api/users',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            authorization: 'Bearer relative-token',
           }),
         }),
       );
@@ -194,6 +211,21 @@ describe('Authentication Middleware', () => {
           }),
         }),
       );
+    });
+
+    it('should propagate downstream middleware exceptions once', async () => {
+      const downstream = vi.fn();
+      const error = new Error('Downstream failed');
+      const client = addAuthentication(new FetchClient(), {
+        tokenProvider: () => 'test-token',
+      });
+      client.use(async () => {
+        downstream();
+        throw error;
+      });
+
+      await expect(client.get('/api/users')).rejects.toBe(error);
+      expect(downstream).toHaveBeenCalledTimes(1);
     });
 
     it('should return synthetic 401 when requireToken and token is empty', async () => {

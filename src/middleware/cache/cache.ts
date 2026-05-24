@@ -107,8 +107,20 @@ function shouldSkipCache(
   });
 }
 
+function cloneCacheData<T>(value: T): T {
+  if (value === null || typeof value !== 'object') {
+    return value;
+  }
+
+  if (typeof structuredClone === 'function') {
+    return structuredClone(value);
+  }
+
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
 /**
- * Creates cache middleware with smart defaults.
+ * Creates TTL response memoization middleware.
  * Caches GET responses for faster subsequent requests.
  *
  * @param options - Cache configuration options
@@ -132,7 +144,6 @@ export function createCacheMiddleware(
 ): FetchMiddleware {
   const {
     ttl = 5 * 60 * 1000, // 5 minutes
-    methods = ['GET'],
     storage = new MemoryStorage(),
     keyGenerator = defaultKeyGenerator,
     skipPatterns = [],
@@ -143,115 +154,102 @@ export function createCacheMiddleware(
     const method = (request.method || 'GET').toUpperCase();
     const url = request.url || '';
 
-    // Skip caching if:
-    // 1. Method is not in cached methods list
-    // 2. URL matches a skip pattern
-    if (!methods.includes(method) || shouldSkipCache(url, skipPatterns)) {
+    if (method !== 'GET' || shouldSkipCache(url, skipPatterns)) {
       return next(request);
     }
 
     const cacheKey = keyGenerator(request);
+    let cached: CacheEntry | null;
+    let isExpired: boolean;
 
     try {
-      // Try to get cached response with expiry info
-      const { entry: cached, isExpired } = storage.getWithExpiry
+      const cachedResult = storage.getWithExpiry
         ? await storage.getWithExpiry(cacheKey)
         : await (async () => {
             const entry = await storage.get(cacheKey);
             return { entry, isExpired: false };
           })();
-
-      if (cached && !isExpired) {
-        // Return fresh cached response
-        return {
-          ...cached.response,
-          headers: new Headers(cached.response.headers),
-          data: cached.response.data,
-        } as FetchResponse<unknown>;
-      }
-
-      // If stale-while-revalidate and we have cached data (even expired), return it immediately
-      // and update in background
-      if (cached && staleWhileRevalidate) {
-        // Return cached data immediately (even if stale)
-        const cachedResponse = {
-          ...cached.response,
-          headers: new Headers(cached.response.headers),
-          data: cached.response.data,
-        } as FetchResponse<unknown>;
-
-        // Update cache in background if expired
-        if (isExpired) {
-          next(request)
-            .then(async (freshResponse) => {
-              const headersObj: Record<string, string> = {};
-              freshResponse.headers.forEach((value, key) => {
-                headersObj[key] = value;
-              });
-
-              const cacheEntry: CacheEntry = {
-                response: {
-                  status: freshResponse.status,
-                  statusText: freshResponse.statusText,
-                  headers: headersObj,
-                  data: freshResponse.data,
-                },
-                timestamp: Date.now(),
-                expiresAt: Date.now() + ttl,
-              };
-              await storage.set(cacheKey, cacheEntry);
-            })
-            .catch(() => {
-              // Ignore background update errors
-            });
-        }
-
-        return cachedResponse;
-      }
-
-      // No cached data or not using stale-while-revalidate
-      const response = await next(request);
-
-      // Cache successful responses
-      if (response.ok) {
-        try {
-          const headersObj: Record<string, string> = {};
-          response.headers.forEach((value, key) => {
-            headersObj[key] = value;
-          });
-
-          const cacheEntry: CacheEntry = {
-            response: {
-              status: response.status,
-              statusText: response.statusText,
-              headers: headersObj,
-              data: response.data,
-            },
-            timestamp: Date.now(),
-            expiresAt: Date.now() + ttl,
-          };
-
-          await storage.set(cacheKey, cacheEntry);
-        } catch {
-          // Ignore cache storage errors, but still return the response
-        }
-      }
-
-      return response;
-    } catch (error) {
-      // Only catch cache retrieval errors, let network errors through
-      if (error && typeof error === 'object' && 'message' in error) {
-        const errorMessage = (error as { message: string }).message;
-        if (
-          errorMessage.includes('Network') ||
-          errorMessage.includes('fetch')
-        ) {
-          throw error; // Re-throw network errors
-        }
-      }
-
-      // If cache retrieval fails, just proceed with the request
+      cached = cachedResult.entry;
+      isExpired = cachedResult.isExpired;
+    } catch {
       return next(request);
     }
+
+    if (cached && !isExpired) {
+      return {
+        ...cached.response,
+        headers: new Headers(cached.response.headers),
+        data: cloneCacheData(cached.response.data),
+        ok: true,
+        error: null,
+      } as FetchResponse<unknown>;
+    }
+
+    if (cached && staleWhileRevalidate) {
+      const cachedResponse = {
+        ...cached.response,
+        headers: new Headers(cached.response.headers),
+        data: cloneCacheData(cached.response.data),
+        ok: true,
+        error: null,
+      } as FetchResponse<unknown>;
+
+      if (isExpired) {
+        next(request)
+          .then(async (freshResponse) => {
+            if (!freshResponse.ok) {
+              return;
+            }
+
+            const headersObj: Record<string, string> = {};
+            freshResponse.headers.forEach((value, key) => {
+              headersObj[key] = value;
+            });
+
+            await storage.set(cacheKey, {
+              response: {
+                status: freshResponse.status,
+                statusText: freshResponse.statusText,
+                headers: headersObj,
+                url: freshResponse.url,
+                data: cloneCacheData(freshResponse.data),
+              },
+              timestamp: Date.now(),
+              expiresAt: Date.now() + ttl,
+            });
+          })
+          .catch(() => {
+            // A background refresh must not reject the active request.
+          });
+      }
+
+      return cachedResponse;
+    }
+
+    const response = await next(request);
+    if (response.ok) {
+      try {
+        const headersObj: Record<string, string> = {};
+        response.headers.forEach((value, key) => {
+          headersObj[key] = value;
+        });
+
+        await storage.set(cacheKey, {
+          response: {
+            status: response.status,
+            statusText: response.statusText,
+            headers: headersObj,
+            url: response.url,
+            data: cloneCacheData(response.data),
+          },
+          timestamp: Date.now(),
+          expiresAt: Date.now() + ttl,
+        });
+      } catch {
+        // Storage failure does not change a successful request response.
+      }
+    }
+
+    return response;
   };
 }

@@ -5,7 +5,7 @@ Automatically includes CSRF tokens in requests for secure APIs.
 ## Usage
 
 ```ts
-import { addCSRF, createCSRFMiddleware } from '@fgrzl/fetch';
+import { addCSRF, createCSRFMiddleware } from '@fgrzl/fetch/middleware/csrf';
 
 // Simple usage
 addCSRF(client, {

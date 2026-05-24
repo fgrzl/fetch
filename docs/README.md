@@ -27,7 +27,7 @@ TypeScript-first HTTP client built on the browser **`fetch`** API with composabl
 | Document                                       | Description            |
 | ---------------------------------------------- | ---------------------- |
 | [Authentication](middleware/authentication.md) | Bearer tokens          |
-| [Authorization](middleware/authorization.md)   | Authz headers          |
+| [Authorization](middleware/authorization.md)   | Failure handlers       |
 | [Retry](middleware/retry.md)                   | Retries and backoff    |
 | [Cache](middleware/cache.md)                   | Response caching       |
 | [Logging](middleware/logging.md)               | Request/response logs  |

@@ -111,6 +111,9 @@ export function createRateLimitMiddleware(
         error: {
           message: `Rate limit exceeded. Retry after ${result.retryAfter}ms`,
           body: { retryAfter: result.retryAfter },
+          status: 429,
+          statusText: 'Too Many Requests',
+          url: request.url || '',
         },
       };
     }

@@ -16,7 +16,9 @@ Operation IDs are useful for:
 Pass an `operationId` in the request options:
 
 ```typescript
-import api from '@fgrzl/fetch';
+import { FetchClient } from '@fgrzl/fetch';
+
+const api = new FetchClient();
 
 // Generate a unique operation ID
 const operationId = crypto.randomUUID();
@@ -85,7 +87,8 @@ export async function handleRequest(req: Request) {
 Combine operation ID with logging middleware for enhanced observability:
 
 ```typescript
-import { FetchClient, addLogging } from '@fgrzl/fetch';
+import { FetchClient } from '@fgrzl/fetch';
+import { addLogging } from '@fgrzl/fetch/middleware/logging';
 
 const client = addLogging(new FetchClient(), {
   level: 'info',

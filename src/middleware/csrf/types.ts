@@ -9,9 +9,9 @@
 export type CSRFTokenProvider = () => string;
 
 /**
- * CSRF configuration options - optimized for "pit of success".
+ * CSRF configuration options.
  *
- * Smart defaults:
+ * Defaults:
  * - Uses standard X-XSRF-TOKEN header
  * - Automatically extracts token from XSRF-TOKEN cookie
  * - Only adds token to state-changing methods (POST, PUT, PATCH, DELETE)

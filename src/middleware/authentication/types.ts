@@ -9,9 +9,9 @@
 export type AuthTokenProvider = () => string | Promise<string>;
 
 /**
- * Authentication configuration options - optimized for "pit of success".
+ * Authentication configuration options.
  *
- * Smart defaults:
+ * Defaults:
  * - Uses standard Authorization header with Bearer token
  * - Applies to all requests by default
  * - Graceful handling when token is unavailable

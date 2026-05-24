@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 describe('Logging Middleware', () => {
-  describe('addLogging (Pit of Success API)', () => {
+  describe('addLogging', () => {
     it('should log requests and responses to console by default', async () => {
       const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
       const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
@@ -290,6 +290,40 @@ describe('Logging Middleware', () => {
       );
     });
 
+    it('should include failed response bodies when configured', async () => {
+      mockFetch.mockResolvedValue(
+        new Response(JSON.stringify({ code: 'bad_request' }), {
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const mockLogger: Logger = {
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      };
+
+      const client = new FetchClient();
+      const loggedClient = addLogging(client, {
+        logger: mockLogger,
+        includeResponseBody: true,
+      });
+
+      await loggedClient.get('https://api.example.com/users');
+
+      expect(mockLogger.error).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          level: 'error',
+          status: 400,
+          responseBody: { code: 'bad_request' },
+        }),
+      );
+    });
+
     it('should use custom formatter', async () => {
       const customFormatter = vi.fn().mockReturnValue('CUSTOM LOG MESSAGE');
       const mockLogger: Logger = {
@@ -336,16 +370,21 @@ describe('Logging Middleware', () => {
         logger: mockLogger,
       });
 
-      await expect(
-        loggedClient.get('https://api.example.com/users'),
-      ).rejects.toThrow('Network failure');
+      const response = await loggedClient.get('https://api.example.com/users');
+
+      expect(response.ok).toBe(false);
+      if (response.ok) {
+        throw new Error('Expected failed response');
+      }
+      expect(response.error.message).toBe('Network failure');
 
       expect(mockLogger.error).toHaveBeenCalledWith(
-        expect.stringContaining('✗ GET https://api.example.com/users'),
+        expect.stringContaining('← GET https://api.example.com/users'),
         expect.objectContaining({
           level: 'error',
           method: 'GET',
           url: 'https://api.example.com/users',
+          status: 0,
           error: expect.objectContaining({
             message: 'Network failure',
           }),

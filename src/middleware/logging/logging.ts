@@ -36,11 +36,11 @@ const defaultFormatter = (entry: LogEntry): string => {
   const { method, url, status, duration } = entry;
   let message = `${method} ${url}`;
 
-  if (status) {
+  if (status !== undefined) {
     message += ` → ${status}`;
   }
 
-  if (duration) {
+  if (duration !== undefined) {
     message += ` (${duration}ms)`;
   }
 
@@ -63,7 +63,7 @@ function shouldSkipLogging(
 }
 
 /**
- * Creates logging middleware with smart defaults.
+ * Creates request and response logging middleware.
  * Logs HTTP requests and responses for debugging and monitoring.
  *
  * @param options - Logging configuration options
@@ -136,15 +136,24 @@ export function createLoggingMiddleware(
       const response = await next(request);
       const duration = Date.now() - startTime;
 
-      // Determine log level based on response status
-      const logLevel: LogLevel = response.status >= 400 ? 'error' : 'info';
+      // Determine log level based on the response branch
+      const logLevel: LogLevel = response.ok ? 'info' : 'error';
 
       // Log response (info/error level)
       if (LOG_LEVELS[logLevel] >= minLevel) {
         const responseHeaders = includeResponseHeaders
           ? getHeadersObject(response.headers)
           : undefined;
-        const responseBody = includeResponseBody ? response.data : undefined;
+        const responseBody = includeResponseBody
+          ? response.ok
+            ? response.data
+            : response.error.body
+          : undefined;
+        const responseError = !response.ok
+          ? response.error.cause instanceof Error
+            ? response.error.cause
+            : new Error(response.error.message)
+          : undefined;
 
         const responseEntry: LogEntry = {
           level: logLevel,
@@ -153,6 +162,7 @@ export function createLoggingMiddleware(
           url,
           status: response.status,
           duration,
+          ...(responseError ? { error: responseError } : {}),
           ...(responseHeaders ? { responseHeaders } : {}),
           ...(responseBody !== undefined ? { responseBody } : {}),
         };

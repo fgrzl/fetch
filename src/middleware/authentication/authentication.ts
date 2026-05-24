@@ -18,7 +18,12 @@ function syntheticUnauthorized(
     headers: new Headers(),
     url,
     ok: false,
-    error: { message },
+    error: {
+      message,
+      status: 401,
+      statusText: 'Unauthorized',
+      url,
+    },
   };
 }
 
@@ -56,8 +61,16 @@ function shouldIncludeAuth(
   });
 }
 
+function pathnameForMatching(url: string): string {
+  try {
+    return new URL(url, 'http://fetch.local').pathname;
+  } catch {
+    return url;
+  }
+}
+
 /**
- * Creates authentication middleware with smart defaults.
+ * Creates authentication header middleware.
  * Automatically adds Bearer tokens to requests.
  *
  * @param options - Authentication configuration options
@@ -94,8 +107,7 @@ export function createAuthenticationMiddleware(
 
   return async (request, next) => {
     const url = request.url || '';
-    const parsedUrl = new URL(url);
-    const pathname = parsedUrl.pathname;
+    const pathname = pathnameForMatching(url);
 
     // Skip authentication if:
     // 1. URL matches a skip pattern
@@ -107,34 +119,10 @@ export function createAuthenticationMiddleware(
       return next(request);
     }
 
+    let token: string;
     try {
-      // Get auth token (may be async)
-      const token = await tokenProvider();
-
-      // No token: either fail fast (requireToken) or send without auth (often causes 401)
-      if (!token) {
-        if (requireToken) {
-          return syntheticUnauthorized(
-            url,
-            'Authentication required (no token provided)',
-          );
-        }
-        return next(request);
-      }
-
-      // Add auth header to request
-      const headers = new Headers(request.headers);
-      headers.set(headerName, `${tokenType} ${token}`);
-
-      // Create modified request with auth header
-      const modifiedRequest = {
-        ...request,
-        headers,
-      };
-
-      return next(modifiedRequest);
+      token = await tokenProvider();
     } catch (error) {
-      // Token provider threw (e.g. refresh failed, storage error)
       if (requireToken) {
         const message =
           error instanceof Error
@@ -142,8 +130,25 @@ export function createAuthenticationMiddleware(
             : 'Authentication failed (token provider error)';
         return syntheticUnauthorized(url, message);
       }
-      // Legacy: proceed without auth, which usually results in a 401 from the server
       return next(request);
     }
+
+    if (!token) {
+      if (requireToken) {
+        return syntheticUnauthorized(
+          url,
+          'Authentication required (no token provided)',
+        );
+      }
+      return next(request);
+    }
+
+    const headers = new Headers(request.headers);
+    headers.set(headerName, `${tokenType} ${token}`);
+
+    return next({
+      ...request,
+      headers,
+    });
   };
 }

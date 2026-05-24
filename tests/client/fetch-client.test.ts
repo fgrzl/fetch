@@ -175,6 +175,46 @@ describe('FetchClient', () => {
     expect(client).toBeInstanceOf(FetchClient);
   });
 
+  it('should preserve an already-aborted signal when a timeout is configured', async () => {
+    mockFetch.mockReset();
+    const controller = new AbortController();
+    controller.abort();
+    mockFetch.mockImplementationOnce((_url: string, options?: RequestInit) => {
+      expect(options?.signal?.aborted).toBe(true);
+      const error = new Error('Aborted');
+      error.name = 'AbortError';
+      return Promise.reject(error);
+    });
+
+    const client = new FetchClient({ timeout: 100 });
+    const response = await client.get(
+      '/api/test',
+      {},
+      {
+        signal: controller.signal,
+      },
+    );
+
+    expect(response.ok).toBe(false);
+    expect(response.statusText).toBe('Request Aborted');
+  });
+
+  it('should remove a source abort listener after a timed request completes', async () => {
+    const controller = new AbortController();
+    const removeListener = vi.spyOn(controller.signal, 'removeEventListener');
+    mockFetch.mockResolvedValueOnce(
+      new Response('{}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const client = new FetchClient({ timeout: 100 });
+    await client.get('/api/test', {}, { signal: controller.signal });
+
+    expect(removeListener).toHaveBeenCalledWith('abort', expect.any(Function));
+  });
+
   describe('Base URL functionality', () => {
     describe('with baseUrl configured', () => {
       it('should prepend baseUrl to relative URLs', async () => {
@@ -263,6 +303,26 @@ describe('FetchClient', () => {
 
         expect(mockFetch).toHaveBeenCalledWith(
           'https://api.example.com/users?page=1&limit=10',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should append array query values without losing fragments', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+        mockFetch.mockResolvedValueOnce(
+          new Response('{}', {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users?sort=name#list', {
+          tag: ['admin', 'editor'],
+          page: undefined,
+        });
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users?sort=name&tag=admin&tag=editor#list',
           expect.objectContaining({ method: 'GET' }),
         );
       });
@@ -357,7 +417,7 @@ describe('FetchClient', () => {
         );
       });
 
-      it('should allow relative URLs (backward compatibility)', async () => {
+      it('should allow relative URLs', async () => {
         const client = new FetchClient();
 
         mockFetch.mockResolvedValueOnce(
@@ -375,7 +435,7 @@ describe('FetchClient', () => {
         );
       });
 
-      it('should allow relative URLs without leading slash (backward compatibility)', async () => {
+      it('should allow relative URLs without leading slash', async () => {
         const client = new FetchClient();
 
         mockFetch.mockResolvedValueOnce(
@@ -552,10 +612,39 @@ describe('FetchClient', () => {
     });
 
     describe('error handling', () => {
-      it('should throw error when resolving relative URL with invalid base URL', async () => {
+      it('should return a failed response when resolving relative URL with invalid base URL', async () => {
         const client = new FetchClient({ baseUrl: 'not-a-valid-url' });
 
-        await expect(client.get('/users')).rejects.toThrow('Invalid URL');
+        const response = await client.get('/users');
+
+        expect(response.ok).toBe(false);
+        if (response.ok) {
+          throw new Error('Expected failed response');
+        }
+        expect(response.status).toBe(0);
+        expect(response.statusText).toBe('Invalid URL');
+        expect(response.error.message).toContain('Invalid URL');
+      });
+
+      it('should return failed responses for invalid base URL query helpers', async () => {
+        const client = new FetchClient({ baseUrl: 'not-a-valid-url' });
+
+        const getResponse = await client.get('/users', { page: 1 });
+        const headResponse = await client.head('/users', { page: 1 });
+        const deleteResponse = await client.del('/users', { page: 1 });
+
+        expect(getResponse.ok).toBe(false);
+        expect(headResponse.ok).toBe(false);
+        expect(deleteResponse.ok).toBe(false);
+
+        if (getResponse.ok || headResponse.ok || deleteResponse.ok) {
+          throw new Error('Expected failed responses');
+        }
+
+        expect(getResponse.statusText).toBe('Invalid URL');
+        expect(headResponse.error.message).toContain('Invalid URL');
+        expect(deleteResponse.error.message).toContain('Invalid URL');
+        expect(mockFetch).not.toHaveBeenCalled();
       });
     });
   });

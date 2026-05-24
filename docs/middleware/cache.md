@@ -1,198 +1,72 @@
 # Cache Middleware
 
-Provides intelligent response caching with TTL (Time To Live) support for improved performance and reduced API calls.
+The cache middleware provides opt-in TTL response memoization. It is not a full HTTP cache.
+
+Use it for repeated safe reads where short-lived staleness is acceptable. Prefer browser cache, service workers, server cache headers, CDN policy, or app data tools for correctness-heavy caching.
 
 ## Usage
 
-### Simple Caching
-
 ```ts
-import { addCache } from '@fgrzl/fetch';
+import { FetchClient } from '@fgrzl/fetch';
+import { addCache } from '@fgrzl/fetch/middleware/cache';
 
-// Cache responses for 5 minutes
-const cachedClient = addCache(client, {
-  ttl: 5 * 60 * 1000, // 5 minutes in milliseconds
+const client = addCache(new FetchClient(), {
+  ttl: 5 * 60 * 1000,
 });
 
-// Default caching (1 minute TTL)
-const cachedClient = addCache(client);
+const first = await client.get('/users');
+const second = await client.get('/users'); // served from cache while fresh
 ```
 
-### Advanced Configuration
-
-```ts
-import { addCache, createCacheMiddleware } from '@fgrzl/fetch';
-
-// Custom cache configuration
-const cachedClient = addCache(client, {
-  ttl: 10 * 60 * 1000, // 10 minutes
-  maxSize: 1000, // Maximum 1000 cached responses
-  keyGenerator: (request) => `${request.method}-${request.url}`,
-  shouldCache: (response) =>
-    response.status === 200 && response.method === 'GET',
-});
-
-// Factory approach for advanced control
-const cacheMiddleware = createCacheMiddleware({
-  ttl: 30 * 1000, // 30 seconds
-  storage: new Map(), // Custom storage implementation
-});
-client.use(cacheMiddleware);
-```
-
-### Custom Storage
-
-```ts
-// Using custom storage backend
-import { addCache } from '@fgrzl/fetch';
-
-class RedisCache implements CacheStorage {
-  async get(key: string): Promise<CacheEntry | undefined> {
-    const value = await redis.get(key);
-    return value ? JSON.parse(value) : undefined;
-  }
-
-  async set(key: string, entry: CacheEntry): Promise<void> {
-    await redis.setex(key, entry.ttl / 1000, JSON.stringify(entry));
-  }
-
-  async delete(key: string): Promise<void> {
-    await redis.del(key);
-  }
-
-  async clear(): Promise<void> {
-    await redis.flushall();
-  }
-}
-
-const cachedClient = addCache(client, {
-  storage: new RedisCache(),
-  ttl: 15 * 60 * 1000, // 15 minutes
-});
-```
-
-## Configuration Options
+## Options
 
 ```ts
 interface CacheOptions {
-  ttl?: number; // Time to live in milliseconds (default: 60000)
-  maxSize?: number; // Maximum cache entries (default: 1000)
-  storage?: CacheStorage; // Custom storage implementation
-  keyGenerator?: CacheKeyGenerator; // Custom cache key generation
-  shouldCache?: (response: FetchResponse) => boolean; // Cache predicate
+  ttl?: number;
+  storage?: CacheStorage;
+  keyGenerator?: CacheKeyGenerator;
+  skipPatterns?: (RegExp | string)[];
+  staleWhileRevalidate?: boolean;
 }
+```
 
-interface CacheEntry {
-  data: any;
-  timestamp: number;
-  ttl: number;
-  headers: HeadersInit;
-  status: number;
-  statusText: string;
+- `ttl`: time to keep entries, in milliseconds. Default is 5 minutes.
+- Only successful `GET` responses are memoized.
+- `storage`: async storage adapter. Default is in-memory storage.
+- `keyGenerator`: custom cache key function.
+- `skipPatterns`: URL patterns that bypass memoization.
+- `staleWhileRevalidate`: return stale data while refreshing it in the background.
+
+## Custom Storage
+
+```ts
+import type { CacheEntry, CacheStorage } from '@fgrzl/fetch/middleware/cache';
+
+class LocalStorageCache implements CacheStorage {
+  async get(key: string): Promise<CacheEntry | null> {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : null;
+  }
+
+  async set(key: string, entry: CacheEntry): Promise<void> {
+    localStorage.setItem(key, JSON.stringify(entry));
+  }
+
+  async delete(key: string): Promise<void> {
+    localStorage.removeItem(key);
+  }
+
+  async clear(): Promise<void> {
+    localStorage.clear();
+  }
 }
-
-interface CacheStorage {
-  get(key: string): Promise<CacheEntry | undefined>;
-  set(key: string, entry: CacheEntry): Promise<void>;
-  delete(key: string): Promise<void>;
-  clear(): Promise<void>;
-}
-
-type CacheKeyGenerator = (request: RequestInit & { url: string }) => string;
 ```
 
-## Examples
+## Limits
 
-### API Response Caching
-
-```ts
-// Cache GET requests for user data
-const userClient = addCache(new FetchClient(), {
-  ttl: 2 * 60 * 1000, // 2 minutes
-  shouldCache: (response) =>
-    response.method === 'GET' &&
-    response.url?.includes('/api/users') &&
-    response.status === 200,
-});
-
-const userData = await userClient.get('/api/users/123');
-// Subsequent calls within 2 minutes will be served from cache
-```
-
-### Cache Invalidation
-
-```ts
-// Manual cache clearing
-const client = addCache(new FetchClient());
-
-// Clear entire cache
-await client.cache.clear();
-
-// Clear specific entry (if you have access to the cache instance)
-await client.cache.delete('GET-/api/users/123');
-```
-
-### Per-Request Cache Control
-
-```ts
-// Skip cache for specific requests
-const response = await cachedClient.get('/api/fresh-data', {
-  headers: {
-    'Cache-Control': 'no-cache', // Will bypass cache
-  },
-});
-
-// Force cache refresh
-const response = await cachedClient.get('/api/data', {
-  headers: {
-    'Cache-Control': 'max-age=0', // Will refresh cache
-  },
-});
-```
-
-## Cache Strategies
-
-### Time-based Caching
-
-```ts
-// Different TTLs for different endpoints
-const smartClient = addCache(client, {
-  keyGenerator: (req) => `${req.method}-${req.url}`,
-  shouldCache: (response) => response.status < 400,
-  ttl: (request) => {
-    if (request.url?.includes('/api/config')) return 30 * 60 * 1000; // 30 min
-    if (request.url?.includes('/api/users')) return 5 * 60 * 1000; // 5 min
-    return 60 * 1000; // 1 min default
-  },
-});
-```
-
-### Conditional Caching
-
-```ts
-// Only cache successful GET requests
-const conditionalClient = addCache(client, {
-  shouldCache: (response) =>
-    response.method === 'GET' &&
-    response.status >= 200 &&
-    response.status < 300 &&
-    !response.url?.includes('?nocache=true'),
-});
-```
-
-## Best Practices
-
-1. **Cache GET requests only**: POST/PUT/DELETE should not be cached
-2. **Set appropriate TTLs**: Balance freshness vs performance
-3. **Use custom storage**: For shared caches or persistence
-4. **Handle cache misses**: Always be prepared for network requests
-5. **Cache invalidation**: Clear cache after mutations
-6. **Memory management**: Set `maxSize` to prevent memory leaks
-7. **Error handling**: Don't cache error responses unless intentional
-
-## Performance Considerations
-
-- **Memory usage**: Default in-memory storage grows with cache size
-- **TTL cleanup**: Expired entries are cleaned up automatically
-- **Network fallback**: Cache misses fall through to network requests
-- **Serialization**: Custom storage may have serialization overhead
+- No automatic invalidation after mutations.
+- No `Cache-Control` parsing or HTTP cache semantics.
+- No built-in max-size eviction.
+- No distributed coordination.
+- No streaming response support.
+- Be careful caching authenticated responses; include auth-relevant headers in the cache key if needed.

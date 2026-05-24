@@ -1,5 +1,5 @@
 /**
- * @fileoverview CSRF protection middleware - "pit of success" API.
+ * @fileoverview CSRF protection middleware public API.
  */
 
 import type { FetchClient } from '../../client/fetch-client';
@@ -11,8 +11,7 @@ export type { CSRFOptions, CSRFTokenProvider } from './types';
 export { createCSRFMiddleware } from './csrf';
 
 /**
- * "Pit of success" API for adding CSRF protection to a FetchClient.
- * Uses smart defaults that work with most web frameworks out of the box.
+ * Adds cookie-based CSRF header handling to a FetchClient.
  *
  * Default behavior:
  * - Reads CSRF token from XSRF-TOKEN cookie

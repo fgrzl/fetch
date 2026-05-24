@@ -5,7 +5,9 @@
  * Designed for discoverability and type safety.
  */
 
-// Export RequestOptions interface so it's available to consumers
+/**
+ * Per-request options for cancellation, timeouts, and request tracing.
+ */
 export interface RequestOptions {
   /**
    * AbortSignal for cancelling the request.
@@ -140,7 +142,8 @@ export type FetchResponse<T, E = unknown> =
 /**
  * Configuration options for FetchClient.
  *
- * Optimized for "pit of success" - good defaults, minimal required config.
+ * Defaults are deliberately small: same-origin credentials, with no base URL
+ * or timeout unless supplied.
  */
 export interface FetchClientOptions {
   /**

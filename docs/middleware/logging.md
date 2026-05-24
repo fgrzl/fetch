@@ -7,7 +7,7 @@ Provides comprehensive request and response logging for debugging, monitoring, a
 ### Simple Logging
 
 ```ts
-import { addLogging } from '@fgrzl/fetch';
+import { addLogging } from '@fgrzl/fetch/middleware/logging';
 
 // Default logging (info level)
 const loggedClient = addLogging(client);
@@ -21,7 +21,10 @@ const debugClient = addLogging(client, {
 ### Advanced Configuration
 
 ```ts
-import { addLogging, createLoggingMiddleware } from '@fgrzl/fetch';
+import {
+  addLogging,
+  createLoggingMiddleware,
+} from '@fgrzl/fetch/middleware/logging';
 
 // Comprehensive logging configuration
 const loggedClient = addLogging(client, {
@@ -45,7 +48,7 @@ client.use(loggingMiddleware);
 ### Custom Logger
 
 ```ts
-import { addLogging } from '@fgrzl/fetch';
+import { addLogging } from '@fgrzl/fetch/middleware/logging';
 
 // Custom logger implementation
 const customLogger = {

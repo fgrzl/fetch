@@ -1,6 +1,6 @@
 # Custom Middleware
 
-Create your own middleware to handle cross-cutting concerns like authentication, logging, and error handling using the unified intercept pattern.
+Create your own middleware to handle cross-cutting concerns like authentication, logging, and response handling.
 
 ## Unified Middleware Pattern
 
@@ -65,4 +65,4 @@ function createAuthMiddleware(token: string) {
 client.use(createAuthMiddleware(userToken));
 ```
 
-See also: [Error Handling](../errors.md)
+See also: [Error Handling](../error-handling.md)
