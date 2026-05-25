@@ -53,9 +53,9 @@ describe('Cache Middleware', () => {
       const client = new FetchClient();
       const cachedClient = addCache(client);
 
-      const firstResponse = await cachedClient.get(
-        'https://api.example.com/users',
-      );
+      const firstResponse = await cachedClient.get<{
+        nested: { value: number };
+      }>('https://api.example.com/users');
 
       expect(firstResponse.ok).toBe(true);
       if (!firstResponse.ok) {
@@ -64,9 +64,9 @@ describe('Cache Middleware', () => {
 
       firstResponse.data.nested.value = 99;
 
-      const secondResponse = await cachedClient.get(
-        'https://api.example.com/users',
-      );
+      const secondResponse = await cachedClient.get<{
+        nested: { value: number };
+      }>('https://api.example.com/users');
 
       expect(secondResponse.ok).toBe(true);
       if (!secondResponse.ok) {
@@ -74,6 +74,39 @@ describe('Cache Middleware', () => {
       }
 
       expect(secondResponse.data).toEqual({ nested: { value: 1 } });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    it('should allow cache data cloning to be disabled for immutable payloads', async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ nested: { value: 1 } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      );
+
+      const cachedClient = addCache(new FetchClient(), { cloneData: false });
+      const firstResponse = await cachedClient.get<{
+        nested: { value: number };
+      }>('https://api.example.com/users');
+
+      expect(firstResponse.ok).toBe(true);
+      if (!firstResponse.ok) {
+        throw new Error('Expected a successful response');
+      }
+
+      firstResponse.data.nested.value = 99;
+
+      const secondResponse = await cachedClient.get<{
+        nested: { value: number };
+      }>('https://api.example.com/users');
+
+      expect(secondResponse.ok).toBe(true);
+      if (!secondResponse.ok) {
+        throw new Error('Expected a successful response');
+      }
+
+      expect(secondResponse.data).toEqual({ nested: { value: 99 } });
       expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 

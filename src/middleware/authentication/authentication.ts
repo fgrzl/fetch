@@ -61,6 +61,26 @@ function shouldIncludeAuth(
   });
 }
 
+function headersToRecord(headers?: HeadersInit): Record<string, string> {
+  if (!headers) {
+    return {};
+  }
+
+  if (headers instanceof Headers) {
+    const result: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      result[key] = value;
+    });
+    return result;
+  }
+
+  if (Array.isArray(headers)) {
+    return Object.fromEntries(headers);
+  }
+
+  return { ...headers };
+}
+
 function pathnameForMatching(url: string): string {
   try {
     return new URL(url, 'http://fetch.local').pathname;
@@ -104,24 +124,42 @@ export function createAuthenticationMiddleware(
     includePatterns,
     requireToken = false,
   } = options;
+  const normalizedHeaderName = headerName.toLowerCase();
+  const hasPathFilters =
+    skipPatterns.length > 0 || (includePatterns?.length ?? 0) > 0;
 
   return async (request, next) => {
     const url = request.url || '';
-    const pathname = pathnameForMatching(url);
 
-    // Skip authentication if:
-    // 1. URL matches a skip pattern
-    // 2. URL doesn't match include patterns (if specified)
-    if (
-      shouldSkipAuth(pathname, skipPatterns) ||
-      !shouldIncludeAuth(pathname, includePatterns)
-    ) {
-      return next(request);
+    if (hasPathFilters) {
+      const pathname = pathnameForMatching(url);
+
+      if (
+        shouldSkipAuth(pathname, skipPatterns) ||
+        !shouldIncludeAuth(pathname, includePatterns)
+      ) {
+        return next(request);
+      }
     }
 
     let token: string;
+    let suppliedToken: string | Promise<string>;
     try {
-      token = await tokenProvider();
+      suppliedToken = tokenProvider();
+    } catch (error) {
+      if (requireToken) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Authentication failed (token provider error)';
+        return syntheticUnauthorized(url, message);
+      }
+      return next(request);
+    }
+
+    try {
+      token =
+        typeof suppliedToken === 'string' ? suppliedToken : await suppliedToken;
     } catch (error) {
       if (requireToken) {
         const message =
@@ -143,8 +181,8 @@ export function createAuthenticationMiddleware(
       return next(request);
     }
 
-    const headers = new Headers(request.headers);
-    headers.set(headerName, `${tokenType} ${token}`);
+    const headers = headersToRecord(request.headers);
+    headers[normalizedHeaderName] = `${tokenType} ${token}`;
 
     return next({
       ...request,

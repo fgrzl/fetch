@@ -87,6 +87,13 @@ export interface CacheOptions {
    * When true, returns cached data immediately and updates cache in background
    */
   staleWhileRevalidate?: boolean;
+
+  /**
+   * Whether to clone data when storing and returning cached responses.
+   * Defaults to true so callers cannot mutate future cache reads.
+   * Disable only when cached response data is treated as immutable.
+   */
+  cloneData?: boolean;
 }
 
 // Ensure this file is treated as a module

@@ -27,6 +27,7 @@ interface CacheOptions {
   keyGenerator?: CacheKeyGenerator;
   skipPatterns?: (RegExp | string)[];
   staleWhileRevalidate?: boolean;
+  cloneData?: boolean;
 }
 ```
 
@@ -36,6 +37,16 @@ interface CacheOptions {
 - `keyGenerator`: custom cache key function.
 - `skipPatterns`: URL patterns that bypass memoization.
 - `staleWhileRevalidate`: return stale data while refreshing it in the background.
+- `cloneData`: clone data on cache writes and reads so mutations do not leak between responses. Defaults to `true`; set to `false` only for immutable payloads when large-response cache-hit throughput matters.
+
+By default, modifying one returned response cannot modify later cache hits. For read-only large payloads, cloning can outweigh the rest of a warm cache lookup:
+
+```ts
+const immutableClient = addCache(new FetchClient(), {
+  ttl: 30_000,
+  cloneData: false,
+});
+```
 
 ## Custom Storage
 

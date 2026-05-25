@@ -1,3 +1,5 @@
+// @vitest-environment node
+
 import { bench, describe, vi } from 'vite-plus/test';
 import { appendQueryParams, buildQueryParams } from '../src/client/query';
 import { FetchClient } from '../src/client/fetch-client';
@@ -9,7 +11,7 @@ const jsonResponse = (data: unknown, init: ResponseInit = {}) =>
     ...init,
   });
 
-describe('query utilities', () => {
+describe('attribution: query utilities', () => {
   bench('builds scalar and array query parameters', () => {
     buildQueryParams({
       active: true,
@@ -31,39 +33,55 @@ describe('query utilities', () => {
   });
 });
 
-describe('FetchClient request paths', () => {
-  const mockFetch = vi.fn(() => Promise.resolve(jsonResponse({ ok: true })));
+describe('attribution: FetchClient request paths', () => {
+  const mockFetch = vi.fn((input: RequestInfo | URL, _init?: RequestInit) => {
+    const url =
+      typeof input === 'string'
+        ? input
+        : input instanceof URL
+          ? input.href
+          : input.url;
+
+    return Promise.resolve(
+      url === '/text'
+        ? new Response('plain text response', {
+            status: 200,
+            headers: { 'content-type': 'text/plain' },
+          })
+        : jsonResponse({ ok: true }),
+    );
+  });
   globalThis.fetch = mockFetch;
 
-  bench('resolves base URL GET requests with query parameters', async () => {
-    const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+  const relativeClient = new FetchClient();
+  const baseUrlClient = new FetchClient({ baseUrl: 'https://api.example.com' });
+  const postBody = {
+    email: 'ada@example.com',
+    name: 'Ada Lovelace',
+    roles: ['admin', 'maintainer'],
+  };
 
-    await client.get('/users', {
+  bench('FetchClient parses a JSON GET response', async () => {
+    await relativeClient.get('/users');
+  });
+
+  bench('resolves base URL GET requests without query parameters', async () => {
+    await baseUrlClient.get('/users');
+  });
+
+  bench('resolves base URL GET requests with query parameters', async () => {
+    await baseUrlClient.get('/users', {
       active: true,
       page: 2,
       search: 'Ada Lovelace',
     });
   });
 
-  bench('serializes JSON POST requests', async () => {
-    const client = new FetchClient({ baseUrl: 'https://api.example.com' });
-
-    await client.post('/users', {
-      email: 'ada@example.com',
-      name: 'Ada Lovelace',
-      roles: ['admin', 'maintainer'],
-    });
+  bench('FetchClient serializes a JSON POST and parses its response', async () => {
+    await relativeClient.post('/users', postBody);
   });
 
-  bench('parses text responses', async () => {
-    mockFetch.mockResolvedValueOnce(
-      new Response('plain text response', {
-        status: 200,
-        headers: { 'content-type': 'text/plain' },
-      }),
-    );
-
-    const client = new FetchClient({ baseUrl: 'https://api.example.com' });
-    await client.get('/text');
+  bench('FetchClient parses a text response', async () => {
+    await relativeClient.get('/text');
   });
 });

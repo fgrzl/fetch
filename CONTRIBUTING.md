@@ -88,7 +88,7 @@ tests/
 └── test-utils.ts        # Testing utilities
 
 bench/
-└── *.bench.ts           # Vitest benchmarks
+└── *.bench.ts           # Node-based Vite+ attribution benchmarks
 ```
 
 ### Writing Tests

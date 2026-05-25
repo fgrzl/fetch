@@ -73,6 +73,7 @@ export default defineConfig({
       {
         files: ['tests/**', 'bench/**'],
         rules: {
+          'no-console': 'off',
           'typescript/no-misused-spread': 'off',
           'typescript/unbound-method': 'off',
         },

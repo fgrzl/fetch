@@ -119,6 +119,10 @@ function cloneCacheData<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
 }
 
+function reuseCacheData<T>(value: T): T {
+  return value;
+}
+
 /**
  * Creates TTL response memoization middleware.
  * Caches GET responses for faster subsequent requests.
@@ -148,7 +152,9 @@ export function createCacheMiddleware(
     keyGenerator = defaultKeyGenerator,
     skipPatterns = [],
     staleWhileRevalidate = false,
+    cloneData = true,
   } = options;
+  const copyCacheData = cloneData ? cloneCacheData : reuseCacheData;
 
   return async (request, next) => {
     const method = (request.method || 'GET').toUpperCase();
@@ -179,7 +185,7 @@ export function createCacheMiddleware(
       return {
         ...cached.response,
         headers: new Headers(cached.response.headers),
-        data: cloneCacheData(cached.response.data),
+        data: copyCacheData(cached.response.data),
         ok: true,
         error: null,
       } as FetchResponse<unknown>;
@@ -189,7 +195,7 @@ export function createCacheMiddleware(
       const cachedResponse = {
         ...cached.response,
         headers: new Headers(cached.response.headers),
-        data: cloneCacheData(cached.response.data),
+        data: copyCacheData(cached.response.data),
         ok: true,
         error: null,
       } as FetchResponse<unknown>;
@@ -212,7 +218,7 @@ export function createCacheMiddleware(
                 statusText: freshResponse.statusText,
                 headers: headersObj,
                 url: freshResponse.url,
-                data: cloneCacheData(freshResponse.data),
+                data: copyCacheData(freshResponse.data),
               },
               timestamp: Date.now(),
               expiresAt: Date.now() + ttl,
@@ -240,7 +246,7 @@ export function createCacheMiddleware(
             statusText: response.statusText,
             headers: headersObj,
             url: response.url,
-            data: cloneCacheData(response.data),
+            data: copyCacheData(response.data),
           },
           timestamp: Date.now(),
           expiresAt: Date.now() + ttl,

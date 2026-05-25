@@ -85,11 +85,13 @@ export class FetchClient {
   private middlewares: FetchMiddleware[] = [];
   private credentials: RequestCredentials;
   private baseUrl: string | undefined;
+  private baseUrlObject: URL | undefined;
   private defaultTimeout: number | undefined;
 
   constructor(config: FetchClientOptions = {}) {
     this.credentials = config.credentials ?? 'same-origin';
     this.baseUrl = config.baseUrl;
+    this.baseUrlObject = undefined;
     this.defaultTimeout = config.timeout;
   }
 
@@ -124,6 +126,7 @@ export class FetchClient {
    */
   setBaseUrl(baseUrl?: string): this {
     this.baseUrl = baseUrl;
+    this.baseUrlObject = undefined;
     return this;
   }
 
@@ -372,7 +375,8 @@ export class FetchClient {
       return url;
     }
 
-    const baseUrl = new URL(this.baseUrl);
+    const baseUrl =
+      this.baseUrlObject ?? (this.baseUrlObject = new URL(this.baseUrl));
     const resolvedUrl = new URL(url, baseUrl);
     return resolvedUrl.toString();
   }
@@ -502,7 +506,7 @@ export class FetchClient {
    * controller.abort(); // Cancel the request
    * ```
    */
-  async head<T = null, E = unknown>(
+  head<T = null, E = unknown>(
     url: string,
     params?: QueryParams,
     options?: RequestOptions,
@@ -511,7 +515,7 @@ export class FetchClient {
     try {
       finalUrl = this.buildUrlWithParams(url, params);
     } catch (error) {
-      return this.urlFailureResponse<T, E>(url, error);
+      return Promise.resolve(this.urlFailureResponse<T, E>(url, error));
     }
 
     return this.request<T, E>(finalUrl, { method: 'HEAD' }, options);
@@ -592,7 +596,7 @@ export class FetchClient {
    * const users = await client.get<User[]>('/api/users', {}, { timeout: 5000 });
    * ```
    */
-  async get<T = unknown, E = unknown>(
+  get<T = unknown, E = unknown>(
     url: string,
     params?: QueryParams,
     options?: RequestOptions,
@@ -601,7 +605,7 @@ export class FetchClient {
     try {
       finalUrl = this.buildUrlWithParams(url, params);
     } catch (error) {
-      return this.urlFailureResponse<T, E>(url, error);
+      return Promise.resolve(this.urlFailureResponse<T, E>(url, error));
     }
 
     return this.request<T, E>(finalUrl, { method: 'GET' }, options);
@@ -731,7 +735,7 @@ export class FetchClient {
    * if (result.ok) console.log('Deleted successfully');
    * ```
    */
-  async del<T = unknown, E = unknown>(
+  del<T = unknown, E = unknown>(
     url: string,
     params?: QueryParams,
     options?: RequestOptions,
@@ -740,7 +744,7 @@ export class FetchClient {
     try {
       finalUrl = this.buildUrlWithParams(url, params);
     } catch (error) {
-      return this.urlFailureResponse<T, E>(url, error);
+      return Promise.resolve(this.urlFailureResponse<T, E>(url, error));
     }
 
     return this.request<T, E>(finalUrl, { method: 'DELETE' }, options);

@@ -59,11 +59,14 @@ describe('FetchClient', () => {
     const client = new FetchClient();
 
     mockFetch.mockResolvedValueOnce(
-      new Response(JSON.stringify({ type: 'about:blank', title: 'Bad Request' }), {
-        status: 400,
-        statusText: 'Bad Request',
-        headers: { 'content-type': 'application/problem+json' },
-      }),
+      new Response(
+        JSON.stringify({ type: 'about:blank', title: 'Bad Request' }),
+        {
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { 'content-type': 'application/problem+json' },
+        },
+      ),
     );
 
     const result = await client.get('/api/users');
