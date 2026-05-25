@@ -44,6 +44,31 @@ describe('Authentication Middleware', () => {
       );
     });
 
+    it('should overwrite existing auth headers without duplicate casing', async () => {
+      const client = new FetchClient();
+
+      client.use(async (request, next) =>
+        next({
+          ...request,
+          headers: {
+            ...request.headers,
+            Authorization: 'Basic old-token',
+          },
+        }),
+      );
+
+      const authClient = addAuthentication(client, {
+        tokenProvider: () => 'test-token-123',
+      });
+
+      await authClient.get('https://api.example.com/users');
+
+      const [, options] = mockFetch.mock.calls[0]!;
+      expect(options?.headers).toEqual({
+        authorization: 'Bearer test-token-123',
+      });
+    });
+
     it('should authenticate relative request URLs', async () => {
       const client = addAuthentication(new FetchClient(), {
         tokenProvider: () => 'relative-token',

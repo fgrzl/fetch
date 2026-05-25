@@ -93,18 +93,23 @@ export class NetworkError extends FetchError {
 export function errorFromResponse<E = unknown>(
   response: FetchFailureResponse<E>,
 ): FetchError | HttpError | NetworkError {
-  if (response.statusText === 'Network Error') {
-    return new NetworkError(
+  if (response.status === 0) {
+    if (response.statusText === 'Network Error') {
+      return new NetworkError(
+        response.error.message,
+        response.url,
+        response.error.cause,
+      );
+    }
+
+    return new FetchError(
       response.error.message,
       response.url,
       response.error.cause,
     );
   }
 
-  if (
-    response.status === 0 ||
-    (response.status >= 200 && response.status < 300)
-  ) {
+  if (response.status >= 200 && response.status < 300) {
     return new FetchError(
       response.error.message,
       response.url,

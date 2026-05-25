@@ -61,26 +61,6 @@ function shouldIncludeAuth(
   });
 }
 
-function headersToRecord(headers?: HeadersInit): Record<string, string> {
-  if (!headers) {
-    return {};
-  }
-
-  if (headers instanceof Headers) {
-    const result: Record<string, string> = {};
-    headers.forEach((value, key) => {
-      result[key] = value;
-    });
-    return result;
-  }
-
-  if (Array.isArray(headers)) {
-    return Object.fromEntries(headers);
-  }
-
-  return { ...headers };
-}
-
 function pathnameForMatching(url: string): string {
   try {
     return new URL(url, 'http://fetch.local').pathname;
@@ -124,7 +104,6 @@ export function createAuthenticationMiddleware(
     includePatterns,
     requireToken = false,
   } = options;
-  const normalizedHeaderName = headerName.toLowerCase();
   const hasPathFilters =
     skipPatterns.length > 0 || (includePatterns?.length ?? 0) > 0;
 
@@ -181,8 +160,8 @@ export function createAuthenticationMiddleware(
       return next(request);
     }
 
-    const headers = headersToRecord(request.headers);
-    headers[normalizedHeaderName] = `${tokenType} ${token}`;
+    const headers = new Headers(request.headers);
+    headers.set(headerName, `${tokenType} ${token}`);
 
     return next({
       ...request,

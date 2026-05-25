@@ -298,6 +298,35 @@ describe('Error Classes', () => {
       expect(() => throwOnError(response)).toThrow(NetworkError);
     });
 
+    it('should not misclassify HTTP responses that mention Network Error', () => {
+      const response: FetchResponse<unknown, { message: string }> = {
+        data: null,
+        status: 503,
+        statusText: 'Network Error',
+        headers: new Headers(),
+        url: '/api/user',
+        ok: false,
+        error: {
+          message: 'upstream unavailable',
+          status: 503,
+          statusText: 'Network Error',
+          url: '/api/user',
+          body: { message: 'upstream unavailable' },
+        },
+      };
+
+      const error = errorFromResponse(response);
+
+      expect(error).toBeInstanceOf(HttpError);
+      expect(error).not.toBeInstanceOf(NetworkError);
+      expect(error).toMatchObject({
+        status: 503,
+        statusText: 'Network Error',
+        url: '/api/user',
+      });
+      expect(() => throwOnError(response)).toThrow(HttpError);
+    });
+
     it('should convert aborted or invalid requests to FetchError', () => {
       const response: FetchResponse<unknown> = {
         data: null,

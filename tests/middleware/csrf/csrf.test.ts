@@ -159,6 +159,32 @@ describe('CSRF Middleware', () => {
       );
     });
 
+    it('should overwrite existing CSRF headers without duplicate casing', async () => {
+      const client = new FetchClient();
+
+      client.use(async (request, next) =>
+        next({
+          ...request,
+          headers: {
+            ...request.headers,
+            'X-XSRF-TOKEN': 'legacy-token',
+          },
+        }),
+      );
+
+      const csrfClient = addCSRF(client, {
+        tokenProvider: () => 'new-token',
+      });
+
+      await csrfClient.post('https://api.example.com/data', { test: true });
+
+      const [, options] = mockFetch.mock.calls[0]!;
+      expect(options?.headers).toEqual({
+        'content-type': 'application/json',
+        'x-xsrf-token': 'new-token',
+      });
+    });
+
     it('should skip CSRF for URLs matching skip patterns', async () => {
       const client = new FetchClient();
       const csrfClient = addCSRF(client, {

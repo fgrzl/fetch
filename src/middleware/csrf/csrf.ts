@@ -43,26 +43,6 @@ function shouldSkipCSRF(
   });
 }
 
-function headersToRecord(headers?: HeadersInit): Record<string, string> {
-  if (!headers) {
-    return {};
-  }
-
-  if (headers instanceof Headers) {
-    const result: Record<string, string> = {};
-    headers.forEach((value, key) => {
-      result[key] = value;
-    });
-    return result;
-  }
-
-  if (Array.isArray(headers)) {
-    return Object.fromEntries(headers);
-  }
-
-  return { ...headers };
-}
-
 /**
  * Creates CSRF protection middleware.
  * Automatically adds CSRF tokens to state-changing requests.
@@ -101,7 +81,6 @@ export function createCSRFMiddleware(
     skipPatterns = [],
     tokenProvider = () => getTokenFromCookie(cookieName),
   } = options;
-  const normalizedHeaderName = headerName.toLowerCase();
 
   return async (request, next) => {
     const method = (request.method || 'GET').toUpperCase();
@@ -126,8 +105,8 @@ export function createCSRFMiddleware(
     }
 
     // Add CSRF token to request headers
-    const headers = headersToRecord(request.headers);
-    headers[normalizedHeaderName] = token;
+    const headers = new Headers(request.headers);
+    headers.set(headerName, token);
 
     // Create modified request with CSRF header
     const modifiedRequest = {
