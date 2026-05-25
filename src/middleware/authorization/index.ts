@@ -1,61 +1,31 @@
 /**
- * @fileoverview Authorization middleware - "pit of success" API.
+ * @fileoverview Explicit authorization response-handler middleware.
  */
 
 import type { FetchClient } from '../../client/fetch-client';
 import type { AuthorizationOptions } from './types';
 import { createAuthorizationMiddleware } from './authorization';
 
-// Re-export types for convenience
-export type {
-  AuthorizationOptions,
-  UnauthorizedHandler,
-  RedirectAuthorizationConfig,
-} from './types';
+export type { AuthorizationOptions, UnauthorizedHandler } from './types';
 export { createAuthorizationMiddleware } from './authorization';
 
 /**
- * "Pit of success" API for adding authorization handling to a FetchClient.
- * Automatically handles 401 Unauthorized responses.
+ * Adds explicit authorization response handlers to a client.
  *
- * @param client - The FetchClient to add authorization handling to
- * @param options - Authorization configuration (optional)
- * @returns A new FetchClient with authorization middleware
+ * @param client - The client to configure.
+ * @param options - Handler and status configuration.
+ * @returns The configured client.
  *
- * @example Smart defaults - no configuration needed:
+ * @example
  * ```typescript
- * const authzClient = addAuthorization(client);
- * // Redirects to '/login?return_url=current-page' on 401
- * ```
- *
- * @example Custom redirect path:
- * ```typescript
- * const authzClient = addAuthorization(client, {
- *   redirectConfig: { redirectPath: '/signin', returnUrlParam: 'redirect_to' }
- * });
- * ```
- *
- * @example Manual handler (full control):
- * ```typescript
- * const authzClient = addAuthorization(client, {
- *   onUnauthorized: () => {
- *     localStorage.removeItem('auth-token');
- *     window.location.href = '/login';
- *   }
- * });
- * ```
- *
- * @example Handle multiple status codes:
- * ```typescript
- * const authzClient = addAuthorization(client, {
- *   onForbidden: () => showAccessDenied(),
- *   statusCodes: [401, 403]
+ * addAuthorization(client, {
+ *   onUnauthorized: () => window.location.assign('/login')
  * });
  * ```
  */
 export function addAuthorization(
   client: FetchClient,
-  options: AuthorizationOptions = {},
+  options: AuthorizationOptions,
 ): FetchClient {
   return client.use(createAuthorizationMiddleware(options));
 }

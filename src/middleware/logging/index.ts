@@ -1,5 +1,5 @@
 /**
- * @fileoverview Logging middleware - "pit of success" API.
+ * @fileoverview Logging middleware public API.
  */
 
 import type { FetchClient } from '../../client/fetch-client';
@@ -11,7 +11,7 @@ export type { LoggingOptions, Logger, LogEntry, LogLevel } from './types';
 export { createLoggingMiddleware } from './logging';
 
 /**
- * "Pit of success" API for adding logging to a FetchClient.
+ * Adds request and response logging to a FetchClient.
  * Logs HTTP requests and responses for debugging and monitoring.
  *
  * @param client - The FetchClient to add logging to

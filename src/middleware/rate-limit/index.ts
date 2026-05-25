@@ -7,7 +7,7 @@ import type { RateLimitOptions } from './types';
 import { createRateLimitMiddleware } from './rate-limit';
 
 // Re-export types for convenience
-export type { RateLimitOptions, RateLimitAlgorithm } from './types';
+export type { RateLimitOptions } from './types';
 export { createRateLimitMiddleware } from './rate-limit';
 
 /**

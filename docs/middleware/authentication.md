@@ -1,122 +1,61 @@
 # Authentication Middleware
 
-Automatically adds authentication headers to requests using bearer tokens or custom authentication schemes.
+Adds an authentication header to matching requests.
 
 ## Usage
 
-### Simple Bearer Token
-
 ```ts
-import { addAuthentication } from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
+import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
 
-// Static token
-const authClient = addAuthentication(client, {
-  tokenProvider: () => "your-bearer-token",
-});
-
-// Dynamic token from localStorage
-const authClient = addAuthentication(client, {
-  tokenProvider: () => localStorage.getItem("auth-token") || "",
-});
-
-// With custom header name
-const authClient = addAuthentication(client, {
-  tokenProvider: () => getApiKey(),
-  headerName: "X-API-Key",
+const client = addAuthentication(new FetchClient(), {
+  tokenProvider: () => localStorage.getItem('auth-token') || '',
 });
 ```
 
-### Custom Authentication Schemes
+By default, a token is sent as `Authorization: Bearer <token>`.
 
-```ts
-// Custom authorization header
-const authClient = addAuthentication(client, {
-  tokenProvider: () => `Bearer ${getToken()}`,
-  headerName: "Authorization", // Default
-});
-
-// API Key authentication
-const authClient = addAuthentication(client, {
-  tokenProvider: () => process.env.API_KEY,
-  headerName: "X-API-Key",
-});
-```
-
-### Advanced Usage
-
-```ts
-import { createAuthenticationMiddleware } from "@fgrzl/fetch";
-
-// Skip authentication for certain endpoints
-const authClient = addAuthentication(client, {
-  tokenProvider: () => getToken(),
-  skipPatterns: ["/public", /^\/health/],
-});
-
-// Advanced factory usage
-const authMiddleware = createAuthenticationMiddleware({
-  tokenProvider: async () => {
-    const token = await refreshTokenIfNeeded();
-    return token;
-  },
-  headerName: "Authorization",
-});
-
-client.use(authMiddleware);
-```
-
-## Configuration Options
+## Options
 
 ```ts
 interface AuthenticationOptions {
-  tokenProvider: AuthTokenProvider;
-  headerName?: string; // Default: 'Authorization'
+  tokenProvider: () => string | Promise<string>;
+  headerName?: string;
+  tokenType?: string;
   skipPatterns?: (RegExp | string)[];
+  includePatterns?: (RegExp | string)[];
+  requireToken?: boolean;
 }
-
-type AuthTokenProvider = () => string | Promise<string>;
 ```
 
-### Options
+- `tokenProvider`: returns the token.
+- `headerName`: header to set. Default is `Authorization`.
+- `tokenType`: token prefix. Default is `Bearer`.
+- `skipPatterns`: paths that should not receive auth.
+- `includePatterns`: when provided, only matching paths receive auth.
+- `requireToken`: return a synthetic `401` response when no token is available.
 
-- **`tokenProvider`** (required): Function that returns the authentication token
-- **`headerName`** (optional): Name of the header to add (default: `'Authorization'`)
-- **`skipPatterns`** (optional): URL patterns to skip authentication for
-
-## Examples
-
-### React Integration
-
-```tsx
-import { addAuthentication } from "@fgrzl/fetch";
-
-function createAuthenticatedClient(getToken: () => string) {
-  return addAuthentication(new FetchClient(), {
-    tokenProvider: getToken,
-  });
-}
-
-// In your React app
-const apiClient = createAuthenticatedClient(
-  () => localStorage.getItem("authToken") || "",
-);
-```
-
-### Next.js API Routes
+## API Key Example
 
 ```ts
-// pages/api/proxy.ts
-import { addAuthentication } from "@fgrzl/fetch";
-
-const authenticatedClient = addAuthentication(new FetchClient(), {
-  tokenProvider: () => process.env.SERVICE_API_KEY!,
-  headerName: "X-Service-Key",
+const client = addAuthentication(new FetchClient(), {
+  tokenProvider: () => getApiKey(),
+  headerName: 'X-API-Key',
+  tokenType: 'ApiKey',
 });
 ```
 
-## Best Practices
+## Required Token Example
 
-1. **Async token providers**: Use async functions if you need to refresh tokens
-2. **Error handling**: Token provider errors are propagated to the request
-3. **Security**: Never log or expose tokens in client-side code
-4. **Skip patterns**: Use for public endpoints that don't need authentication
+```ts
+const client = addAuthentication(new FetchClient(), {
+  tokenProvider: () => sessionStorage.getItem('token') || '',
+  requireToken: true,
+});
+
+const response = await client.get('/private');
+
+if (!response.ok && response.status === 401) {
+  showLogin();
+}
+```

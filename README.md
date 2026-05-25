@@ -2,80 +2,89 @@
 
 # @fgrzl/fetch
 
-A tiny, TypeScript-first wrapper around `fetch` that adds typed responses and composable middleware.
+An explicit TypeScript client built on native `fetch`, with typed `ok` / `data` / `error` responses and opt-in middleware.
 
-## What
+## Why It Exists
 
-- Lightweight HTTP client built on the browser `fetch` API.
-- Returns a consistent response shape (`ok`, `data`, `error`).
-- Built-in, optional middleware: auth, retry, cache, logging, CSRF, rate-limit.
+- Requests resolve to typed result objects instead of throwing for ordinary HTTP failures.
+- The core API stays small: JSON requests, base URLs, cancellation, timeouts, and tracing headers.
+- Middleware is opt-in: add auth, retry, caching, logging, CSRF, or local rate limits only where a client needs them.
+- Importing the package creates no shared client and enables no behavior automatically.
 
-## Why
-
-- Removes repetitive request boilerplate (base URLs, headers, retries).
-- Keeps runtime small and TypeScript-friendly.
-- Compose only the middleware you need — zero-config defaults when useful.
-
-## How
-
-1. Install
+## Install
 
 ```bash
 npm install @fgrzl/fetch
 ```
 
-2. Quick example
+## Quick Start
 
 ```ts
-import api from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
 
-api.setBaseUrl("https://api.example.com");
-const res = await api.get<{ id: number; name: string }>("/users");
-if (res.ok) console.log(res.data);
-```
+const api = new FetchClient({ baseUrl: 'https://api.example.com' });
+const response = await api.get<{ id: number; name: string }>('/users/1');
 
-## Examples
-
-### Set base URL
-
-```ts
-api.setBaseUrl("https://api.example.com");
-await api.get("/users");
-```
-
-### POST with JSON
-
-```ts
-const created = await api.post("/users", { name: "Ava" });
-```
-
-### Typed response
-
-```ts
-interface User {
-  id: number;
-  name: string;
+if (response.ok) {
+  console.log(response.data.name);
+} else {
+  console.error(response.status, response.error.message);
+  console.error(response.error.body);
 }
-const r = await api.get<User>("/me");
-if (r.ok) r.data.name;
 ```
 
-### Add authentication middleware
+Use `response.ok` for control flow. Success gives you `response.data`; failure gives structured details in `response.error`.
+
+## Add Middleware
 
 ```ts
-import { addAuthentication } from "@fgrzl/fetch/middleware/authentication";
-const authed = addAuthentication(api, {
-  tokenProvider: () => localStorage.getItem("token") || "",
+import { FetchClient } from '@fgrzl/fetch';
+import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
+import { addRetry } from '@fgrzl/fetch/middleware/retry';
+
+const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+addAuthentication(client, {
+  tokenProvider: () => localStorage.getItem('token') || '',
 });
-await authed.get("/private");
+
+addRetry(client, {
+  maxRetries: 2,
+  delay: 250,
+  backoff: 'exponential',
+});
 ```
 
-### Cancel / timeout
+Each helper mutates and returns the same client. Cache, logging, CSRF, and rate limiting are available the same way when a specific client needs them.
+
+## Optional Exceptions
 
 ```ts
-const c = new AbortController();
-api.get("/data", {}, { signal: c.signal, timeout: 5000 });
-c.abort();
+import { FetchClient, throwOnError } from '@fgrzl/fetch';
+
+const api = new FetchClient({ baseUrl: 'https://api.example.com' });
+const user = throwOnError(
+  await api.get<{ id: number; name: string }>('/users/1'),
+);
+
+console.log(user.name);
 ```
 
-Documentation: **[docs/](docs/README.md)** — [getting started](docs/getting-started.md), [architecture](docs/architecture.md), [middleware](docs/middleware.md)
+Use `throwOnError` only at call sites that expect exceptions.
+
+## Documentation
+
+- [Getting started](docs/getting-started.md)
+- [Configuration](docs/configuration.md)
+- [Cancellation](docs/cancellation.md)
+- [Error handling](docs/error-handling.md)
+- [Middleware](docs/middleware.md)
+- [Architecture](docs/architecture.md)
+- [TypeScript](docs/typescript.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+## Related
+
+- [Docs hub](docs/README.md)
+- [CHANGELOG](CHANGELOG.md)
+- [CONTRIBUTING](CONTRIBUTING.md)

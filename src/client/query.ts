@@ -22,6 +22,9 @@ export type QueryValue =
  */
 export type QueryParams = Record<string, QueryValue>;
 
+const hasOwn = (object: object, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(object, key);
+
 /**
  * Builds a URL query string from a JavaScript object.
  *
@@ -69,18 +72,24 @@ export type QueryParams = Record<string, QueryValue>;
 export function buildQueryParams(query: QueryParams): string {
   const params = new URLSearchParams();
 
-  for (const [key, value] of Object.entries(query)) {
-    if (value !== undefined) {
-      if (Array.isArray(value)) {
-        // Handle arrays properly with multiple entries
-        value.forEach((item) => {
-          if (item !== undefined) {
-            params.append(key, String(item));
-          }
-        });
-      } else {
-        params.set(key, String(value));
+  for (const key in query) {
+    if (!hasOwn(query, key)) {
+      continue;
+    }
+
+    const value = query[key];
+    if (value === undefined) {
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (item !== undefined) {
+          params.append(key, String(item));
+        }
       }
+    } else {
+      params.set(key, String(value));
     }
   }
 
@@ -122,12 +131,12 @@ export function appendQueryParams(baseUrl: string, query: QueryParams): string {
   // Handle URLs with fragments (hash)
   const fragmentIndex = baseUrl.indexOf('#');
   if (fragmentIndex !== -1) {
-    const urlPart = baseUrl.substring(0, fragmentIndex);
-    const fragmentPart = baseUrl.substring(fragmentIndex);
-    const separator = urlPart.includes('?') ? '&' : '?';
+    const urlPart = baseUrl.slice(0, fragmentIndex);
+    const fragmentPart = baseUrl.slice(fragmentIndex);
+    const separator = urlPart.indexOf('?') === -1 ? '?' : '&';
     return `${urlPart}${separator}${queryString}${fragmentPart}`;
   }
 
-  const separator = baseUrl.includes('?') ? '&' : '?';
+  const separator = baseUrl.indexOf('?') === -1 ? '?' : '&';
   return `${baseUrl}${separator}${queryString}`;
 }

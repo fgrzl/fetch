@@ -18,7 +18,12 @@ function syntheticUnauthorized(
     headers: new Headers(),
     url,
     ok: false,
-    error: { message },
+    error: {
+      message,
+      status: 401,
+      statusText: 'Unauthorized',
+      url,
+    },
   };
 }
 
@@ -56,8 +61,16 @@ function shouldIncludeAuth(
   });
 }
 
+function pathnameForMatching(url: string): string {
+  try {
+    return new URL(url, 'http://fetch.local').pathname;
+  } catch {
+    return url;
+  }
+}
+
 /**
- * Creates authentication middleware with smart defaults.
+ * Creates authentication header middleware.
  * Automatically adds Bearer tokens to requests.
  *
  * @param options - Authentication configuration options
@@ -91,50 +104,28 @@ export function createAuthenticationMiddleware(
     includePatterns,
     requireToken = false,
   } = options;
+  const hasPathFilters =
+    skipPatterns.length > 0 || (includePatterns?.length ?? 0) > 0;
 
   return async (request, next) => {
     const url = request.url || '';
-    const parsedUrl = new URL(url);
-    const pathname = parsedUrl.pathname;
 
-    // Skip authentication if:
-    // 1. URL matches a skip pattern
-    // 2. URL doesn't match include patterns (if specified)
-    if (
-      shouldSkipAuth(pathname, skipPatterns) ||
-      !shouldIncludeAuth(pathname, includePatterns)
-    ) {
-      return next(request);
-    }
+    if (hasPathFilters) {
+      const pathname = pathnameForMatching(url);
 
-    try {
-      // Get auth token (may be async)
-      const token = await tokenProvider();
-
-      // No token: either fail fast (requireToken) or send without auth (often causes 401)
-      if (!token) {
-        if (requireToken) {
-          return syntheticUnauthorized(
-            url,
-            'Authentication required (no token provided)',
-          );
-        }
+      if (
+        shouldSkipAuth(pathname, skipPatterns) ||
+        !shouldIncludeAuth(pathname, includePatterns)
+      ) {
         return next(request);
       }
+    }
 
-      // Add auth header to request
-      const headers = new Headers(request.headers);
-      headers.set(headerName, `${tokenType} ${token}`);
-
-      // Create modified request with auth header
-      const modifiedRequest = {
-        ...request,
-        headers,
-      };
-
-      return next(modifiedRequest);
+    let token: string;
+    let suppliedToken: string | Promise<string>;
+    try {
+      suppliedToken = tokenProvider();
     } catch (error) {
-      // Token provider threw (e.g. refresh failed, storage error)
       if (requireToken) {
         const message =
           error instanceof Error
@@ -142,8 +133,39 @@ export function createAuthenticationMiddleware(
             : 'Authentication failed (token provider error)';
         return syntheticUnauthorized(url, message);
       }
-      // Legacy: proceed without auth, which usually results in a 401 from the server
       return next(request);
     }
+
+    try {
+      token =
+        typeof suppliedToken === 'string' ? suppliedToken : await suppliedToken;
+    } catch (error) {
+      if (requireToken) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : 'Authentication failed (token provider error)';
+        return syntheticUnauthorized(url, message);
+      }
+      return next(request);
+    }
+
+    if (!token) {
+      if (requireToken) {
+        return syntheticUnauthorized(
+          url,
+          'Authentication required (no token provided)',
+        );
+      }
+      return next(request);
+    }
+
+    const headers = new Headers(request.headers);
+    headers.set(headerName, `${tokenType} ${token}`);
+
+    return next({
+      ...request,
+      headers,
+    });
   };
 }

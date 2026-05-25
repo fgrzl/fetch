@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.0]
+
+### Changed
+
+- Defined requests around a discriminated `FetchResponse<T, E>` result with structured failure details.
+- Kept throwing behavior opt-in through `throwOnError`, `HttpError`, and `NetworkError`.
+- Reduced the root API to the named client and core helpers; optional middleware now comes from middleware subpaths.
+- Removed the shared default client, preset middleware stacks, minified subpath entry, automatic authorization redirects, and unimplemented rate-limit algorithm choices.
+- Corrected retry composition so downstream middleware runs for every attempt.
+- Moved builds, checks, tests, and benchmarks onto Vite+.
+
 ## [1.1.0-alpha.12] - 2025-08-14
 
 ### Added
@@ -26,7 +37,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release of @fgrzl/fetch
 - TypeScript-first HTTP client with middleware support
 - Built-in CSRF protection middleware
-- Smart authorization middleware with redirect handling
+- Authorization response-handler middleware
 - Authentication middleware with bearer token support
 - Retry middleware with configurable strategies
 - Response caching middleware

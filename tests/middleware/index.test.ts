@@ -1,0 +1,237 @@
+/**
+ * @fileoverview Tests for middleware module exports.
+ *
+ * This test ensures that the middleware module properly exports:
+ * 1. All middleware functions and creators
+ * 2. Types for TypeScript users
+ */
+
+import {
+  describe,
+  it,
+  expect,
+  vi,
+  beforeEach,
+  afterEach,
+} from 'vite-plus/test';
+import { FetchClient } from '../../src/client/fetch-client';
+import * as middleware from '../../src/middleware';
+
+// Mock fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+describe('Middleware Module Exports', () => {
+  beforeEach(() => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+  });
+
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe('Authentication Middleware Exports', () => {
+    it('should export authentication functions', () => {
+      expect(middleware.addAuthentication).toBeDefined();
+      expect(middleware.createAuthenticationMiddleware).toBeDefined();
+      expect(typeof middleware.addAuthentication).toBe('function');
+      expect(typeof middleware.createAuthenticationMiddleware).toBe('function');
+    });
+
+    it('should create functional authentication middleware', async () => {
+      const client = new FetchClient();
+      const authClient = middleware.addAuthentication(client, {
+        tokenProvider: () => 'test-token',
+      });
+
+      await authClient.get('http://example.com/test');
+
+      const [, options] = mockFetch.mock.calls[0]!;
+      expect(options?.headers?.authorization).toBe('Bearer test-token');
+    });
+  });
+
+  describe('Authorization Middleware Exports', () => {
+    it('should export authorization functions', () => {
+      expect(middleware.addAuthorization).toBeDefined();
+      expect(middleware.createAuthorizationMiddleware).toBeDefined();
+      expect(typeof middleware.addAuthorization).toBe('function');
+      expect(typeof middleware.createAuthorizationMiddleware).toBe('function');
+    });
+
+    it('should create functional authorization middleware', () => {
+      const client = new FetchClient();
+      const authzClient = middleware.addAuthorization(client, {
+        onUnauthorized: vi.fn(),
+      });
+
+      expect(authzClient).toBeDefined();
+    });
+  });
+
+  describe('Cache Middleware Exports', () => {
+    it('should export cache functions', () => {
+      expect(middleware.addCache).toBeDefined();
+      expect(middleware.createCacheMiddleware).toBeDefined();
+      expect(typeof middleware.addCache).toBe('function');
+      expect(typeof middleware.createCacheMiddleware).toBe('function');
+    });
+
+    it('should create functional cache middleware', () => {
+      const client = new FetchClient();
+      const cacheClient = middleware.addCache(client, {
+        ttl: 1000,
+      });
+
+      expect(cacheClient).toBeDefined();
+    });
+  });
+
+  describe('CSRF Middleware Exports', () => {
+    it('should export CSRF function', () => {
+      expect(middleware.addCSRF).toBeDefined();
+      expect(typeof middleware.addCSRF).toBe('function');
+    });
+
+    it('should create functional CSRF middleware', () => {
+      // Set up mock cookie for CSRF token
+      Object.defineProperty(document, 'cookie', {
+        value: 'csrftoken=test-csrf-token',
+        writable: true,
+      });
+
+      const client = new FetchClient();
+      const csrfClient = middleware.addCSRF(client, {
+        tokenProvider: () => 'test-csrf-token',
+        headerName: 'X-CSRFToken',
+      });
+
+      expect(csrfClient).toBeDefined();
+    });
+  });
+
+  describe('Logging Middleware Exports', () => {
+    it('should export logging functions', () => {
+      expect(middleware.addLogging).toBeDefined();
+      expect(middleware.createLoggingMiddleware).toBeDefined();
+      expect(typeof middleware.addLogging).toBe('function');
+      expect(typeof middleware.createLoggingMiddleware).toBe('function');
+    });
+
+    it('should create functional logging middleware', () => {
+      const client = new FetchClient();
+      const logger = {
+        debug: vi.fn(),
+        info: vi.fn(),
+        warn: vi.fn(),
+        error: vi.fn(),
+      };
+
+      const loggingClient = middleware.addLogging(client, {
+        level: 'info',
+        logger,
+      });
+
+      expect(loggingClient).toBeDefined();
+    });
+  });
+
+  describe('Rate Limit Middleware Exports', () => {
+    it('should export rate limit functions', () => {
+      expect(middleware.addRateLimit).toBeDefined();
+      expect(middleware.createRateLimitMiddleware).toBeDefined();
+      expect(typeof middleware.addRateLimit).toBe('function');
+      expect(typeof middleware.createRateLimitMiddleware).toBe('function');
+    });
+
+    it('should create functional rate limit middleware', () => {
+      const client = new FetchClient();
+      const rateLimitClient = middleware.addRateLimit(client, {
+        maxRequests: 10,
+        windowMs: 1000,
+      });
+
+      expect(rateLimitClient).toBeDefined();
+    });
+  });
+
+  describe('Retry Middleware Exports', () => {
+    it('should export retry functions', () => {
+      expect(middleware.addRetry).toBeDefined();
+      expect(middleware.createRetryMiddleware).toBeDefined();
+      expect(typeof middleware.addRetry).toBeDefined();
+      expect(typeof middleware.createRetryMiddleware).toBe('function');
+    });
+
+    it('should create functional retry middleware', () => {
+      const client = new FetchClient();
+      const retryClient = middleware.addRetry(client, {
+        maxRetries: 3,
+        delay: 1000,
+      });
+
+      expect(retryClient).toBeDefined();
+    });
+  });
+
+  describe('Middleware Composition', () => {
+    it('should support chaining multiple middleware from exports', async () => {
+      const client = new FetchClient();
+
+      const enhancedClient = middleware.addAuthentication(
+        middleware.addRetry(client, { maxRetries: 1 }),
+        { tokenProvider: () => 'test-token' },
+      );
+
+      await enhancedClient.get('http://example.com/test');
+
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      const [, options] = mockFetch.mock.calls[0]!;
+      expect(options?.headers?.authorization).toBe('Bearer test-token');
+    });
+
+    it('should support creating custom middleware with exported creators', async () => {
+      const client = new FetchClient();
+
+      const authMiddleware = middleware.createAuthenticationMiddleware({
+        tokenProvider: () => 'custom-token',
+      });
+
+      client.use(authMiddleware);
+      await client.get('http://example.com/test');
+
+      const [, options] = mockFetch.mock.calls[0]!;
+      expect(options?.headers?.authorization).toBe('Bearer custom-token');
+    });
+  });
+
+  describe('Type Exports Verification', () => {
+    it('should make all middleware types available', () => {
+      // This test ensures types are properly exported
+      // If there were type export issues, this would fail at compile time
+
+      const authOptions: middleware.AuthenticationOptions = {
+        tokenProvider: () => 'token',
+      };
+      expect(authOptions.tokenProvider()).toBe('token');
+
+      const cacheOptions: middleware.CacheOptions = {
+        ttl: 1000,
+      };
+      expect(cacheOptions.ttl).toBe(1000);
+
+      const retryOptions: middleware.RetryOptions = {
+        maxRetries: 3,
+      };
+      expect(retryOptions.maxRetries).toBe(3);
+
+      // Other types exist but can't be easily tested without complex setup
+      // The import itself validates they're exported correctly
+    });
+  });
+});

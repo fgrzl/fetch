@@ -1,0 +1,693 @@
+/**
+ * @fileoverview Tests for the enhanced FetchClient.
+ */
+
+import { describe, it, expect, vi, beforeEach } from 'vite-plus/test';
+import { FetchClient } from '../../src/client/fetch-client';
+
+// Mock fetch
+const mockFetch = vi.fn();
+global.fetch = mockFetch;
+
+describe('FetchClient', () => {
+  beforeEach(() => {
+    mockFetch.mockClear();
+  });
+
+  it('should create a client instance', () => {
+    const client = new FetchClient();
+    expect(client).toBeInstanceOf(FetchClient);
+  });
+
+  it('should make GET requests', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: 1 }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await client.get('/api/users');
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/users', {
+      credentials: 'same-origin',
+      method: 'GET',
+    });
+    expect(result.data).toEqual({ id: 1 });
+    expect(result.ok).toBe(true);
+  });
+
+  it('should treat empty JSON responses as null instead of parse failures', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response('', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await client.get('/api/users');
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toBeNull();
+  });
+
+  it('should parse +json media types as JSON', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ type: 'about:blank', title: 'Bad Request' }),
+        {
+          status: 400,
+          statusText: 'Bad Request',
+          headers: { 'content-type': 'application/problem+json' },
+        },
+      ),
+    );
+
+    const result = await client.get('/api/users');
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error('Expected failed response');
+    }
+    expect(result.error.body).toEqual({
+      type: 'about:blank',
+      title: 'Bad Request',
+    });
+  });
+
+  it('should make POST requests with JSON body', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: 1, name: 'John' }), {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const result = await client.post('/api/users', { name: 'John' });
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/users', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'John' }),
+    });
+    expect(result.data).toEqual({ id: 1, name: 'John' });
+  });
+
+  it('should support basic middleware', async () => {
+    const client = new FetchClient();
+
+    let middlewareExecuted = false;
+    client.use((request, next) => {
+      middlewareExecuted = true;
+      return next(request);
+    });
+
+    mockFetch.mockResolvedValueOnce(
+      new Response('{}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await client.get('/api/test');
+
+    expect(middlewareExecuted).toBe(true);
+  });
+
+  it('should set x-operation-id header when operationId is provided', async () => {
+    const client = new FetchClient();
+    const operationId = 'test-op-123';
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await client.get('/api/test', {}, { operationId });
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+      credentials: 'same-origin',
+      method: 'GET',
+      headers: { 'x-operation-id': operationId },
+    });
+  });
+
+  it('should set x-operation-id header for POST requests', async () => {
+    const client = new FetchClient();
+    const operationId = 'post-op-456';
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ id: 1 }), {
+        status: 201,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await client.post('/api/users', { name: 'Test' }, {}, { operationId });
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/users', {
+      credentials: 'same-origin',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-operation-id': operationId,
+      },
+      body: JSON.stringify({ name: 'Test' }),
+    });
+  });
+
+  it('should not set x-operation-id header when operationId is not provided', async () => {
+    const client = new FetchClient();
+
+    mockFetch.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    await client.get('/api/test');
+
+    expect(mockFetch).toHaveBeenCalledWith('/api/test', {
+      credentials: 'same-origin',
+      method: 'GET',
+    });
+  });
+
+  it('should support all HTTP methods', async () => {
+    const client = new FetchClient();
+
+    // Create fresh mock responses for each call to avoid body already read error
+    const createMockResponse = () =>
+      new Response('{}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+
+    mockFetch
+      .mockResolvedValueOnce(createMockResponse())
+      .mockResolvedValueOnce(createMockResponse())
+      .mockResolvedValueOnce(createMockResponse())
+      .mockResolvedValueOnce(createMockResponse())
+      .mockResolvedValueOnce(createMockResponse())
+      .mockResolvedValueOnce(createMockResponse());
+
+    await client.get('/test');
+    await client.post('/test', {});
+    await client.put('/test', {});
+    await client.patch('/test', {});
+    await client.del('/test');
+
+    expect(mockFetch).toHaveBeenCalledTimes(5);
+  });
+
+  it('should handle configuration options', () => {
+    const client = new FetchClient({ credentials: 'include' });
+    expect(client).toBeInstanceOf(FetchClient);
+  });
+
+  it('should preserve an already-aborted signal when a timeout is configured', async () => {
+    mockFetch.mockReset();
+    const controller = new AbortController();
+    controller.abort();
+    mockFetch.mockImplementationOnce((_url: string, options?: RequestInit) => {
+      expect(options?.signal?.aborted).toBe(true);
+      const error = new Error('Aborted');
+      error.name = 'AbortError';
+      return Promise.reject(error);
+    });
+
+    const client = new FetchClient({ timeout: 100 });
+    const response = await client.get(
+      '/api/test',
+      {},
+      {
+        signal: controller.signal,
+      },
+    );
+
+    expect(response.ok).toBe(false);
+    expect(response.statusText).toBe('Request Aborted');
+  });
+
+  it('should remove a source abort listener after a timed request completes', async () => {
+    const controller = new AbortController();
+    const removeListener = vi.spyOn(controller.signal, 'removeEventListener');
+    mockFetch.mockResolvedValueOnce(
+      new Response('{}', {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
+    );
+
+    const client = new FetchClient({ timeout: 100 });
+    await client.get('/api/test', {}, { signal: controller.signal });
+
+    expect(removeListener).toHaveBeenCalledWith('abort', expect.any(Function));
+  });
+
+  describe('Base URL functionality', () => {
+    describe('with baseUrl configured', () => {
+      it('should prepend baseUrl to relative URLs', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should handle relative URLs without leading slash', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should remove trailing slash from baseUrl', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com/' });
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should use absolute URLs as-is', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('https://other-api.com/data');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://other-api.com/data',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should work with query parameters', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users', { page: 1, limit: 10 });
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users?page=1&limit=10',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should append array query values without losing fragments', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+        mockFetch.mockResolvedValueOnce(
+          new Response('{}', {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users?sort=name#list', {
+          tag: ['admin', 'editor'],
+          page: undefined,
+        });
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users?sort=name&tag=admin&tag=editor#list',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should work with POST requests', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ id: 1 }), {
+            status: 201,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.post('/users', { name: 'John' });
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ name: 'John' }),
+          }),
+        );
+      });
+
+      it('should work with all HTTP methods', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        const createMockResponse = () =>
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          });
+
+        mockFetch
+          .mockResolvedValueOnce(createMockResponse())
+          .mockResolvedValueOnce(createMockResponse())
+          .mockResolvedValueOnce(createMockResponse())
+          .mockResolvedValueOnce(createMockResponse())
+          .mockResolvedValueOnce(createMockResponse());
+
+        await client.get('/test');
+        await client.post('/test', {});
+        await client.put('/test', {});
+        await client.patch('/test', {});
+        await client.del('/test');
+
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          1,
+          'https://api.example.com/test',
+          expect.objectContaining({ method: 'GET' }),
+        );
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          2,
+          'https://api.example.com/test',
+          expect.objectContaining({ method: 'POST' }),
+        );
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          3,
+          'https://api.example.com/test',
+          expect.objectContaining({ method: 'PUT' }),
+        );
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          4,
+          'https://api.example.com/test',
+          expect.objectContaining({ method: 'PATCH' }),
+        );
+        expect(mockFetch).toHaveBeenNthCalledWith(
+          5,
+          'https://api.example.com/test',
+          expect.objectContaining({ method: 'DELETE' }),
+        );
+      });
+    });
+
+    describe('without baseUrl configured', () => {
+      it('should allow absolute URLs', async () => {
+        const client = new FetchClient();
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('https://api.example.com/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should allow relative URLs', async () => {
+        const client = new FetchClient();
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should allow relative URLs without leading slash', async () => {
+        const client = new FetchClient();
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should handle query parameters with relative URLs', async () => {
+        const client = new FetchClient();
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users', { page: 1 });
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          '/users?page=1',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+    });
+
+    describe('middleware compatibility', () => {
+      it('should work with middleware', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        // Add a simple middleware that adds a header
+        client.use(async (request, next) => {
+          request.headers = { ...request.headers, 'X-Test': 'middleware' };
+          return next(request);
+        });
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({ success: true }), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        await client.get('/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({
+            method: 'GET',
+            headers: expect.objectContaining({
+              'X-Test': 'middleware',
+            }),
+          }),
+        );
+      });
+    });
+
+    describe('setBaseUrl method', () => {
+      it('should allow setting base URL after construction', async () => {
+        const client = new FetchClient();
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({}), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        client.setBaseUrl('https://api.example.com');
+        await client.get('/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({
+            method: 'GET',
+          }),
+        );
+      });
+
+      it('should allow updating base URL', async () => {
+        const client = new FetchClient({
+          baseUrl: 'https://old-api.example.com',
+        });
+
+        mockFetch.mockResolvedValue(
+          new Response(JSON.stringify({}), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        // First request with original base URL
+        await client.get('/users');
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://old-api.example.com/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+
+        // Update base URL
+        client.setBaseUrl('https://new-api.example.com');
+        await client.get('/users');
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://new-api.example.com/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should allow clearing base URL', async () => {
+        const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+        mockFetch.mockResolvedValue(
+          new Response(JSON.stringify({}), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        // Clear base URL
+        client.setBaseUrl(undefined);
+        await client.get('https://external-api.com/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://external-api.com/users',
+          expect.objectContaining({ method: 'GET' }),
+        );
+      });
+
+      it('should return client instance for method chaining', () => {
+        const client = new FetchClient();
+        const result = client.setBaseUrl('https://api.example.com');
+        expect(result).toBe(client);
+      });
+
+      it('should work with middleware chains', async () => {
+        const client = new FetchClient();
+
+        mockFetch.mockResolvedValueOnce(
+          new Response(JSON.stringify({}), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        );
+
+        // Chain middleware and setBaseUrl
+        client
+          .use((request, next) => {
+            request.headers = { ...request.headers, 'X-Test': 'chaining' };
+            return next(request);
+          })
+          .setBaseUrl('https://api.example.com');
+
+        await client.get('/users');
+
+        expect(mockFetch).toHaveBeenCalledWith(
+          'https://api.example.com/users',
+          expect.objectContaining({
+            method: 'GET',
+            headers: expect.objectContaining({
+              'X-Test': 'chaining',
+            }),
+          }),
+        );
+      });
+    });
+
+    describe('error handling', () => {
+      it('should return a failed response when resolving relative URL with invalid base URL', async () => {
+        const client = new FetchClient({ baseUrl: 'not-a-valid-url' });
+
+        const response = await client.get('/users');
+
+        expect(response.ok).toBe(false);
+        if (response.ok) {
+          throw new Error('Expected failed response');
+        }
+        expect(response.status).toBe(0);
+        expect(response.statusText).toBe('Invalid URL');
+        expect(response.error.message).toContain('Invalid URL');
+      });
+
+      it('should return failed responses for invalid base URL query helpers', async () => {
+        const client = new FetchClient({ baseUrl: 'not-a-valid-url' });
+
+        const getResponse = await client.get('/users', { page: 1 });
+        const headResponse = await client.head('/users', { page: 1 });
+        const deleteResponse = await client.del('/users', { page: 1 });
+
+        expect(getResponse.ok).toBe(false);
+        expect(headResponse.ok).toBe(false);
+        expect(deleteResponse.ok).toBe(false);
+
+        if (getResponse.ok || headResponse.ok || deleteResponse.ok) {
+          throw new Error('Expected failed responses');
+        }
+
+        expect(getResponse.statusText).toBe('Invalid URL');
+        expect(headResponse.error.message).toContain('Invalid URL');
+        expect(deleteResponse.error.message).toContain('Invalid URL');
+        expect(mockFetch).not.toHaveBeenCalled();
+      });
+    });
+  });
+});

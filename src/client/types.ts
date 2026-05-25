@@ -5,7 +5,9 @@
  * Designed for discoverability and type safety.
  */
 
-// Export RequestOptions interface so it's available to consumers
+/**
+ * Per-request options for cancellation, timeouts, and request tracing.
+ */
 export interface RequestOptions {
   /**
    * AbortSignal for cancelling the request.
@@ -60,51 +62,88 @@ export interface RequestOptions {
 }
 
 /**
- * Typed response wrapper with consistent shape.
+ * Structured failure details returned when a request does not complete
+ * successfully. HTTP failures, aborts, network failures, parse failures, and
+ * URL resolution failures all use this shape.
  *
- * ✅ Always returns this shape (never throws)
- * ✅ Use `.ok` to check success
- * ✅ Use `.data` for parsed response
- * ✅ Use `.error` for failure details
- *
- * @template T - The expected type of the response data
- *
- * @example
- * ```typescript
- * const result = await client.get<User[]>('/api/users');
- * if (result.ok) {
- *   console.log(result.data); // Type is User[]
- * } else {
- *   console.error(result.error?.message); // Handle error
- * }
- * ```
+ * @template E - Optional response error body type
  */
-export interface FetchResponse<T> {
-  /** The parsed response data (null if request failed) */
-  data: T | null;
+export interface FetchResponseError<E = unknown> {
+  /** Human-readable error message */
+  message: string;
+  /** HTTP status code (0 for client-side failures) */
+  status: number;
+  /** HTTP status text or a short client-side failure category */
+  statusText: string;
+  /** The request URL, when known */
+  url: string;
+  /** Parsed error response body, when available */
+  body?: E;
+  /** Underlying exception for network, abort, parse, or URL failures */
+  cause?: unknown;
+}
+
+/**
+ * Fields shared by successful and failed responses.
+ */
+export interface FetchResponseBase {
   /** HTTP status code (0 for network errors) */
   status: number;
-  /** HTTP status text ('Network Error' for network failures) */
+  /** HTTP status text or client-side failure category */
   statusText: string;
   /** Response headers */
   headers: Headers;
   /** The request URL */
   url: string;
-  /** True if status 200-299, false otherwise */
-  ok: boolean;
-  /** Error details when ok is false */
-  error?: {
-    /** Human-readable error message */
-    message: string;
-    /** Raw error response body */
-    body?: unknown;
-  };
 }
+
+/**
+ * Successful response branch.
+ *
+ * @template T - The expected type of the response data
+ */
+export interface FetchSuccessResponse<T> extends FetchResponseBase {
+  /** True if status 200-299, false otherwise */
+  ok: true;
+  /** Parsed response data */
+  data: T;
+  /** Success responses never have error details */
+  error: null;
+}
+
+/**
+ * Failed response branch.
+ *
+ * @template E - Optional response error body type
+ */
+export interface FetchFailureResponse<E = unknown> extends FetchResponseBase {
+  /** False for HTTP errors, network failures, aborts, parse failures, and URL failures */
+  ok: false;
+  /** Failure responses never have successful data */
+  data: null;
+  /** Structured failure details */
+  error: FetchResponseError<E>;
+}
+
+/**
+ * Typed response wrapper with a discriminated shape.
+ *
+ * Use `.ok` to narrow the result:
+ * - `ok: true` exposes `data: T` and `error: null`
+ * - `ok: false` exposes `data: null` and `error: FetchResponseError<E>`
+ *
+ * @template T - The expected type of the response data
+ * @template E - Optional type for parsed error response bodies
+ */
+export type FetchResponse<T, E = unknown> =
+  | FetchSuccessResponse<T>
+  | FetchFailureResponse<E>;
 
 /**
  * Configuration options for FetchClient.
  *
- * Optimized for "pit of success" - good defaults, minimal required config.
+ * Defaults are deliberately small: same-origin credentials, with no base URL
+ * or timeout unless supplied.
  */
 export interface FetchClientOptions {
   /**

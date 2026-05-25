@@ -1,5 +1,5 @@
 /**
- * @fileoverview Cache middleware - "pit of success" API.
+ * @fileoverview TTL memoization middleware public API.
  */
 
 import type { FetchClient } from '../../client/fetch-client';
@@ -16,7 +16,7 @@ export type {
 export { createCacheMiddleware, MemoryStorage } from './cache';
 
 /**
- * "Pit of success" API for adding response caching to a FetchClient.
+ * Adds TTL response memoization to a FetchClient.
  * Caches GET responses for faster subsequent requests.
  *
  * @param client - The FetchClient to add caching to
@@ -34,11 +34,10 @@ export { createCacheMiddleware, MemoryStorage } from './cache';
  * await cachedClient.get('/api/data');
  * ```
  *
- * @example Custom TTL and methods:
+ * @example Custom TTL:
  * ```typescript
  * const cachedClient = addCache(client, {
- *   ttl: 10 * 60 * 1000, // 10 minutes
- *   methods: ['GET', 'HEAD']
+ *   ttl: 10 * 60 * 1000 // 10 minutes
  * });
  * ```
  *

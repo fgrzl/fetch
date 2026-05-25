@@ -2,18 +2,12 @@
  * @fileoverview Rate limiting middleware types and configuration.
  */
 
-/**
- * Rate limiting algorithm types.
- */
-export type RateLimitAlgorithm =
-  | 'token-bucket'
-  | 'sliding-window'
-  | 'fixed-window';
+import type { FetchResponse } from '../../client/types';
 
 /**
- * Rate limiting configuration options - optimized for "pit of success".
+ * Configuration for the token-bucket rate limiter.
  *
- * Smart defaults:
+ * Defaults:
  * - 60 requests per minute
  * - Token bucket algorithm
  * - Per-client limiting
@@ -29,14 +23,6 @@ export interface RateLimitOptions {
    * Time window in milliseconds (default: 60000 = 1 minute)
    */
   windowMs?: number;
-
-  /**
-   * Rate limiting algorithm (default: 'token-bucket')
-   * - 'token-bucket': Allows bursts up to maxRequests, refills over time
-   * - 'sliding-window': Smooth rate limiting over rolling window
-   * - 'fixed-window': Fixed number of requests per fixed time window
-   */
-  algorithm?: RateLimitAlgorithm;
 
   /**
    * Custom key generator for rate limiting scope
@@ -81,25 +67,8 @@ export interface RateLimitOptions {
   ) =>
     | void
     | Promise<void>
-    | {
-        data: unknown;
-        status: number;
-        statusText: string;
-        headers: Headers;
-        url: string;
-        ok: boolean;
-        error?: { message: string; body?: unknown };
-      }
-    | Promise<{
-        data: unknown;
-        status: number;
-        statusText: string;
-        headers: Headers;
-        url: string;
-        ok: boolean;
-        error?: { message: string; body?: unknown };
-      }>;
+    | FetchResponse<unknown>
+    | Promise<FetchResponse<unknown>>;
 }
 
 // Ensure this file is treated as a module
-export {};

@@ -1,97 +1,58 @@
-# Middleware Overview
+# Middleware
 
-This document explains how to use and compose request/response middleware in the fetch client.
+Middleware is optional. Add only the behavior a specific client needs.
 
-## Built-in Middleware
+## Modules
 
-- [Authentication](./middleware/authentication.md) - Add bearer tokens and API keys to requests
-- [Authorization](./middleware/authorization.md) - Handle 401/403 responses with smart redirects
-- [Cache](./middleware/cache.md) - Response caching with TTL support
-- [CSRF Protection](./middleware/csrf.md) - Automatic CSRF token handling
-- [Logging](./middleware/logging.md) - Request/response logging for debugging and monitoring
-- [Rate Limiting](./middleware/rate-limit.md) - Client-side rate limiting with token bucket
-- [Retry](./middleware/retry.md) - Automatic retry with exponential backoff
-- [Custom Middleware](./middleware/custom.md) - Create your own middleware
+- [Authentication](./middleware/authentication.md): inject bearer tokens or custom auth headers.
+- [Authorization](./middleware/authorization.md): handle selected authorization failures.
+- [Retry](./middleware/retry.md): retry selected transient failures.
+- [Cache](./middleware/cache.md): TTL memoization for safe repeated reads.
+- [Logging](./middleware/logging.md): request and response logging.
+- [Rate limit](./middleware/rate-limit.md): in-memory token-bucket pacing.
+- [CSRF](./middleware/csrf.md): add CSRF tokens to state-changing requests.
+- [Custom](./middleware/custom.md): write middleware directly.
 
-## Pre-built Stacks
+## Composition
 
-The middleware module also provides pre-configured stacks for common use cases:
-
-```ts
-import {
-  addProductionStack,
-  addDevelopmentStack,
-  addBasicStack,
-} from "@fgrzl/fetch";
-
-// Production: auth + cache + retry + rate limiting + logging
-const prodClient = addProductionStack(client, {
-  auth: { tokenProvider: () => getToken() },
-  cache: { ttl: 5 * 60 * 1000 },
-  logging: { level: "info" },
-});
-
-// Development: auth + retry + comprehensive logging
-const devClient = addDevelopmentStack(client, {
-  auth: { tokenProvider: () => "dev-token" },
-});
-
-// Basic: just auth + retry
-const basicClient = addBasicStack(client, {
-  auth: { tokenProvider: () => getToken() },
-});
-
-// 💡 Combine with dynamic base URL
-const apiClient = addProductionStack(new FetchClient(), {
-  auth: { tokenProvider: () => getToken() },
-  retry: { maxRetries: 3 },
-  logging: { level: "info" },
-}).setBaseUrl(process.env.API_BASE_URL!);
-```
-
-## Quick Start
+Order is explicit and observable:
 
 ```ts
-import { FetchClient } from "@fgrzl/fetch";
-import {
-  addAuthentication,
-  addAuthorization,
-  addRetry,
-  addLogging,
-} from "@fgrzl/fetch";
+import { FetchClient } from '@fgrzl/fetch';
+import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
+import { addLogging } from '@fgrzl/fetch/middleware/logging';
+import { addRetry } from '@fgrzl/fetch/middleware/retry';
 
-const client = new FetchClient();
+const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+const getToken = () => localStorage.getItem('token') || '';
 
-// Compose nested middleware for a complete API client
-const apiClient = addLogging(
-  addRetry(
-    addAuthorization(
-      addAuthentication(client, {
-        tokenProvider: () => localStorage.getItem("token") || "",
-      }),
-    ),
-  ),
-  { level: "info" },
-);
-
-// Now use the enhanced client
-const users = await apiClient.get("/api/users");
+addAuthentication(client, { tokenProvider: () => getToken() });
+addRetry(client, { maxRetries: 2, delay: 250 });
+addLogging(client, { level: 'error' });
 ```
 
-### Alternative: Step-by-Step Composition
+Each helper adds middleware to the provided client and returns that client. There are no bundled production presets: the application owns which behavior is active and in what order.
 
-You can also apply middleware step by step for better readability:
+Retry middleware re-runs middleware registered after it on each attempt, so place it where repeated work is acceptable.
+
+## Custom Middleware
 
 ```ts
-// Step-by-step composition (client is mutated in place)
-const client = new FetchClient();
-addAuthentication(client, {
-  tokenProvider: () => localStorage.getItem("token") || "",
-});
-addAuthorization(client);
-addRetry(client);
-addLogging(client, { level: "info" });
+import { FetchClient } from '@fgrzl/fetch';
 
-// Use the enhanced client
-const users = await client.get("/api/users");
+const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+const reportError = (error: unknown) => console.error(error);
+
+client.use(async (request, next) => {
+  const headers = new Headers(request.headers);
+  headers.set('X-Request-Source', 'web');
+
+  const response = await next({ ...request, headers });
+  if (!response.ok) {
+    reportError(response.error);
+  }
+  return response;
+});
 ```
+
+Middleware may short-circuit by returning a `FetchResponse` without calling `next`.

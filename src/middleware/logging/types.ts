@@ -35,9 +35,9 @@ export interface Logger {
 }
 
 /**
- * Logging configuration options - optimized for "pit of success".
+ * Logging configuration options.
  *
- * Smart defaults:
+ * Defaults:
  * - Logs to console
  * - Info level by default
  * - Excludes request/response bodies by default
@@ -99,4 +99,3 @@ export interface LoggingOptions {
 }
 
 // Ensure this file is treated as a module
-export {};
