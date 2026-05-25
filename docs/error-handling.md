@@ -1,11 +1,21 @@
 # Error Handling
 
-`@fgrzl/fetch` uses response-based error handling by default. Calls resolve to `FetchResponse<T, E>` instead of throwing for HTTP errors, network failures, aborts, parse failures, or invalid URL resolution.
+`@fgrzl/fetch` resolves requests to `FetchResponse<T, E>` instead of throwing for ordinary HTTP failures. Use `response.ok` to branch between the success and failure shapes.
 
-## Response Branches
+## Response Shape
 
 ```ts
 import { FetchClient } from '@fgrzl/fetch';
+
+interface User {
+  id: number;
+  name: string;
+}
+
+interface ApiError {
+  code: string;
+  message: string;
+}
 
 const api = new FetchClient({ baseUrl: 'https://api.example.com' });
 const response = await api.get<User, ApiError>('/users/1');
@@ -19,7 +29,7 @@ if (response.ok) {
 }
 ```
 
-Failed responses include:
+Failed responses expose `message`, `status`, `statusText`, `url`, optional parsed `body`, and optional `cause`.
 
 ```ts
 interface FetchResponseError<E = unknown> {
@@ -56,7 +66,7 @@ if (!response.ok && response.status === 0) {
 }
 ```
 
-Examples of `statusText` values for status `0` failures include `Network Error`, `Request Aborted`, and `Invalid URL`.
+Examples of `statusText` values for status `0` failures include `Network Error`, `Request Aborted`, `Invalid URL`, and `Parse Error`.
 
 ## Optional Exception Flow
 
@@ -91,6 +101,11 @@ try {
 Middleware should usually return failed responses rather than throw. Throwing is reserved for middleware bugs or application-specific exception flows.
 
 ```ts
+import { FetchClient } from '@fgrzl/fetch';
+
+const client = new FetchClient();
+const clearSession = () => sessionStorage.removeItem('session');
+
 client.use(async (request, next) => {
   const response = await next(request);
 
@@ -100,16 +115,4 @@ client.use(async (request, next) => {
 
   return response;
 });
-```
-
-## Testing
-
-```ts
-mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
-
-const response = await api.get('/api/test');
-
-expect(response.ok).toBe(false);
-expect(response.status).toBe(0);
-expect(response.statusText).toBe('Network Error');
 ```

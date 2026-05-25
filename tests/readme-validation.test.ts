@@ -31,15 +31,21 @@ describe('README Examples Validation', () => {
 
   it('should work with the named client shown in README', async () => {
     const { FetchClient } = await import('../src/index');
-    const api = new FetchClient();
+    const api = new FetchClient({ baseUrl: 'https://api.example.com' });
 
-    const response = await api.get('/api/users');
+    const response = await api.get('/users/1');
     expect(response.ok).toBe(true);
     expect(response.data).toEqual({ id: 1, name: 'Test User' });
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      'https://api.example.com/users/1',
+      expect.objectContaining({
+        credentials: 'same-origin',
+      }),
+    );
   });
 
   it('should work with custom authentication as shown in README', async () => {
-    // This tests the second example from README
     const { FetchClient } = await import('../src/index');
     const { addAuthentication } =
       await import('../src/middleware/authentication');
@@ -61,10 +67,20 @@ describe('README Examples Validation', () => {
     );
   });
 
+  it('should work with throwOnError as shown in README', async () => {
+    const { FetchClient, throwOnError } = await import('../src/index');
+    const api = new FetchClient();
+
+    const user = throwOnError(
+      await api.get<{ id: number; name: string }>('/api/users/1'),
+    );
+
+    expect(user).toEqual({ id: 1, name: 'Test User' });
+  });
+
   it('should export all the middleware mentioned in docs', async () => {
     const fetchLib = await import('../src/middleware');
 
-    // Verify all middleware exports exist as documented
     expect(typeof fetchLib.addAuthentication).toBe('function');
     expect(typeof fetchLib.addCSRF).toBe('function');
     expect(typeof fetchLib.addAuthorization).toBe('function');
@@ -74,23 +90,21 @@ describe('README Examples Validation', () => {
     expect(typeof fetchLib.addRateLimit).toBe('function');
   });
 
-  it('should have correct TypeScript types as documented', async () => {
+  it('should expose ok/data/error branches as documented', async () => {
     const { FetchClient } = await import('../src/index');
 
-    interface TestUser {
-      id: number;
-      name: string;
-    }
-
     const client = new FetchClient();
-    const response = await client.get<TestUser>('/api/user');
+    const response = await client.get<{ id: number; name: string }>(
+      '/api/user',
+    );
 
-    // This test verifies the response structure matches documentation
     if (response.ok) {
-      expect(response.data).toBeTruthy();
+      expect(response.data).toEqual({ id: 1, name: 'Test User' });
+      expect(response.error).toBeNull();
       expect(typeof response.status).toBe('number');
     } else {
       expect(response.error).toBeTruthy();
+      expect(response.data).toBeNull();
       expect(typeof response.status).toBe('number');
     }
   });

@@ -1,18 +1,22 @@
 # Architecture
 
-`@fgrzl/fetch` is built around one narrow contract: every core request resolves to a typed response object.
+`@fgrzl/fetch` centers on one narrow contract: every request resolves to a typed response object, not a shared client or a hidden preset stack.
 
-## Product Shape
+## Public Shape
 
-- The root export provides `FetchClient`, response types, query helpers, and an explicit `throwOnError` escape hatch.
-- HTTP errors, network failures, aborts, parse failures, and invalid URL resolution return `ok: false`.
+- The root export provides `FetchClient`, `throwOnError`, query helpers, and response/error types.
 - Middleware lives behind middleware subpath exports and is installed explicitly per client.
-- Importing the package creates no shared client and enables no behavior.
+- Importing the package creates no shared client and enables no behavior automatically.
 
 ## Response Contract
 
 ```ts
 import { FetchClient } from '@fgrzl/fetch';
+
+interface User {
+  id: number;
+  name: string;
+}
 
 const api = new FetchClient();
 const response = await api.get<User>('/users/1');
@@ -49,9 +53,15 @@ client.use(async (request, next) => {
 
 Middleware can modify requests, observe responses, or short-circuit with a `FetchResponse`. Retry middleware re-runs middleware registered after it for every attempt.
 
-## Optional Middleware
+## Built-in Middleware
 
-The package includes authentication, authorization response handling, retry, TTL memoization, logging, local rate limiting, and CSRF helpers. Cache is deliberately a small TTL memoizer, not HTTP caching, invalidation, or distributed storage.
+- Authentication injects bearer tokens or custom headers.
+- Authorization handles selected authentication or authorization failures.
+- Retry retries selected transient failures with backoff.
+- Cache is a small TTL memoizer for safe repeated reads.
+- Logging records request and response details.
+- Rate limit applies local token-bucket pacing.
+- CSRF injects CSRF tokens for state-changing requests.
 
 ## Out Of Scope
 

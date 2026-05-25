@@ -1,6 +1,8 @@
 # Configuration
 
-`FetchClient` has a small configuration surface.
+`FetchClient` keeps configuration intentionally small: credentials, base URL, and timeout.
+
+## Client Options
 
 ```ts
 import { FetchClient } from '@fgrzl/fetch';
@@ -12,8 +14,6 @@ const client = new FetchClient({
 });
 ```
 
-## Options
-
 ```ts
 interface FetchClientOptions {
   credentials?: RequestCredentials;
@@ -22,24 +22,22 @@ interface FetchClientOptions {
 }
 ```
 
-- `credentials`: forwarded to `fetch`; defaults to `same-origin`.
-- `baseUrl`: used to resolve relative request URLs.
-- `timeout`: default request timeout in milliseconds. Use `0` or omit it for no default timeout.
+- `credentials` is forwarded to `fetch`. The default is `same-origin`.
+- `baseUrl` resolves relative request URLs.
+- `timeout` sets the default request timeout in milliseconds.
 
-## Base URL
-
-```ts
-const api = new FetchClient({ baseUrl: 'https://api.example.com' });
-
-await api.get('/users'); // https://api.example.com/users
-await api.get('users'); // https://api.example.com/users
-await api.get('https://cdn.example.com/file.json'); // unchanged
-```
-
-`setBaseUrl` updates an existing client:
+## Base URLs
 
 ```ts
-api.setBaseUrl('https://staging-api.example.com');
+import { FetchClient } from '@fgrzl/fetch';
+
+const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+
+await client.get('/users'); // https://api.example.com/users
+await client.get('https://cdn.example.com/file.json'); // unchanged
+
+client.setBaseUrl('https://staging-api.example.com');
+await client.get('/users'); // https://staging-api.example.com/users
 ```
 
 Invalid base URL resolution returns a failed response rather than throwing.
@@ -47,6 +45,8 @@ Invalid base URL resolution returns a failed response rather than throwing.
 ## Credentials
 
 ```ts
+import { FetchClient } from '@fgrzl/fetch';
+
 const cookieClient = new FetchClient({ credentials: 'include' });
 const tokenOnlyClient = new FetchClient({ credentials: 'omit' });
 ```
@@ -56,6 +56,8 @@ Use `include` for cross-origin cookie flows. Use `omit` for token-only clients t
 ## Timeouts
 
 ```ts
+import { FetchClient } from '@fgrzl/fetch';
+
 const client = new FetchClient({ timeout: 10000 });
 
 await client.get('/fast', {}, { timeout: 1000 });
@@ -65,13 +67,37 @@ await client.get('/no-timeout', {}, { timeout: 0 });
 
 Timeouts return `ok: false`, `status: 0`, and `statusText: 'Request Aborted'`.
 
+## Request Overrides
+
+Per-request `signal`, `timeout`, and `operationId` live on `RequestOptions`.
+
+```ts
+import { FetchClient } from '@fgrzl/fetch';
+
+const client = new FetchClient();
+
+await client.get(
+  '/users',
+  {},
+  {
+    signal: new AbortController().signal,
+    timeout: 1000,
+    operationId: crypto.randomUUID(),
+  },
+);
+```
+
 ## Middleware Configuration
 
 Middleware is configured where it is added:
 
 ```ts
+import { FetchClient } from '@fgrzl/fetch';
 import { addAuthentication } from '@fgrzl/fetch/middleware/authentication';
 import { addRetry } from '@fgrzl/fetch/middleware/retry';
+
+const client = new FetchClient({ baseUrl: 'https://api.example.com' });
+const getToken = () => localStorage.getItem('token') || '';
 
 addAuthentication(client, {
   tokenProvider: () => getToken(),
